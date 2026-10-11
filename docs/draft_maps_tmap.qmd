@@ -1,0 +1,258 @@
+---
+title: "Maps with tmap"
+subtitle: "COMM 407 · Static maps, interactive maps, and geocoding"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 5)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(sf)
+  library(tmap)
+  library(cancensus)
+  library(tidygeocoder)
+})
+```
+
+## One package for static and interactive maps
+
+- tmap draws `sf` objects: polygons, lines, and points.
+- The same code makes a static map for a PDF or slides, or an interactive map for exploring.
+
+::: {.warning}
+We use tmap version 4. AI tools often write the older version 3 syntax. A translation table is at the end of this deck.
+:::
+
+## Census tracts with geometry
+
+```{r}
+#| label: ct
+#| results: hide
+ct <- get_census(
+  dataset = "CA21", regions = list(CMA = "59933"), level = "CT",
+  vectors = c(total = "v_CA21_7632", transit = "v_CA21_7644"),
+  geo_format = "sf"
+) |>
+  mutate(transit_pct = 100 * transit / total)
+```
+
+- `geo_format = "sf"` returns tract boundaries with the data.
+- `total` is all commuters; `transit` is those who commute mainly by public transit.
+
+::: {.notes}
+The 2021 Census was taken in May 2021, during the pandemic, so transit shares are lower than in 2016. Worth asking students why the census year matters here.
+:::
+
+## A map starts with tm_shape()
+
+```{r}
+#| label: shape
+tm_shape(ct) +
+  tm_polygons()
+```
+
+## Map a variable with fill =
+
+```{r}
+#| label: fill
+tm_shape(ct) +
+  tm_polygons(fill = "transit_pct")
+```
+
+## Add a legend title and lighter borders
+
+```{r}
+#| label: legend
+tm_shape(ct) +
+  tm_polygons(fill = "transit_pct",
+              fill.legend = tm_legend(title = "Public transit share (%)"),
+              col = "white", lwd = 0.2)
+```
+
+## Layers stack, as in ggplot
+
+```{r}
+#| label: parks
+#| fig-height: 5.2
+burnaby <- ct |> filter(CSD_UID == "5915025")  # Burnaby's CSD code
+parks <- st_read("data/Park_Inventory.geojson", quiet = TRUE)
+
+tm_shape(burnaby) + tm_polygons(fill = "transit_pct") +
+  tm_shape(parks) + tm_polygons(fill = "darkgreen", col = NULL)
+```
+
+## A basemap adds context
+
+```{r}
+#| label: basemap
+#| fig-height: 4.3
+tm_basemap("Esri.WorldGrayCanvas") +
+  tm_shape(burnaby) +
+  tm_polygons(fill = "transit_pct", fill_alpha = 0.7)
+```
+
+::: {.small}
+Basemaps download map tiles, so you need internet access. `"Esri.WorldGrayCanvas"` and `"OpenStreetMap"` need no API key; CartoDB tiles now do.
+:::
+
+## View mode makes the map interactive
+
+```{r}
+#| label: view
+tmap_mode("view")
+tm_shape(burnaby) + tm_polygons(fill = "transit_pct", fill_alpha = 0.7)
+```
+
+```{r}
+#| label: plot-mode
+#| include: false
+tmap_mode("plot")
+```
+
+## Use view mode to check your work
+
+- Zoom in and click a tract to see its values.
+- This is a quick way to check a join or a calculation: does this tract have the value you expected?
+- Switch back with `tmap_mode("plot")` before you render to PDF. Interactive maps cannot go in a PDF.
+
+## Save a map as a PNG
+
+```{r}
+#| label: save
+#| eval: false
+m <- tm_shape(ct) +
+  tm_polygons(fill = "transit_pct",
+              fill.legend = tm_legend(title = "Public transit share (%)"))
+
+tmap_save(m, "temp/transit_share.png", width = 8, height = 6, dpi = 300)
+```
+
+Save the map in an object first, then pass it to `tmap_save()`.
+
+## Geocoding turns addresses into coordinates
+
+```{r}
+#| label: geocode
+places <- tibble(address = c("2053 Main Mall, Vancouver, BC",
+                             "999 Canada Place, Vancouver, BC",
+                             "800 Robson St, Vancouver, BC")) |>
+  geocode(address, method = "arcgis", full_results = TRUE)
+
+places |> select(address, lat, long, arcgis_address, score)
+```
+
+## Turn coordinates into points on a map
+
+```{r}
+#| label: points
+#| fig-height: 4.6
+places_sf <- st_as_sf(places, coords = c("long", "lat"), crs = 4326)
+
+# Show 1.5 km around the points, so they are not on the edge of the map
+area <- st_bbox(st_buffer(places_sf, 1500))
+
+tm_basemap("OpenStreetMap") +
+  tm_shape(places_sf, bbox = area) + tm_dots(fill = "red", size = 1)
+```
+
+## A perfect score can be the wrong place
+
+```{r}
+#| label: geocode-trap
+tibble(address = c("1000 Main St", "1000 Main St, Vancouver, BC")) |>
+  geocode(address, method = "arcgis", full_results = TRUE) |>
+  select(address, lat, long, city = attributes.City, score)
+```
+
+::: {.warning}
+Without a city, "1000 Main St" matched Dallas, Texas, with a score of 100. Always include the city and province, then map the points.
+:::
+
+## Google is more precise but needs a key
+
+- `method = "google"` reads `GOOGLEGEOCODE_API_KEY` from `.Renviron`.
+- You need a Google Cloud account with billing turned on.
+- Restrict the key to the Geocoding API and set a budget alert.
+- Comparing two methods is a good check: look into any address where they disagree.
+
+## AI tools often write tmap v3 code
+
+::: {.small}
+| Version 3 (old) | Version 4 (use this) |
+|---|---|
+| `tm_polygons(col = "x")` | `tm_polygons(fill = "x")` |
+| `style = "jenks", n = 5` | `fill.scale = tm_scale_intervals(style = "jenks", n = 5)` |
+| `palette = "Blues"` | `fill.scale = tm_scale_intervals(values = "brewer.blues")` |
+| `title = "Share"` | `fill.legend = tm_legend(title = "Share")` |
+| `alpha = 0.5` | `fill_alpha = 0.5` |
+| `border.col = "white"` | `col = "white"` |
+:::
+
+::: {.notes}
+Version 3 code often still runs in version 4, with deprecation messages, but some options behave differently.
+:::
+
+## Practice
+
+1. Map the share of renter households by census tract in the Vancouver CMA (2021). Use `v_CA21_4237` (total households) and `v_CA21_4239` (renters).
+2. Add a basemap and a legend title.
+3. Switch to view mode and find the tract with the highest renter share.
+
+## Answer
+
+```{r include=params$answers}
+#| label: practice-answer
+#| results: hide
+#| fig-show: hide
+renter <- get_census(
+  dataset = "CA21", regions = list(CMA = "59933"), level = "CT",
+  vectors = c(households = "v_CA21_4237", renters = "v_CA21_4239"),
+  geo_format = "sf"
+) |>
+  mutate(renter_pct = 100 * renters / households)
+
+renter_map <- tm_basemap("Esri.WorldGrayCanvas") +
+  tm_shape(renter) +
+  tm_polygons(fill = "renter_pct", fill_alpha = 0.7,
+              fill.legend = tm_legend(title = "Renter households (%)"))
+renter_map
+```
+
+## Answer: the map
+
+```{r include=params$answers}
+#| label: practice-answer-map
+#| echo: false
+renter_map
+```

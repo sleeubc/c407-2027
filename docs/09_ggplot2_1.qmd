@@ -1,0 +1,586 @@
+---
+title: "ggplot2 I"
+subtitle: "COMM 407 · The grammar of graphics"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: translated-setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(kableExtra))
+```
+
+
+
+## Build plots with ggplot2
+
+ggplot2 grammar
+
+geom_point()
+
+geom_smooth()
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+```{r eval=FALSE}
+install.packages("gapminder")
+```
+Need to install gapminder package, just once.
+
+```{r}
+library(gapminder)
+library(tidyverse)
+```
+
+No need to load ggplot2 package in addition to tidyverse.
+
+```{r}
+gapminder_2007 <- gapminder |> filter(year == 2007)
+```
+
+```{r eval=FALSE}
+gapminder_2007
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output}
+```{r echo=FALSE}
+gapminder_2007 |> kable()
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+## Minimum ggplot2 template
+
+```{r eval=FALSE}
+ggplot() + 
+  <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>), data = <DATA>)
+```
+
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+
+::: {.small}
+```{r}
+ggplot() + 
+  geom_point(mapping=aes(x=gdpPercap, y=lifeExp), data=gapminder_2007)
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+## Different geoms
+
+Open Posit's [Data visualization with ggplot2 cheat sheet](https://posit.co/resources/cheatsheets/).
+
+Find geom_point().
+
+Which section is it in?
+
+
+::: {.fragment}
+
+Find geom_smooth()
+
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+
+::: {.small}
+```{r}
+ggplot() + 
+  geom_smooth(mapping=aes(x=gdpPercap, y=lifeExp), data=gapminder_2007)
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+## Overlaying multiple geoms
+
+
+::: {.small}
+```{r}
+ggplot() + 
+  geom_smooth(mapping=aes(x=gdpPercap, y=lifeExp), data=gapminder_2007) +
+  geom_point(mapping=aes(x=gdpPercap, y=lifeExp), data=gapminder_2007)
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+## Global option
+
+
+::: {.small}
+```{r eval=FALSE}
+ggplot() + 
+  geom_smooth(mapping=aes(x=gdpPercap, y=lifeExp), data=gapminder_2007) +
+  geom_point(mapping=aes(x=gdpPercap, y=lifeExp), data=gapminder_2007) 
+```
+:::
+
+
+::: {.fragment}
+
+```{r eval=TRUE, fig.height=4.5}
+ggplot(data=gapminder_2007, mapping=aes(x=gdpPercap, y=lifeExp)) + 
+  geom_smooth() +  geom_point()
+```
+
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+## Matching arguments by position
+
+[? `ggplot`](https://ggplot2.tidyverse.org/reference/ggplot.html)
+
+[? `aes`](https://ggplot2.tidyverse.org/reference/aes.html)
+
+```{r eval=FALSE}
+ggplot(data=gapminder_2007, mapping=aes(x=gdpPercap, y=lifeExp)) + 
+  geom_smooth() +  geom_point()
+```
+
+```{r}
+ggplot(gapminder_2007, aes(gdpPercap, lifeExp ) ) + 
+  geom_smooth() + geom_point()
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+[`? geom_point`](https://ggplot2.tidyverse.org/reference/geom_point.html)
+
+```{r}
+ggplot(gapminder_2007) + 
+  geom_point(aes(gdpPercap, lifeExp))
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+## Aesthetic mappings
+
+`mapping = aes( <MAPPING> )` maps variables (i.e., columns) in the data to visual properties.
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+```{r}
+ggplot(gapminder_2007) + 
+  geom_point(aes(gdpPercap, lifeExp, color=continent))
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+```{r}
+ggplot(gapminder_2007) + 
+  geom_point(aes(gdpPercap, lifeExp, shape=continent))
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+
+::: {.small}
+```{r}
+ggplot(gapminder_2007) + 
+  geom_point(aes(gdpPercap, lifeExp, shape=continent, color=continent))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+## ggplot2 cheatsheet
+
+Open Posit's [Data visualization with ggplot2 cheat sheet](https://posit.co/resources/cheatsheets/).
+
+
+::: {.fragment}
+
+Note different geom functions may offer different aesthetic properties.
+
+:::
+
+
+::: {.fragment}
+
+Run the example for geom_col()
+
+What are argument names for mpg, aes(class, hwy), class, hwy?
+
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+```{r include=params$answers}
+f <- ggplot(mpg, aes(class, hwy)) 
+f + geom_col()
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+```{r include=params$answers}
+ggplot(mpg, aes(class, hwy)) + geom_col()
+```
+
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+## Application - Housing value vs. population size across CMAs
+
+Using the PUMF, calculate population and average housing value for each CMA.
+
+Generate a scatter plot with population on x-axis and average housing value on y-axis. (See next slide for the output.)
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+```{r echo=FALSE}
+pumf <- read_rds("Data/2021_census_pumf_ind.rds")
+pumf <- pumf |> mutate(VALUE2 = case_when( Value > 80000000 ~ NA_real_, .default = Value))
+
+temp <- pumf |> group_by(CMA) |> 
+  summarise(
+    avg_VALUE = weighted.mean(VALUE2, w=WEIGHT, na.rm = TRUE), 
+    pop=sum(WEIGHT)
+    )
+
+temp <- temp |> 
+  filter(CMA != "Other census metropolitan areas, census agglomerations and other geographies")
+
+temp <- temp |> arrange( desc(avg_VALUE) )
+
+ggplot() + geom_point(aes(pop, avg_VALUE), temp)
+```
+
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+
+
+::: {.small}
+Load the pumf dataset.
+
+Add a new column VALUE2 that has NA for VALUE > 80000000 and is equal to VALUE otherwise.(Read chapter 2 VALUE page in the manual to understand why.)
+
+```{r eval=FALSE}
+mutate(VALUE2 = case_when( VALUE > 80000000 ~ NA, .default = VALUE))
+```
+
+Calculate pop (= population size) and avg_VALUE (= average VALUE2) by CMA. Set na.rm = TRUE in weighted.mean(). Assign temp as its name.
+
+Drop observation where CMA is "Other census metropolitan areas, census agglomerations and other geographies".
+
+Sort the remaining observations in the descending order of avg_VALUE.
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r include=params$answers}
+pumf <- read_rds("Data/2021_census_pumf_ind.rds")
+pumf <- pumf |> mutate(VALUE2 = case_when( Value > 80000000 ~ NA_real_, .default = Value))
+
+temp <- pumf |> group_by(CMA) |> 
+  summarise(
+    avg_VALUE = weighted.mean(VALUE2, w=WEIGHT, na.rm = TRUE), 
+    pop=sum(WEIGHT)
+    )
+
+temp <- temp |> 
+  filter(CMA != "Other census metropolitan areas, census agglomerations and other geographies")
+
+temp <- temp |> arrange( desc(avg_VALUE) )
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+```{r}
+temp
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+Create a scatterplot showing the population size on x-axis and the average VALUE2 on y-axis.
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+```{r echo=params$answers}
+ggplot() + geom_point(aes(pop, avg_VALUE), temp)
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+Install `ggrepel` package, and add the following geom: 
+
+
+::: {.tiny}
+```{r eval=FALSE}
++ ggrepel::geom_text_repel(
+  aes(pop, avg_VALUE, label=CMA), 
+  temp |> arrange(desc(pop)) |> head(8) 
+  )
+```
+:::
+
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r echo=params$answers}
+ggplot() + geom_point(aes(pop, avg_VALUE), temp) + 
+  ggrepel::geom_text_repel(
+    aes(pop, avg_VALUE, label=CMA), 
+    temp |> arrange(desc(pop)) |> head(8) )
+```
+:::
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/09_ggplot2_1.Rmd`.
+:::
+

@@ -1,0 +1,515 @@
+---
+title: "dplyr III"
+subtitle: "COMM 407 · Grouped mutation, nth, and lag"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: translated-setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(kableExtra))
+```
+
+
+
+## Work within groups
+
+Group_by() - mutate()
+
+nth()
+
+lag()
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+## group_by() - mutate()
+
+```{r}
+library(tidyverse)
+tb <- tibble(a = c(1, 1, 1, 2, 2, 2), b = c(1, 2, 3, 3, 4, 4))
+tb
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.columns}
+::: {.column width="49%"}
+```{r}
+tb
+```
+:::
+
+::: {.column width="49%"}
+```{r}
+tb |>
+  group_by(a) |>
+  summarise(b_1 = nth(b, 1))
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.columns}
+::: {.column width="49%"}
+```{r}
+tb
+```
+:::
+
+::: {.column width="49%"}
+```{r}
+tb |>
+  group_by(a) |>
+  mutate(b_1 = nth(b, 1))
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.columns}
+::: {.column width="34%"}
+```{r}
+tb
+```
+:::
+
+::: {.column width="64%"}
+```{r}
+tb |>
+  group_by(a) |>
+  mutate(b_index = b / nth(b, 1))
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+## lag()
+
+
+::: {.columns}
+::: {.column width="49%"}
+```{r}
+tb
+```
+:::
+
+
+::: {.column width="49%"}
+```{r}
+tb |> mutate(lag_b = lag(b))
+```
+
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.columns}
+::: {.column width="49%"}
+```{r}
+tb
+```
+:::
+
+
+::: {.column width="49%"}
+```{r}
+tb |> mutate(diff_b = b - lag(b))
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.columns}
+::: {.column width="49%"}
+```{r}
+tb |>
+  group_by(a) |>
+  mutate(lag_b = lag(b))
+```
+:::
+
+
+::: {.column width="49%"}
+```{r}
+tb |>
+  group_by(a) |>
+  mutate(diff_b = b - lag(b))
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.columns}
+::: {.column width="34%"}
+```{r}
+tb |>
+  group_by(a) |>
+  mutate(lag_b = lag(b))
+```
+:::
+
+
+::: {.column width="64%"}
+```{r}
+tb |>
+  group_by(a) |>
+  mutate(growth_b = (b - lag(b)) / lag(b))
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+## Application
+
+- Load the bca262 data and assigns bca as its name.
+
+- Create sale_year column. Use the `year` function in `lubridate` package to extract year from `sale_date`.
+
+- Calculate average sale price by act_use_cat and sale_year. Use avg_price as its column name.
+
+- Use avg_price for the name of the resulting tibble.
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+```{r include=params$answers}
+bca <- read_rds("Data/bca262.rds")
+
+avg_price <- bca |>
+  mutate(sale_year = lubridate::year(sale_date)) |>
+  group_by(act_use_cat, sale_year) |>
+  summarise(avg_price = mean(price, na.rm = TRUE)) |>
+  ungroup()
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output}
+```{r}
+avg_price
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+```{r}
+ggplot(avg_price, aes(sale_year, avg_price, color = act_use_cat)) +
+  geom_line() +
+  geom_point()
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+Using `avg_price`, calculate price index (= avg_price / avg_price of year 2000) by act_use_cat. Name the output tibble `price_index`.
+
+
+::: {.fragment}
+
+```{r include=params$answers}
+price_index <- avg_price |>
+  group_by(act_use_cat) |>
+  mutate(price_index = avg_price / nth(avg_price, 1))
+```
+
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output}
+```{r}
+price_index
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+```{r}
+ggplot(price_index, aes(sale_year, price_index, color = act_use_cat)) +
+  geom_line() +
+  geom_point()
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+Modify the previous code to calculate price index (= avg_price / avg_price of year 2010) by act_use_cat. Name the output tibble `price_index`.
+
+
+::: {.fragment}
+
+```{r include=params$answers}
+price_index <- avg_price |>
+  group_by(act_use_cat) |>
+  mutate(price_index = avg_price / nth(avg_price, 11))
+```
+
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output}
+```{r}
+price_index
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+```{r}
+ggplot(price_index, aes(sale_year, price_index, color = act_use_cat)) +
+  geom_line() +
+  geom_point()
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+Modify the previous code to calculate price growth rate (= (avg_price - avg_price of the previous year)  / avg_price of the previous year) by act_use_cat. Name the output tibble `price_growth`.
+
+
+::: {.fragment}
+
+```{r include=params$answers}
+price_growth <- avg_price |>
+  group_by(act_use_cat) |>
+  mutate(price_growth = (avg_price - lag(avg_price)) / lag(avg_price))
+```
+
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output}
+```{r}
+price_growth
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+
+---
+
+
+```{r}
+ggplot(price_growth, aes(sale_year, price_growth, color = act_use_cat)) +
+  geom_line() +
+  geom_point()
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/08_dplyr_3.Rmd`.
+:::
+

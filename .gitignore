@@ -1,0 +1,15 @@
+# Only docs/ is public. Everything else (admin/, data/, .Renviron,
+# _quarto.yml, _freeze/, _site/, publish.sh) stays local.
+*
+!.gitignore
+!docs/
+!docs/**
+
+# Never commit, even inside docs/
+.Renviron
+.DS_Store
+.Rhistory
+.RData
+~$*
+
+/.quarto/

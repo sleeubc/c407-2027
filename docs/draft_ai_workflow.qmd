@@ -1,0 +1,239 @@
+---
+title: "Working with AI"
+subtitle: "COMM 407 · Prompt, read, and check"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+pumf <- read_rds("data/2021_census_pumf_ind.rds")
+```
+
+## AI writes the first draft; you own the result
+
+- AI tools are allowed for the presentations, with attribution. They are not allowed in exams.
+- AI is good at R syntax. It does not know your data.
+- You are responsible for every number on your slides, whoever typed the code.
+
+::: {.key-point}
+Your job shifts from writing code to checking it.
+:::
+
+## Will you notice if the AI is wrong?
+
+:::: {.columns}
+::: {.column width="50%"}
+**Visible errors**
+
+- The code stops with an error.
+- The chart looks obviously wrong.
+
+Ask the AI again.
+:::
+
+::: {.column width="50%"}
+**Silent errors**
+
+- The code runs and the chart looks fine.
+- The numbers are wrong.
+
+You must catch these yourself.
+:::
+::::
+
+::: {.warning}
+Common silent errors: a join that duplicates rows, a factor converted to numbers, missing-value codes treated as data, a wrong census vector, a geocoding match in the wrong city.
+:::
+
+## Two kinds of AI tools
+
+- **Chat tools in a browser.** They see only what you paste: your question, code, and output.
+- **Coding agents in Positron or the Terminal.** They read the files in your `c407` folder, write code, and run it.
+
+The same checks apply to both.
+
+## AGENTS.md gives AI tools the course rules
+
+- `AGENTS.md` in your `c407` folder lists where files go, which packages to use, and the data traps in this course.
+- Many coding agents read it automatically. Check your tool's documentation.
+- For chat tools, paste the "COMM 407 Course Rules" section into the conversation.
+
+## Give the AI the context it needs
+
+::: {.small}
+```text
+I'm using R and the tidyverse in a Quarto document.
+`pumf` is the 2021 Census PUMF (data/2021_census_pumf_ind.rds).
+Here is glimpse(pumf) for the variables I need: <paste output>
+
+Goal: the share of residents aged 65 and over in each CMA.
+Follow the rules in AGENTS.md.
+```
+:::
+
+::: {.key-point}
+`glimpse()` output shows names, types, and example values in a few lines.
+:::
+
+## Demo: "average age by CMA"
+
+An AI's first attempt:
+
+```{r}
+#| label: avg-age-wrong
+pumf |>
+  group_by(CMA) |>
+  summarise(avg_age = mean(as.numeric(AGEGRP))) |>
+  filter(CMA %in% c("Vancouver", "Toronto", "Victoria"))
+```
+
+The code runs without an error or a warning.
+
+## An average age of 11 should stop you
+
+`as.numeric()` on a factor returns the position of each level, not an age.
+
+```{r}
+#| label: agegrp-levels
+levels(pumf$AGEGRP) |> head(8)
+```
+
+::: {.warning}
+`AGEGRP` is a set of age brackets. Its last level is "Not available". You cannot average it directly.
+:::
+
+## Ask a question the data can answer
+
+```{r}
+#| label: share-65
+seniors <- c("65 to 69 years", "70 to 74 years", "75 to 79 years",
+             "80 to 84 years", "85 years and over")
+
+pumf |>
+  filter(AGEGRP != "Not available") |>
+  group_by(CMA) |>
+  summarise(share_65plus = sum(WEIGHT[AGEGRP %in% seniors]) / sum(WEIGHT)) |>
+  filter(CMA %in% c("Vancouver", "Toronto", "Victoria"))
+```
+
+## Missing values can hide as numbers
+
+```{r}
+#| label: totinc-codes
+pumf |>
+  filter(CMA == "Vancouver") |>
+  summarise(avg_income = mean(TotInc),
+            coded_missing = sum(TotInc %in% c(88888888, 99999999)))
+```
+
+::: {.warning}
+`TotInc`, `Wages`, and `Value` use `88888888` and `99999999` for "not applicable" and "not available". Convert them to `NA` first.
+:::
+
+## Check the row count after every join
+
+```{r}
+#| label: join-dup
+sales <- tibble(sale_id = 1:3, neigh = c("Kitsilano", "West End", "Marpole"))
+neigh_info <- tibble(neigh = c("Kitsilano", "Kitsilano", "West End", "Marpole"),
+                     area_km2 = c(5.5, 5.5, 2.0, 5.8))
+
+sales |> left_join(neigh_info, by = "neigh") |> nrow()
+```
+
+Three sales became four rows, because Kitsilano appears twice in `neigh_info`.
+
+## Make R check the join for you
+
+```{r}
+#| label: join-relationship
+sales |> left_join(neigh_info, by = "neigh", relationship = "many-to-one")
+```
+
+::: {.key-point}
+`relationship = "many-to-one"` stops with an error if the right-hand table has duplicate keys.
+:::
+
+## A checklist for AI-written code
+
+1. Read every line. Ask the AI to explain any line you cannot.
+2. Count rows before and after each filter and join.
+3. Look for missing values, including "Not available" levels and `99999999` codes.
+4. Compare magnitudes with a number you know. Is an average income of $17 million plausible?
+5. Plot the raw data before you summarise it.
+
+## Keep API keys out of AI chats
+
+- Keys live in `.Renviron`. Code reads them with `Sys.getenv()`.
+- Never paste a key into a chat, your code, or a submission.
+- If a key leaks, delete it in the provider's console and create a new one.
+
+## Say how you used AI
+
+State the tool, what you used it for, and what you checked. For example:
+
+::: {.small}
+> I used [tool] to draft the code for Figures 2 and 3 and to fix a join error. I checked the row counts after each join and compared our totals with Statistics Canada's published figures.
+:::
+
+::: {.notes}
+TODO: Confirm the attribution format for the presentations before class.
+:::
+
+## Practice: find three mistakes
+
+We asked an AI: *"Compare the average total income of owners and renters in the Vancouver CMA, and show the population of each group."*
+
+```{r}
+#| label: practice-wrong
+pumf |>
+  filter(CMA == "Vancouver") |>
+  group_by(Tenur) |>
+  summarise(avg_income = mean(TotInc), population = n())
+```
+
+## Answer
+
+```{r include=params$answers}
+#| label: practice-answer
+pumf |>
+  # 1. Drop the "Not available" group
+  filter(CMA == "Vancouver", Tenur != "Not available") |>
+  # 2. Turn missing-value codes into NA
+  mutate(TotInc = if_else(TotInc %in% c(88888888, 99999999), NA, TotInc)) |>
+  group_by(Tenur) |>
+  # 3. Count people with WEIGHT, not records
+  summarise(avg_income = weighted.mean(TotInc, WEIGHT, na.rm = TRUE),
+            population = sum(WEIGHT))
+```

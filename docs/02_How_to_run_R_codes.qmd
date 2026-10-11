@@ -1,0 +1,256 @@
+---
+title: "How to run R code"
+subtitle: "COMM 407 · Console and R scripts"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+## R code runs in two places
+
+::: {.columns}
+::: {.column width="48%"}
+### Console
+
+Use it for quick commands and temporary checks.
+:::
+
+::: {.column width="48%"}
+### R script
+
+Use it to save, revise, and reproduce an analysis.
+:::
+:::
+
+::: {.key-point}
+Most analyses use both: write lasting work in a script and experiment in the Console.
+:::
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/02_How_to_run_R_codes.Rmd`.
+:::
+
+## Use the Console for quick commands
+
+Type and run this command in Positron’s **Console**:
+
+```{r}
+mean(mtcars$mpg)
+```
+
+The numeric result appears directly below the command.
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/02_How_to_run_R_codes.Rmd`.
+:::
+
+## Plot commands show their graphical output
+
+```{r}
+#| fig-height: 4.2
+#| out-width: 70%
+plot(mtcars$hp, mtcars$mpg)
+```
+
+In Positron, the same graph also appears in the **Plots** pane.
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/02_How_to_run_R_codes.Rmd`.
+- Positron interface overview: https://positron.posit.co/migrate-rstudio.html
+:::
+
+## Save an R script when the work matters
+
+Commands typed only in the Console are difficult to reproduce or revise later.
+
+An R script stores the complete sequence of commands in a plain-text `.R` file.
+
+::: {.key-point}
+A saved script lets you rerun the analysis from a clean R session.
+:::
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/02_How_to_run_R_codes.Rmd`.
+:::
+
+## Create your first R script
+
+1. In Positron, choose **New → Text File**.
+2. Save the file as `Temp/run_code.R`.
+3. Enter these two commands:
+
+```r
+mean(mtcars$mpg)
+plot(mtcars$hp, mtcars$mpg)
+```
+
+The `.R` extension tells Positron that the file contains R code.
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/02_How_to_run_R_codes.Rmd`.
+- Positron action bars: https://positron.posit.co/action-bars.html
+:::
+
+## Run the current statement
+
+Place the cursor inside an R statement and press:
+
+::: {.shortcut}
+**Windows/Linux:** `Ctrl + Enter`  
+**macOS:** `Command + Enter`
+:::
+
+Positron sends the complete statement to the active R Console.
+
+::: {.key-point}
+`Enter` creates a new line. `Ctrl/Command + Enter` runs code.
+:::
+
+::: {.notes}
+[Sources]
+
+- Positron keyboard shortcuts: https://positron.posit.co/keyboard-shortcuts.html
+:::
+
+## Run several lines together
+
+Select the lines you want to run, then press `Ctrl/Command + Enter`.
+
+```{r}
+mpg_mean <- mean(mtcars$mpg)
+mpg_mean
+```
+
+If nothing is selected, Positron runs the statement containing the cursor.
+
+::: {.notes}
+[Sources]
+
+- Positron keyboard shortcuts: https://positron.posit.co/keyboard-shortcuts.html
+:::
+
+## Run the whole script with one shortcut
+
+Keep the `.R` script active; no selection is needed.
+
+::: {.shortcut}
+**macOS:** `Command + Shift + Enter`  
+**Windows/Linux:** `Ctrl + Shift + P`
+:::
+
+Positron runs the entire current file in the active R Console.
+
+::: {.key-point}
+For a clean reproducibility check, restart R first with `Ctrl/Command + Shift + 0`, then use the same whole-file shortcut.
+:::
+
+::: {.notes}
+[Sources]
+
+- Positron keyboard shortcuts: https://positron.posit.co/keyboard-shortcuts.html
+:::
+
+## Keep lasting code in the script
+
+- Put commands you want to keep in the R script.
+- Use the Console for one-time checks and installation commands.
+- Save the script regularly.
+- Restart R and rerun the file to test reproducibility.
+
+::: {.key-point}
+The script is the record of your analysis; the Console is the workspace where commands run.
+:::
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/02_How_to_run_R_codes.Rmd`.
+:::
+
+## Where should installation commands go?
+
+You are installing the tidyverse package:
+
+```r
+install.packages("tidyverse")
+```
+
+### Which would you use?
+
+**A.** Console  
+**B.** R script
+
+::: {.notes}
+Answer: **A. Console.** Package installation is a setup action, not part of the analysis that should run every time.
+
+[Sources]
+
+- Course source: `../docs_2026/02_How_to_run_R_codes.Rmd`.
+:::
+
+## Where should research commands go?
+
+You are running a series of commands for a research project.
+
+### Which would you use?
+
+**A.** Console  
+**B.** R script
+
+::: {.notes}
+Answer: **B. R script.** Save the commands so the work can be revised and reproduced.
+
+[Sources]
+
+- Course source: `../docs_2026/02_How_to_run_R_codes.Rmd`.
+:::
+
+## What runs the current statement?
+
+### Choose the Positron shortcut
+
+**A.** `Enter`  
+**B.** `Ctrl/Command + Enter`  
+**C.** `Ctrl/Command + S`
+
+::: {.notes}
+Answer: **B. `Ctrl/Command + Enter`.**
+
+[Sources]
+
+- Positron keyboard shortcuts: https://positron.posit.co/keyboard-shortcuts.html
+:::

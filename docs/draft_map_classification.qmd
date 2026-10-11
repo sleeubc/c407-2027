@@ -1,0 +1,219 @@
+---
+title: "Classifying map colours"
+subtitle: "COMM 407 · Breaks, palettes, and honest maps"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 5)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(sf)
+  library(tmap)
+  library(cancensus)
+})
+```
+
+```{r}
+#| label: data
+#| results: hide
+#| include: false
+ct <- get_census(
+  dataset = "CA21", regions = list(CMA = "59933"), level = "CT",
+  vectors = c(total = "v_CA21_7632", transit = "v_CA21_7644"),
+  geo_format = "sf"
+) |>
+  mutate(transit_pct = 100 * transit / total)
+```
+
+## A continuous scale makes areas hard to compare
+
+```{r}
+#| label: continuous
+tm_shape(ct) +
+  tm_polygons(fill = "transit_pct", col = NULL,
+              fill.scale = tm_scale_continuous(values = "brewer.blues"),
+              fill.legend = tm_legend(title = "Transit share (%)"))
+```
+
+## Classes group similar values
+
+```{r}
+#| label: intervals
+#| fig-height: 4.4
+tm_shape(ct) +
+  tm_polygons(
+    fill = "transit_pct", col = NULL,
+    fill.scale = tm_scale_intervals(style = "jenks", n = 5,
+                                    values = "brewer.blues"),
+    fill.legend = tm_legend(title = "Transit share (%)"))
+```
+
+## The break method changes the story
+
+```{r}
+#| label: compare
+#| echo: false
+#| fig-width: 12
+#| fig-height: 4.8
+map_style <- function(style) {
+  tm_shape(ct) +
+    tm_polygons(fill = "transit_pct", col = NULL,
+                fill.scale = tm_scale_intervals(style = style, n = 5, values = "brewer.blues",
+                                                label.format = tm_label_format(suffix = "%", digits = 0)),
+                fill.legend = tm_legend(title = style))
+}
+tmap_arrange(map_style("equal"), map_style("quantile"), map_style("jenks"), ncol = 3)
+```
+
+## Three common break methods
+
+| `style =` | How it sets breaks | Watch out for |
+|---|---|---|
+| `"equal"` | Classes of equal width | With skewed data, most areas land in the lowest classes. |
+| `"quantile"` | The same number of areas in each class | Small differences can look large. |
+| `"jenks"` | Natural gaps in the data | Breaks are hard to compare across maps. |
+
+## Look at the distribution before choosing
+
+```{r}
+#| label: hist
+#| fig-height: 3.8
+ggplot(ct, aes(transit_pct)) +
+  geom_histogram(bins = 40) +
+  labs(x = "Public transit share (%)", y = "Census tracts")
+```
+
+## Match the palette to the data
+
+- **Sequential** for low-to-high values: `"brewer.blues"`, `"brewer.yl_or_br"`.
+- **Diverging** for values above and below a midpoint: `"brewer.rd_bu"`.
+- **Categorical** for groups with no order: `"brewer.set2"`.
+
+Browse palettes at <https://colorbrewer2.org>.
+
+## How far is each tract from the CMA average?
+
+```{r}
+#| label: cma-avg
+cma_avg <- 100 * sum(ct$transit, na.rm = TRUE) / sum(ct$total, na.rm = TRUE)
+cma_avg
+
+ct <- ct |> mutate(diff = transit_pct - cma_avg)
+```
+
+`cma_avg` divides all transit commuters by all commuters, so tracts with more commuters count more. It is not the same as `mean(ct$transit_pct)`.
+
+## A diverging palette shows above and below average
+
+```{r}
+#| label: diverging
+#| fig-height: 3.7
+tm_shape(ct) +
+  tm_polygons(
+    fill = "diff", col = NULL,
+    fill.scale = tm_scale_intervals(breaks = c(-15, -10, -5, 0, 5, 10, 35),
+                                    values = "brewer.rd_bu", midpoint = 0),
+    fill.legend = tm_legend(title = "Points above CMA average"))
+```
+
+## Large areas dominate the eye
+
+- The biggest tracts in the last map are rural, with few commuters.
+- Readers see area, not population.
+
+::: {.key-point}
+Before you draw conclusions, check how many people live in the areas that catch your eye.
+:::
+
+## Format legend labels
+
+::: {.small}
+```{r}
+#| label: labels
+#| fig-height: 3.5
+tm_shape(ct) +
+  tm_polygons(
+    fill = "transit_pct", col = NULL,
+    fill.scale = tm_scale_intervals(
+      style = "jenks", n = 5, values = "brewer.blues",
+      label.format = tm_label_format(suffix = "%", digits = 0),
+      value.na = "grey80", label.na = "No data"),
+    fill.legend = tm_legend(title = "Public transit share"))
+```
+:::
+
+::: {.notes}
+Avoid `tm_label_format(fun = ...)` for interval scales: in tmap 4.4.1 it printed a message and then hung during testing. Use `suffix`, `prefix`, and `digits` instead.
+:::
+
+## Practice: create this map
+
+```{r}
+#| label: practice-target
+#| results: hide
+#| echo: false
+renter <- get_census(
+  dataset = "CA21", regions = list(CMA = "59933"), level = "CT",
+  vectors = c(households = "v_CA21_4237", renters = "v_CA21_4239"),
+  geo_format = "sf"
+) |>
+  mutate(renter_pct = 100 * renters / households)
+
+tm_shape(renter) +
+  tm_polygons(fill = "renter_pct", col = NULL,
+              fill.scale = tm_scale_intervals(style = "quantile", n = 4, values = "brewer.yl_or_br",
+                                              label.format = tm_label_format(suffix = "%", digits = 0)),
+              fill.legend = tm_legend(title = "Renter households\n(quartiles)"))
+```
+
+## Answer
+
+```{r include=params$answers}
+#| label: practice-answer
+#| eval: false
+renter <- get_census(
+  dataset = "CA21", regions = list(CMA = "59933"), level = "CT",
+  vectors = c(households = "v_CA21_4237", renters = "v_CA21_4239"),
+  geo_format = "sf"
+) |>
+  mutate(renter_pct = 100 * renters / households)
+
+tm_shape(renter) +
+  tm_polygons(
+    fill = "renter_pct", col = NULL,
+    fill.scale = tm_scale_intervals(
+      style = "quantile", n = 4, values = "brewer.yl_or_br",
+      label.format = tm_label_format(suffix = "%", digits = 0)),
+    fill.legend = tm_legend(title = "Renter households\n(quartiles)"))
+```

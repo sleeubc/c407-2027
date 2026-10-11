@@ -1,0 +1,482 @@
+---
+title: "ggplot2 IV"
+subtitle: "COMM 407 · Themes, facets, and labels"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: translated-setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(kableExtra))
+```
+
+
+
+## Refine and split plots
+
+- theme
+    - customize the non-data components of your plots: i.e. fonts, background, gridlines, legend style, etc.
+    - default themes
+    - legend.position
+    - text = element_text(size=  )
+
+- facet_wrap
+
+- labs
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+```{r}
+library(tidyverse)
+
+bca <- read_rds("Data/bca262.rds")
+
+avg_price <- bca |> 
+  mutate(sale_year = year(sale_date)) |> 
+  group_by(act_use_cat, sale_year) |> 
+  summarise(avg_price = mean(price, na.rm = TRUE))
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output}
+```{r echo=FALSE}
+avg_price |> head(30) |> kable()
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r}
+ggplot(avg_price, aes(sale_year, avg_price, color=act_use_cat)) + 
+  geom_line() + geom_point() +
+	scale_color_discrete(name=NULL) +
+	scale_x_continuous(name="Year") +
+	scale_y_continuous(name="Average Price", labels = scales::label_comma(scale = 0.001, prefix = "$", suffix = "K"))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r}
+ggplot(avg_price, aes(sale_year, avg_price, color=act_use_cat)) + 
+  geom_line() + geom_point() +
+	scale_color_discrete(name=NULL) +
+	scale_x_continuous(name="Year") +
+	scale_y_continuous(name="Average Price", labels = scales::label_comma(scale = 0.001, prefix = "$", suffix = "K")) +
+	theme_bw()
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r}
+ggplot(avg_price, aes(sale_year, avg_price, color=act_use_cat)) + 
+  geom_line() + geom_point() +
+	scale_color_discrete(name=NULL) +
+	scale_x_continuous(name="Year") +
+	scale_y_continuous(name="Average Price", labels = scales::label_comma(scale = 0.001, prefix = "$", suffix = "K")) +
+	theme_bw() + theme(legend.position = c(0.2, 0.8))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r}
+ggplot(avg_price, aes(sale_year, avg_price, color=act_use_cat)) + 
+  geom_line() + geom_point() +
+	scale_color_discrete(name=NULL) +
+	scale_x_continuous(name="Year") +
+	scale_y_continuous(name="Average Price", labels = scales::label_comma(scale = 0.001, prefix = "$", suffix = "K")) +
+	theme_bw() + theme(legend.position = c(0.2, 0.8), text=element_text(size=14))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+Practice Task
+
+
+::: {.tiny}
+```{r}
+by_aa_yr <- bca |> 
+  filter(! is.na(aa_label)) |> 
+  group_by(aa_label, year=year(sale_date)) |> 
+  summarise(avg_price = mean(price, na.rm = TRUE), n=n())
+```
+:::
+
+::: {.scroll-output}
+
+::: {.tiny}
+```{r echo=FALSE}
+by_aa_yr |> head(10) |> kable()
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+Create the figure on next slide. Try the themes in the cheatsheet.
+
+
+::: {.tiny}
+```{r}
+ggplot(by_aa_yr, aes(year, avg_price, color=aa_label)) + geom_line() + geom_point() +
+  scale_color_discrete(name="Assessment Area") + 
+  scale_x_continuous(name="Year") +
+  scale_y_continuous(name="Average Price", labels = scales::label_comma(accuracy = 0.1, scale = 0.000001, prefix = "$", suffix = "M"))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+```{r echo=FALSE}
+ggplot(by_aa_yr, aes(year, avg_price, color=aa_label)) + geom_line() + geom_point() +
+  scale_color_discrete(name=NULL) + 
+  scale_x_continuous(name="Year") +
+  scale_y_continuous(name="Average Price", labels = scales::label_comma(accuracy = 0.1, scale = 0.000001, prefix = "$", suffix = "M")) +
+	theme_minimal() +
+	theme(legend.position = c(0.25, 0.7), text=element_text(size=12))
+```
+
+
+
+::: {.tiny .fragment}
+```{r echo=params$answers, eval=FALSE}
+ggplot(by_aa_yr, aes(year, avg_price, color=aa_label)) + geom_line() + geom_point() +
+  scale_color_discrete(name=NULL) + 
+  scale_x_continuous(name="Year") +
+  scale_y_continuous(name="Average Price", labels = scales::label_comma(accuracy = 0.1, scale = 0.000001, prefix = "$", suffix = "M")) +
+	theme_minimal() +	theme(legend.position = c(0.25, 0.7), text=element_text(size=12))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+facet_wrap()
+
+
+::: {.tiny}
+```{r}
+ggplot(avg_price, aes(sale_year, avg_price, color=act_use_cat)) + 
+  geom_line() + geom_point() +
+	scale_color_discrete(name=NULL) +
+	scale_x_continuous(name="Year") +
+	scale_y_continuous(name="Average Price", labels = scales::label_comma(scale = 0.001, prefix = "$", suffix = "K"))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r}
+ggplot(avg_price, aes(sale_year, avg_price)) + 
+  geom_line() + geom_point() +
+	scale_color_discrete(name=NULL) +
+	scale_x_continuous(name="Year") +
+	scale_y_continuous(name="Average Price", labels = scales::label_comma(scale = 0.001, prefix = "$", suffix = "K")) +
+	facet_wrap(~act_use_cat)
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+Practice task
+
+
+::: {.tiny}
+```{r}
+ggplot(by_aa_yr, aes(year, avg_price, color=aa_label)) + geom_line() + geom_point() +
+  scale_color_discrete(name="Assessment Area") + 
+  scale_x_continuous(name="Year") +
+  scale_y_continuous(name="Average Price", labels = scales::label_comma(accuracy = 0.1, scale = 0.000001, prefix = "$", suffix = "M"))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+```{r echo=FALSE}
+ggplot(by_aa_yr, aes(year, avg_price)) + geom_line() + geom_point() +
+  scale_color_discrete(name="Assessment Area") + 
+  scale_x_continuous(name="Year") +
+  scale_y_continuous(name="Average Price", labels = scales::label_comma(accuracy = 0.1, scale = 0.000001, prefix = "$", suffix = "M")) + facet_wrap(~aa_label)
+```
+
+
+
+::: {.tiny .fragment}
+```{r echo=params$answers, eval=FALSE}
+ggplot(by_aa_yr, aes(year, avg_price)) + geom_line() + geom_point() +
+  scale_color_discrete(name="Assessment Area") + 
+  scale_x_continuous(name="Year") +
+  scale_y_continuous(name="Average Price", labels = scales::label_comma(accuracy = 0.1, scale = 0.000001, prefix = "$", suffix = "M")) + 
+	facet_wrap(~aa_label)
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+labs()
+
+
+::: {.tiny}
+```{r}
+ggplot(avg_price, aes(sale_year, avg_price, color=act_use_cat)) + 
+  geom_line() + geom_point() +	
+	scale_color_discrete(name=NULL) +	scale_x_continuous(name="Year") +
+	scale_y_continuous(name="Average Price", labels = scales::label_comma(scale = 0.001, prefix = "$", suffix = "K")) +
+	theme_bw() + theme(legend.position = c(0.2, 0.8))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r}
+ggplot(avg_price, aes(sale_year, avg_price, color=act_use_cat)) + 
+  geom_line() + geom_point() +	
+	scale_y_continuous(labels = scales::label_comma(scale = 0.001, prefix = "$", suffix = "K")) + 
+	labs(color=NULL, x="Year", y="Average Price") +
+	theme_bw() + theme(legend.position = c(0.2, 0.8))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r}
+ggplot(avg_price, aes(sale_year, avg_price, color=act_use_cat)) + 
+  geom_line() + geom_point() +	
+	scale_y_continuous(labels = scales::label_comma(scale = 0.001, prefix = "$", suffix = "K")) + 
+	labs(color=NULL, x="Year", y="Average Price", title = "Average Transanction Price History by Building Type", caption = "Data source: BC Assessment Authority") +
+	theme_bw() + theme(legend.position = c(0.2, 0.8))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+Practice task
+
+
+::: {.tiny}
+```{r}
+ggplot(by_aa_yr, aes(year, avg_price, color=aa_label)) + geom_line() + geom_point() +
+  scale_color_discrete(name=NULL) + scale_x_continuous(name="Year") +
+  scale_y_continuous(name="Average Price", labels = scales::label_comma(accuracy = 0.1, scale = 0.000001, prefix = "$", suffix = "M")) +
+	theme_minimal() + theme(legend.position = c(0.25, 0.7), text=element_text(size=12))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+
+---
+
+
+```{r echo=FALSE}
+ggplot(by_aa_yr, aes(year, avg_price, color=aa_label)) + geom_line() + geom_point() +
+  scale_color_discrete(name=NULL) + scale_x_continuous(name="Year") +
+  scale_y_continuous(name="Average Price", labels = scales::label_comma(accuracy = 0.1, scale = 0.000001, prefix = "$", suffix = "M")) +
+	labs(title= "Average Transaction Price History By Assessment Area", caption = "Data Source: BC Assessment Authority") +
+	theme_minimal() + theme(legend.position = c(0.25, 0.7), text=element_text(size=12)) 
+```
+
+
+
+::: {.tiny .fragment}
+```{r echo=params$answers, eval=FALSE}
+ggplot(by_aa_yr, aes(year, avg_price, color=aa_label)) + geom_line() + geom_point() +
+  scale_y_continuous(labels = scales::label_comma(accuracy = 0.1, scale = 0.000001, prefix = "$", suffix = "M")) +
+	labs(color=NULL, x="Year", y="Average Price", title= "Average Transaction Price History By Assessment Area", caption = "Data Source: BC Assessment Authority") +
+	theme_minimal() + theme(legend.position = c(0.2, 0.7), text=element_text(size=12)) 
+```
+:::
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/12_ggplot2_4.Rmd`.
+:::
+

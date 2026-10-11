@@ -1,0 +1,177 @@
+---
+title: "Install R and Positron"
+subtitle: "COMM 407 course setup"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+## Update your operating system first
+
+At home, update your computer to the latest version of its operating system.
+
+Restart the computer after the update.
+
+::: {.warning}
+An outdated system can produce mysterious errors that your classmates do not encounter.
+:::
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/01_R_and_RStudio_Installation.Rmd`.
+:::
+
+## Install R before installing Positron
+
+1. Go to [cloud.r-project.org](https://cloud.r-project.org/).
+2. Choose your operating system.
+3. Download and install the current release of R.
+
+If R is already installed, update it before the course begins.
+
+::: {.key-point}
+Positron requires R 4.2 or newer.
+:::
+
+::: {.notes}
+[Sources]
+
+- Positron installation prerequisites: https://positron.posit.co/install
+- The Comprehensive R Archive Network: https://cloud.r-project.org/
+:::
+
+## Install Positron
+
+1. Go to [positron.posit.co/install](https://positron.posit.co/install).
+2. Choose the installer for your operating system.
+3. Accept the licence agreement and follow the standard installation steps.
+
+On macOS, choose the download that matches your computer: **Apple Silicon** or **Intel**.
+
+::: {.key-point}
+Install Positron once; it updates itself afterward.
+:::
+
+::: {.notes}
+[Sources]
+
+- Install Positron: https://positron.posit.co/install
+:::
+
+## Confirm that Positron can run R
+
+Open Positron. In the **Interpreter picker** at the top right, select an R session.
+
+Then run this in the Console:
+
+```{r}
+R.version.string
+```
+
+You should see an R version of **4.2 or newer** and no error message.
+
+::: {.notes}
+[Sources]
+
+- Managing interpreters in Positron: https://positron.posit.co/managing-interpreters.html
+- Discovering R installations: https://positron.posit.co/r-installations.html
+:::
+
+## Download and extract the course folder
+
+Download **C407.zip** from **Canvas → Files**.
+
+Extract it to a folder that is easy to find.
+
+::: {.warning}
+On Windows, right-click the ZIP file and choose **Extract All…**. Merely opening the ZIP file is not the same as extracting it.
+:::
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/01_R_and_RStudio_Installation.Rmd`.
+:::
+
+## Check that the data were extracted
+
+In the extracted **C407** folder, open the **Data** folder.
+
+### How many `.rds` files are there?
+
+::: {.answer-grid}
+**A.** 1  
+**B.** 2  
+**C.** 3  
+**D.** 4  
+**E.** 5
+:::
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/01_R_and_RStudio_Installation.Rmd`.
+:::
+
+## Open the C407 folder as a workspace
+
+In Positron, choose **File → Open Folder…** and select the extracted **C407** folder.
+
+Opening the folder:
+
+- makes **C407** the workspace;
+- shows its files in the Explorer; and
+- sets the R working directory to that folder.
+
+::: {.key-point .fragment}
+For this course, begin by opening the **C407 folder** in Positron.
+:::
+
+::: {.notes}
+[Sources]
+
+- Positron workspaces and R project files: https://positron.posit.co/migrate-rstudio-rproj.html
+:::
+
+## Use this start-up routine every class
+
+1. Open **Positron**.
+2. Open the **C407 folder** as your workspace.
+3. Confirm that an **R interpreter** is active.
+4. Open the `.qmd` file used in class.
+
+::: {.key-point}
+Keep scripts, data, and outputs together inside the course folder.
+:::
+
+::: {.notes}
+[Sources]
+
+- First data analysis with R in a Quarto document: https://positron.posit.co/tutorial-get-started-quarto.html
+- Positron workspaces and R project files: https://positron.posit.co/migrate-rstudio-rproj.html
+:::

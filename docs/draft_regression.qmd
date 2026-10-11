@@ -1,0 +1,281 @@
+---
+title: "Hedonic price regression"
+subtitle: "COMM 407 · fixest and modelsummary"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(fixest)
+  library(modelsummary)
+})
+```
+
+## A home's price reflects its characteristics
+
+- A hedonic model explains price with the home's characteristics: size, age, bathrooms, location, and time of sale.
+- Regression estimates how price varies with each characteristic, **holding the others fixed**.
+
+::: {.key-point}
+"Holding the others fixed" is what a regression adds to a scatter plot.
+:::
+
+## Two packages
+
+```{r}
+#| eval: false
+install.packages(c("fixest", "modelsummary"))  # once, in the Console
+```
+
+```{r}
+#| eval: false
+library(fixest)        # estimate regressions
+library(modelsummary)  # build regression tables
+```
+
+## Sample: Vancouver strata sales, 2016–2025
+
+```{r}
+#| label: sample
+bca <- read_rds("data/bca262.rds")
+
+condo <- bca |>
+  filter(juris_label == "City of Vancouver", act_use_cat == "Strata Res") |>
+  mutate(sale_year = year(sale_date),
+         age = sale_year - year_built,
+         type = if_else(act_use_name == "Row Housing (Single Unit Ownership)",
+                        "Townhouse", "Condo")) |>
+  filter(between(sale_year, 2016, 2025))
+
+nrow(condo)
+```
+
+## Look at the outcome before you model it
+
+```{r}
+#| label: price-hist
+#| fig-width: 9
+#| fig-height: 3.2
+ggplot(condo, aes(price)) +
+  geom_histogram(bins = 60) +
+  scale_x_log10(labels = scales::label_dollar()) +
+  labs(x = "Sale price (log scale)", y = "Sales")
+```
+
+Why does the axis start near $1?
+
+## Check the extremes
+
+```{r}
+#| label: extremes
+condo |>
+  slice_min(price, n = 4) |>
+  select(sale_date, price, floorarea, neigh_label)
+```
+
+::: {.warning}
+A $2 sale is not a market transaction, and three identical prices on one day suggest a bulk sale. Decide how to handle rows like these before you model, and say what you did.
+:::
+
+::: {.notes}
+All four rows lack floor area, so the regressions below drop them anyway. Prices are right-skewed, which is why we model log(price).
+:::
+
+## Reading coefficients in a log model
+
+| Model | A coefficient of *b* means |
+|---|---|
+| `log(price) ~ x` | One more unit of *x* is linked to about 100 × *b* % higher price. |
+| `log(price) ~ log(x)` | 1% more *x* is linked to about *b* % higher price. |
+
+::: {.key-point}
+The second form is an elasticity. We use it for floor area.
+:::
+
+## Start with one variable
+
+```{r}
+#| label: m1
+#| message: true
+m1 <- feols(log(price) ~ log(floorarea), data = condo)
+m1
+```
+
+## fixest drops rows it cannot use
+
+Read the note at the top of the output.
+
+```{r}
+#| label: nobs
+nobs(m1)
+nrow(condo)
+```
+
+::: {.warning}
+The model dropped about 13% of sales, mostly because floor area is missing. Ask whether the missing rows differ from the rest.
+:::
+
+## Add more characteristics
+
+```{r}
+#| label: m2
+m2 <- feols(log(price) ~ log(floorarea) + bedrooms + full_bath + age + type,
+            data = condo)
+coeftable(m2) |> round(4)
+```
+
+## The reference level sets the meaning of a dummy
+
+- `type` has two levels. R uses the first, "Condo", as the reference.
+- `typeTownhouse` compares townhouses with condos of the same size, bedrooms, bathrooms, and age.
+
+```{r}
+#| label: relevel
+condo_th <- condo |> mutate(type = fct_relevel(type, "Townhouse"))
+feols(log(price) ~ log(floorarea) + bedrooms + full_bath + age + type,
+      data = condo_th) |> coef() |> round(4)
+```
+
+The sign flips: now the coefficient compares condos with townhouses.
+
+## Fixed effects compare like with like
+
+```{r}
+#| label: m3
+m3 <- feols(log(price) ~ log(floorarea) + bedrooms + full_bath + age + type |
+              neigh_label + sale_year, data = condo)
+coeftable(m3) |> round(4)
+```
+
+`| neigh_label + sale_year` compares sales in the same neighbourhood and the same year. It is the same as adding a dummy for every neighbourhood and every year.
+
+## Compare models side by side
+
+```{r}
+#| label: msummary-code
+#| eval: false
+modelsummary(
+  list("Size only" = m1, "Characteristics" = m2, "Fixed effects" = m3),
+  stars = TRUE,
+  gof_map = c("nobs", "r.squared"),
+  coef_omit = "Intercept"
+)
+```
+
+- Each model is a column; standard errors are in parentheses.
+- `gof_map` picks the summary rows; `coef_omit` hides the intercept.
+
+## Three models of condo prices
+
+::: {.small}
+```{r}
+#| label: msummary
+#| echo: false
+modelsummary(
+  list("Size only" = m1, "Characteristics" = m2, "Fixed effects" = m3),
+  stars = TRUE,
+  gof_map = c("nobs", "r.squared"),
+  coef_omit = "Intercept"
+)
+```
+:::
+
+## Why did the bedroom coefficient change?
+
+- Without fixed effects: for the same floor area, more bedrooms means smaller rooms, and multi-bedroom units are more common in cheaper neighbourhoods.
+- With fixed effects, the comparison is within a neighbourhood and year, and the bedroom coefficient shrinks towards zero.
+
+::: {.key-point}
+A coefficient depends on what else is in the model.
+:::
+
+## Choose standard errors on purpose
+
+- `fixest` reports IID standard errors by default.
+- Sales in the same neighbourhood share shocks we do not observe, so cluster by neighbourhood.
+
+```{r}
+#| label: cluster
+summary(m3, vcov = ~neigh_label) |> coeftable() |> round(4)
+```
+
+::: {.notes}
+Compare with the previous slide: with clustered standard errors, only floor area and age remain clearly different from zero. The townhouse and bathroom coefficients were "significant" only under IID errors.
+:::
+
+## Coefficients are associations, not causal effects
+
+- Older buildings sell for less, but they also differ in layout, amenities, and maintenance.
+- To claim that *X* changes prices, you need a research design, such as a policy change that affects some homes and not others.
+
+::: {.warning}
+This is why the group project avoids simple "distance to X vs. price" correlations.
+:::
+
+## Practice
+
+For **single-family** sales (`act_use_cat == "S/F Res"`) in the City of Vancouver, 2016–2025:
+
+1. Regress `log(price)` on `log(floorarea)`, `log(lotsize)`, and `age`, with neighbourhood and sale-year fixed effects.
+2. Cluster the standard errors by neighbourhood.
+3. How many sales does the model drop, and why?
+4. Compare the floor-area elasticity with the one for condos.
+
+## Answer
+
+```{r include=params$answers}
+#| label: practice-answer
+sfd <- bca |>
+  filter(juris_label == "City of Vancouver", act_use_cat == "S/F Res") |>
+  mutate(sale_year = year(sale_date), age = sale_year - year_built) |>
+  filter(between(sale_year, 2016, 2025))
+
+m_sfd <- feols(log(price) ~ log(floorarea) + log(lotsize) + age |
+                 neigh_label + sale_year, data = sfd, vcov = ~neigh_label)
+```
+
+## Answer: results
+
+::: {.small}
+```{r include=params$answers}
+#| label: practice-answer-2
+coeftable(m_sfd) |> round(4)
+nrow(sfd) - nobs(m_sfd)
+```
+
+```{asis, echo = params$answers}
+Missing floor area or lot size drops most of these sales. A few have no price or a price of zero: `log(0)` is `-Inf`, and `fixest` drops those rows too. For a house, land carries much of the value, so the floor-area elasticity is much lower than for condos.
+```
+:::

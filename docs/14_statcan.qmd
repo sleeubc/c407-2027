@@ -1,0 +1,415 @@
+---
+title: "Statistics Canada data tables"
+subtitle: "COMM 407 · Working with StatCan tables"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: translated-setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(kableExtra))
+```
+
+
+
+## Access Statistics Canada tables
+
+```{r}
+library(tidyverse)
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+## Statistics Canada Data Table (Formerly, CANSIM)
+
+Go to [Statistics Canada website](https://www12.statcan.gc.ca).
+
+Click Data.
+
+Browse Subject category.
+
+- Which subjects are related to real estate?
+    - Browse available tables in such subjects.
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+Browse Geography category.
+
+- Which geographic unit corresponds to municipalities (e.g., city of Vancouver, Burnaby, ...)?
+
+
+::: {.fragment}
+
+Browse Frequency category.
+
+- What frequency has the largest number of available tables except Occasional?
+
+:::
+
+
+::: {.fragment}
+
+Browse Survey or Statistical Programs
+
+- Which programs are related to real estate?
+
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+## Vacancy rates
+
+Search for 'vacancy rates' in keyword box.
+
+Click Housing in Subject, Census metropolitan area in Geography.
+
+What is table number for 'Canada Mortgage and Housing Corporation, vacancy rates, apartment structures of six units and over, privately initiated in census metropolitan areas'?
+
+
+::: {.fragment}
+
+34-10-0127-01
+
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+```{r}
+library(cansim)
+```
+
+```{r}
+vacancy <- get_cansim("34-10-0127-01")
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output-80}
+
+::: {.tiny}
+```{r echo=FALSE}
+vacancy |> head(20) |> kable()
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output}
+
+::: {.tiny}
+```{r}
+vacancy$GEO |> unique()
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r out.width='90%'}
+vacancy |> filter( GEO |> str_detect("Vancouver|Toronto") ) |> 
+	ggplot(aes(Date, VALUE, color=GEO)) + geom_line() + geom_smooth(se=FALSE) +
+	labs(title="Vacancy Rates", x=NULL, y=NULL, color=NULL) +
+	scale_y_continuous(labels = scales::label_percent(scale = 1 )) +
+	theme_bw() + theme(legend.position = "bottom")
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+
+## Practice - Create this graph. (Replace ##)
+
+```{r echo=FALSE, out.width='90%'}
+mortgage_rate <- get_cansim("34-10-0145-01")
+
+ggplot(mortgage_rate, aes(Date, VALUE)) + geom_line() +
+	labs(title="Conventional mortgage lending rate, 5-year term", caption="Source: Canada Mortgage and Housing Corporation\nStatistics Canada. Table 34-10-0145-##", 
+			 x=NULL, y=NULL) +
+	scale_y_continuous(labels=scales::label_percent(scale=1))
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r eval=FALSE}
+mortgage_rate <- get_cansim("34-10-0145-01")
+
+ggplot(mortgage_rate, aes(Date, VALUE)) + geom_line() +
+	labs(
+		title="Conventional mortgage lending rate, 5-year term", 
+		caption="Source: Canada Mortgage and Housing Corporation\nStatistics Canada. Table 34-10-0145-01", 
+		 x=NULL, y=NULL) +
+	scale_y_continuous(labels=scales::label_percent(scale=1))
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+## Practice - Create this graph.
+
+```{r echo=FALSE, out.width='90%'}
+population <- get_cansim("17-10-0148-01")
+
+population |> filter(GEO |> str_detect("Vancouver"), Gender=="Total - gender", `Age group`=="All ages") |> 
+	ggplot(aes(Date, VALUE)) + geom_line() + geom_point() +
+	labs(title = "Vancouver Metro Population Trend", x=NULL, y=NULL, caption = "Annual, July 1 estimates, y-axis in log scale.\nSource: Statistics Canada Table: 17-10-0148-01") + 
+	scale_y_log10(labels=scales::label_number(scale = 0.000001, suffix="M")) + theme_bw()
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r eval=FALSE}
+population <- get_cansim("17-10-0148-01")
+
+population |> filter(GEO |> str_detect("Vancouver"), Gender=="Total - gender", `Age group`=="All ages") |> 
+	ggplot(aes(Date, VALUE)) + geom_line() + geom_point() +
+	labs(title = "Vancouver Metro Population Trend", x=NULL, y=NULL, caption = "Annual, July 1 estimates, y-axis in log scale.\nSource: Statistics Canada Table: 17-10-0148-01") + 
+	scale_y_log10(labels=scales::label_number(scale = 0.000001, suffix="M")) + theme_bw()
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+
+::: {.small}
+```{r eval=FALSE}
+population |> view()
+```
+:::
+
+::: {.scroll-output-80}
+
+::: {.tiny}
+```{r echo=FALSE}
+population |> head(200) |> kable()
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output}
+
+::: {.tiny}
+```{r}
+population$GEO |> unique()
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output}
+
+::: {.tiny}
+```{r}
+population$Gender |> unique()
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+::: {.scroll-output}
+
+::: {.tiny}
+```{r}
+population$`Age group` |> unique()
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r eval=FALSE}
+population <- get_cansim("17-10-0148-01")
+
+population |> filter(
+	GEO |> str_detect("Vancouver"), 
+	Gender=="Total - gender",
+	`Age group`=="All ages") |> 
+	ggplot(aes(Date, VALUE)) + geom_line() + geom_point() +
+	labs(
+		title = "Vancouver Metro Population Trend", 
+		x=NULL, y=NULL, 
+		caption = "Annual, July 1 estimates, y-axis in log scale.\nSource: Statistics Canada Table: 17-10-0148-01") + 
+	scale_y_log10(labels=scales::label_number(scale = 0.000001, suffix="M")) + theme_bw()
+```
+:::
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/14_statcan.Rmd`.
+:::
+

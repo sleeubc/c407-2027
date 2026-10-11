@@ -1,0 +1,350 @@
+---
+title: "ggplot2 III"
+subtitle: "COMM 407 · Geometries"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: translated-setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(kableExtra))
+```
+
+
+
+## Compare counts and totals with bars
+
+
+```{r}
+library(tidyverse)
+
+bca_2017 <- read_rds("Data/bca262.rds") |> 
+  filter(lubridate::year(sale_date) == 2017)
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+```{r}
+aa_n <- bca_2017 |> group_by(aa_label) |> summarise(n=n())
+```
+
+```{r echo=FALSE}
+aa_n |> kable()
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+```{r}
+ggplot(aa_n) + geom_col(aes(aa_label, n))
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+```{r}
+ggplot(bca_2017) + geom_bar(aes(aa_label))
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.scroll-output}
+
+::: {.tiny}
+```{r echo=FALSE}
+bca_2017 |> head(20) |> kable()
+```
+:::
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r}
+bca_2017_aa_act <- bca_2017 |> group_by(aa_label, act_use_cat) |> 
+	summarise(n=n(), avg_price = mean(price, na.rm=TRUE))
+```
+:::
+
+
+::: {.scroll-output}
+
+::: {.tiny}
+```{r echo=FALSE}
+bca_2017_aa_act |> head(20) |> kable()
+```
+:::
+:::
+
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+
+::: {.tiny}
+```{r}
+ggplot(bca_2017_aa_act) + geom_col(aes(aa_label, n, fill=act_use_cat), position = "stack")
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+```{r}
+ggplot(bca_2017_aa_act) + 
+  geom_col(aes(aa_label, n, fill=act_use_cat), position = "fill")
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+```{r}
+ggplot(bca_2017_aa_act) + 
+  geom_col(aes(aa_label, n, fill=act_use_cat), position = "dodge")
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+`geom_bar()` automatically calculates counts and use them as y. But `geom_col()` is more flexible. 
+
+```{r}
+ggplot(bca_2017_aa_act) + 
+  geom_col(aes(aa_label, avg_price, fill=act_use_cat), position = "dodge")
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+Default value for `position=`
+
+[? geom_col()](https://ggplot2.tidyverse.org/reference/geom_bar.html)
+
+::: {.fragment}
+
+```{r}
+ggplot(bca_2017_aa_act) + geom_col(aes(aa_label, n, fill=act_use_cat))
+```
+
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+```{r}
+ggplot(bca_2017_aa_act) + geom_col(aes(aa_label, n, fill=act_use_cat)) + coord_flip()
+```
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+Practice task - Generate this figure, using `bca_2017_aa_act`.
+
+```{r echo=FALSE}
+ggplot(bca_2017_aa_act) + 
+  geom_col(aes(act_use_cat, avg_price, fill=aa_label), position = "dodge")
+```
+
+
+
+::: {.tiny .fragment}
+```{r echo=params$answers, eval=FALSE}
+ggplot(bca_2017_aa_act) + geom_col(aes(act_use_cat, avg_price, fill=aa_label), position = "dodge")
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+Practice task
+
+```{r}
+pumf_prihm <- read_rds("Data/2021_census_pumf_ind.rds") |> 
+  filter(PRIHM == "Person is primary maintainer", 
+         AGEGRP != "Not available", 
+         Tenur != "Not available")
+```
+
+Generate figures on next two slides. Try both `geom_col()` and `geom_bar()`.
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+ 
+```{r echo=FALSE}
+ggplot(pumf_prihm) + geom_bar(aes(AGEGRP, fill=Tenur, weight=WEIGHT), position = "fill") + coord_flip()
+```
+
+
+::: {.tiny .fragment}
+```{r echo=params$answers, eval=FALSE}
+ggplot(pumf_prihm) + 
+  geom_bar(aes(AGEGRP, fill=Tenur, weight=WEIGHT), position = "fill") + 
+  coord_flip()
+```
+:::
+
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
+---
+
+
+```{r echo=FALSE}
+ggplot(pumf_prihm) + geom_bar(aes(AGEGRP, fill=Tenur, weight=WEIGHT), position = "fill") + coord_flip() +
+  scale_x_discrete(name=NULL) + 
+  scale_y_continuous(name = NULL, labels= scales::label_number(scale=100, suffix = '%')) +
+  scale_fill_discrete(name= NULL, labels= c("Own", "Rent"))
+```
+
+::: {.tiny .fragment}
+```{r echo=params$answers, eval=FALSE}
+ggplot(pumf_prihm) + geom_bar(aes(AGEGRP, fill=Tenur, weight=WEIGHT), position = "fill") + coord_flip() +
+  scale_x_discrete(name=NULL) + 
+  scale_y_continuous(name = NULL, labels= scales::label_number(scale=100, suffix = '%')) +
+  scale_fill_discrete(name= NULL, labels= c("Own", "Rent"))
+```
+:::
+
+::: {.notes}
+[Sources]
+
+- Course source: `../docs_2026/11_ggplot2_3.Rmd`.
+:::
+
