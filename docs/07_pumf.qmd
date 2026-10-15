@@ -1,0 +1,376 @@
+---
+title: "Census microdata (PUMF)"
+subtitle: "COMM 407 · Weights, the user guide, codes, and factors"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.8)
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+## The PUMF describes individuals
+
+```{r}
+#| label: pumf
+pumf <- read_rds("data/2021_census_pumf_ind.rds")
+dim(pumf)
+```
+
+- Each row is one person from the 2021 Census, a **2.7% sample** of Canadians.
+- `WEIGHT` is how many people each row represents, about `r round(mean(pumf$WEIGHT))`.
+- Geography stops at the census metropolitan area (CMA), to protect privacy.
+
+**Try it:** run `View(pumf)` in the Console. Find `AGEGRP` and `CFInc`. Are their values numbers or words?
+
+::: {.notes}
+- Answer: words. `AGEGRP` holds age ranges such as "`r as.character(pumf$AGEGRP[1])`", and `CFInc` holds income ranges such as "`r as.character(pumf$CFInc[1])`". Most PUMF columns store categories like these; the second half of this deck covers them as factors.
+- Column names are short codes. Each column also has a description: `attr(pumf$AGEGRP, "label")` returns "`r attr(pumf$AGEGRP, "label")`". The PUMF user guide explains every column.
+- TODO: check whether Positron's Data Explorer shows these column descriptions.
+- Statistics Canada, Individuals File, 2021 Census PUMF: https://www150.statcan.gc.ca/n1/en/catalogue/98M0001X2021001
+:::
+
+## Each row stands for about 37 people
+
+```{r}
+#| label: weight
+nrow(pumf)
+sum(pumf$WEIGHT)
+```
+
+The rows are a sample. `sum(WEIGHT)` estimates the population: about `r round(sum(pumf$WEIGHT) / 1e6, 1)` million people in private households.
+
+::: {.key-point}
+Count people with `sum(WEIGHT)` or `count(x, wt = WEIGHT)`. Average with `weighted.mean(x, WEIGHT)`, as in deck 05.
+:::
+
+::: {.notes}
+`WEIGHT` ranges only from `r round(min(pumf$WEIGHT), 2)` to `r round(max(pumf$WEIGHT), 2)`, so weighted and unweighted shares are close. Weights matter most for counts.
+:::
+
+## geom_bar() counts rows, not people
+
+```{r}
+#| label: bar
+#| fig-height: 3.2
+households <- pumf |>
+  filter(PRIHM == "Person is primary maintainer", Tenur != "Not available")
+
+ggplot(households, aes(y = Tenur)) + geom_bar()
+```
+
+::: {.notes}
+Keeping only primary maintainers leaves one row per household. "Not available" is dropped here; the factor slides explain it.
+:::
+
+## Add weight to count people
+
+```{r}
+#| label: bar-weight
+#| fig-height: 3.2
+ggplot(households, aes(y = Tenur, weight = WEIGHT)) + geom_bar()
+```
+
+::: {.warning}
+The shape is the same, but the axis is now households, not survey records. An unweighted chart reports numbers about 37 times too small.
+:::
+
+## The user guide explains every column
+
+The PUMF user guide is the PDF in your `data` folder: `2021 Census Individuals PUMF User Guide_v2.pdf`.
+
+- **Chapter 1** (record layout) lists every column.
+- **Chapter 2** (variable descriptions) gives each column's meaning, who it covers, and its categories.
+
+**Try it:** find `CFInc` in Chapter 2. Whose income is it?
+
+::: {.key-point}
+Read a column's description before you use it. The name alone can mislead you.
+:::
+
+::: {.notes}
+- Answer: the whole census family's. For a person in a census family, `CFInc` is the sum of all members' total incomes; a person's own income is `TotInc`. The guide describes `CFInc` on page 92 (PDF page 93).
+- Chapter 2 also lists each category's unweighted and weighted counts, which you can use to check your own counts.
+:::
+
+## Some numbers are codes, not amounts
+
+Chapter 2 on `TotInc`:
+
+> The value 88,888,888 stands for not available. The value 99,999,999 stands for not applicable and is applied to all persons aged less than 15 years.
+
+```{r}
+#| label: totinc-codes
+mean(pumf$TotInc)
+mean(pumf$TotInc[pumf$TotInc < 88888888])
+```
+
+::: {.warning}
+Check Chapter 2 for codes like these before you average a column.
+:::
+
+::: {.notes}
+- `TotInc` has `r format(sum(pumf$TotInc == 99999999), big.mark = ",")` rows coded "not applicable" (under 15) and `r format(sum(pumf$TotInc == 88888888), big.mark = ",")` coded "not available".
+- 20 numeric columns use these codes: the 18 columns whose description starts with "Income:" (including `Wages`, `IncTax`, and `ChldC`, child care expenses), `COVID_ERB`, and `Value`, the dwelling value. In some, most rows are codes: `ChldC` has `r format(sum(pumf$ChldC %in% c(88888888, 99999999)), big.mark = ",")`.
+- The same entry says high incomes are top coded: the largest `TotInc` that is not a code is `r scales::label_dollar()(max(pumf$TotInc[pumf$TotInc < 88888888]))`. Keep this in mind if your project studies high earners.
+- The practice on average income removes them with `filter()`; the housing-value practice turns them into `NA` with `if_else()`.
+:::
+
+## Practice: the largest CMAs
+
+Using the 2021 PUMF:
+
+1. Estimate the population of each CMA.
+2. Drop "Other census metropolitan areas, census agglomerations and other geographies".
+3. Show the six largest CMAs.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: cma-pop
+pumf |>
+  group_by(CMA) |>
+  summarise(population = sum(WEIGHT)) |>
+  filter(!str_detect(CMA, "^Other")) |>
+  arrange(desc(population)) |>
+  head(6)
+```
+:::
+
+## Practice: average income by CMA
+
+Estimate the average total income (`TotInc`) in each CMA and show the ten highest.
+
+- `TotInc` uses `88888888` and `99999999` for missing values. Remove them first.
+- Use `weighted.mean()`.
+- Drop the "Other …" group.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: cma-income
+pumf |>
+  filter(!TotInc %in% c(88888888, 99999999), !str_detect(CMA, "^Other")) |>
+  group_by(CMA) |>
+  summarise(avg_income = weighted.mean(TotInc, w = WEIGHT)) |>
+  arrange(desc(avg_income)) |>
+  head(10)
+```
+:::
+
+## Practice: housing value and city size
+
+Using the PUMF, plot each CMA's population (x) against its average dwelling value (y).
+
+- `Value` uses `88888888` and `99999999` for missing values.
+- Use `WEIGHT` for population and `weighted.mean()` for the average.
+- Drop the "Other …" group.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: value-practice
+#| fig-height: 3.3
+by_cma <- pumf |>
+  filter(!str_detect(CMA, "^Other")) |>
+  mutate(Value = if_else(Value %in% c(88888888, 99999999), NA, Value)) |>
+  group_by(CMA) |>
+  summarise(population = sum(WEIGHT),
+            avg_value = weighted.mean(Value, WEIGHT, na.rm = TRUE))
+
+ggplot(by_cma, aes(population, avg_value)) + geom_point()
+```
+:::
+
+## Most PUMF columns are factors
+
+```{r}
+#| label: pumf-classes
+pumf |> map_chr(\(col) class(col)[1]) |> table()
+```
+
+A **factor** stores categories. Its **levels** are the possible categories, in a fixed order.
+
+```{r}
+#| label: tenur-levels
+levels(pumf$Tenur)
+```
+
+## The level order controls the bar order
+
+```{r}
+#| label: bedrm-code
+#| eval: false
+ggplot(households, aes(y = BedRm, weight = WEIGHT)) + geom_bar()
+ggplot(households, aes(y = as.character(BedRm), weight = WEIGHT)) + geom_bar()
+```
+
+:::: {.columns}
+::: {.column width="48%"}
+```{r}
+#| label: bedrm-factor
+#| echo: false
+#| fig-width: 5
+#| fig-height: 2.6
+ggplot(households, aes(y = BedRm, weight = WEIGHT)) + geom_bar() +
+  scale_x_continuous(labels = scales::label_number(scale = 1e-6, suffix = "M")) +
+  labs(title = "Factor: level order", x = "Households", y = NULL)
+```
+:::
+
+::: {.column width="48%"}
+```{r}
+#| label: bedrm-text
+#| echo: false
+#| fig-width: 5
+#| fig-height: 2.6
+ggplot(households, aes(y = as.character(BedRm), weight = WEIGHT)) + geom_bar() +
+  scale_x_continuous(labels = scales::label_number(scale = 1e-6, suffix = "M")) +
+  labs(title = "Text: alphabetical order", x = "Households", y = NULL)
+```
+:::
+::::
+
+As text, "No bedroom" moves after "5 bedrooms or more". Keep categories as factors.
+
+## A factor is not a number
+
+```{r}
+#| label: as-numeric
+head(pumf$AGEGRP, 3)
+as.numeric(head(pumf$AGEGRP, 3))
+```
+
+::: {.warning}
+`as.numeric()` returns each level's position, not an age. Averaging these numbers runs without an error and gives a meaningless result.
+:::
+
+## "Not available" is a category, not NA
+
+```{r}
+#| label: tenur-count
+pumf |> count(Tenur)
+sum(is.na(pumf$Tenur))
+```
+
+R does not treat "Not available" as missing, so it also shows up as a bar, as in the bedroom chart. Remove it yourself before computing shares.
+
+## Create a factor with your own level order
+
+```{r}
+#| label: factor-create
+tenure <- c("Renter", "Owner", "Owner")
+factor(tenure, levels = c("Owner", "Renter"))
+```
+
+A typo in `levels` turns values into `NA` without a warning:
+
+```{r}
+#| label: factor-typo
+factor(tenure, levels = c("Owner", "renter"))
+```
+
+## Ordered factors support comparisons
+
+```{r}
+#| label: ordered
+unit_size <- factor(c("small", "large", "medium"),
+                    levels = c("small", "medium", "large"), ordered = TRUE)
+unit_size
+unit_size >= "medium"
+```
+
+`>=` compares positions in the level order. `as.ordered(pumf$HDGREE)` makes education levels comparable the same way.
+
+## Practice: simplify education levels
+
+Create `HDGREE2` with five levels, in this order:
+
+"Less than high school", "High school", "Post-secondary below bachelor", "Bachelor's degree", "Graduate degree"
+
+1. Use `case_when()` on `HDGREE`; leave "Not available" and "Not applicable" as `NA`.
+2. Make `HDGREE2` a factor with the levels in the order above.
+3. Count people (not rows) in each level with `count(HDGREE2, wt = WEIGHT)`.
+4. Draw a bar chart of people in each level, without the `NA` group.
+
+## Answer
+
+::: {.tiny}
+```{r include=params$answers}
+#| label: hdgree-answer
+edu <- pumf |>
+  mutate(
+    hdgree = as.ordered(HDGREE),
+    HDGREE2 = case_when(
+      hdgree == "No certificate, diploma or degree" ~ "Less than high school",
+      hdgree == "High (secondary) school diploma or equivalency certificate" ~ "High school",
+      hdgree <= "University certificate or diploma below bachelor level" ~ "Post-secondary below bachelor",
+      hdgree == "Bachelor's degree" ~ "Bachelor's degree",
+      hdgree <= "Earned doctorate" ~ "Graduate degree"
+    ),
+    HDGREE2 = factor(HDGREE2, levels = c(
+      "Less than high school", "High school", "Post-secondary below bachelor",
+      "Bachelor's degree", "Graduate degree"))
+  )
+
+edu |> count(HDGREE2, wt = WEIGHT)
+```
+:::
+
+## Answer: the chart
+
+```{r include=params$answers}
+#| label: hdgree-plot
+#| fig-height: 3
+edu |>
+  filter(!is.na(HDGREE2)) |>
+  ggplot(aes(y = HDGREE2, weight = WEIGHT)) +
+  geom_bar()
+```
+
+The bars follow the level order you chose. `NA` covers "Not available" and "Not applicable" (people under 15).
+
+## The 2016 and 2021 files differ
+
+```{r}
+#| label: pumf-years
+pumf16 <- read_rds("data/2016_census_pumf_ind.rds")
+c(TOTINC = "TOTINC" %in% names(pumf16), TotInc = "TotInc" %in% names(pumf16))
+setdiff(levels(pumf$CMA), levels(pumf16$CMA))
+```
+
+- Many columns were renamed: `TOTINC` became `TotInc`, and `TENUR` became `Tenur`.
+- Some CMA names differ only in a dash or a space: "Ottawa – Gatineau" in 2016, "Ottawa - Gatineau" in 2021. If you stack the two years with `bind_rows()` (deck 09), they become separate groups. Check every factor's levels in both years.

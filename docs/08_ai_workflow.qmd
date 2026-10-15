@@ -42,7 +42,7 @@ pumf <- read_rds("data/2021_census_pumf_ind.rds")
 
 ## AI writes the first draft; you own the result
 
-- AI tools are allowed for the presentations, with attribution. They are not allowed in exams.
+- AI tools are allowed for the research project, with attribution. They are not allowed in exams.
 - AI is good at R syntax. It does not know your data.
 - You are responsible for every number on your slides, whoever typed the code.
 
@@ -105,6 +105,16 @@ Follow the rules in AGENTS.md.
 ::: {.key-point}
 `glimpse()` output shows names, types, and example values in a few lines.
 :::
+
+## Manage the conversation
+
+Each new message is processed together with the whole conversation so far. Long conversations use up your plan's limit faster, and the answers can get worse: the AI loses early instructions and mixes in old versions of your code.
+
+- Use one conversation per task. Start a new one when the topic changes.
+- When answers get worse, ask for a short summary and paste it into a new conversation.
+- Point a coding agent to files instead of pasting them. In a chat tool, paste only the error and the code that caused it.
+- Share `glimpse()` or `head()` output, never whole tables.
+- Keep standing rules in `AGENTS.md` instead of repeating them.
 
 ## Demo: "average age by CMA"
 
@@ -193,6 +203,43 @@ sales |> left_join(neigh_info, by = "neigh", relationship = "many-to-one")
 4. Compare magnitudes with a number you know. Is an average income of $17 million plausible?
 5. Plot the raw data before you summarise it.
 
+## Work in small steps
+
+1. For anything with more than one step, ask for a plan before any code.
+2. Make one change at a time. Run it and check it before you go on.
+3. Save a copy, or commit if you use Git, before an agent edits several files.
+4. After two failed fixes, stop asking it to "try again". Restate the problem in a new conversation.
+
+::: {.key-point}
+Small steps keep every answer small enough to check.
+:::
+
+## Check a file you did not make
+
+AI can write the import code. You check what it read, as in this made-up file:
+
+```{r}
+#| label: import-check
+rents <- read_csv(I("area,units,median_rent
+Burnaby,24510,\"1,725\"
+Coquitlam,6875,1650
+Lions Bay,12,**
+Total,31397,1700"))
+glimpse(rents)
+```
+
+What goes wrong if you sum `units`, or average `median_rent`?
+
+## Three checks after any import
+
+1. **Rows:** compare the count with the source, and look at the first and last rows for notes and totals. In `rents`, the `Total` row would double `sum(units)`.
+2. **Types:** a number column read as `<chr>` hides symbols such as `**` (suppressed) or a comma, as in `median_rent`.
+3. **One known number:** check that a total matches the published figure.
+
+::: {.key-point}
+AI coding agents can read your data files. Ask the agent to run these checks and show you the output.
+:::
+
 ## Keep API keys out of AI chats
 
 - Keys live in `.Renviron`. Code reads them with `Sys.getenv()`.
@@ -208,7 +255,7 @@ State the tool, what you used it for, and what you checked. For example:
 :::
 
 ::: {.notes}
-TODO: Confirm the attribution format for the presentations before class.
+TODO: Confirm the attribution format for the research project before class.
 :::
 
 ## Practice: find three mistakes

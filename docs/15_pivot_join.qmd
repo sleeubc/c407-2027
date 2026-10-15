@@ -1,0 +1,275 @@
+---
+title: "Reshaping and joining tables"
+subtitle: "COMM 407 · Pivots, joins, and checking the result"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.6)
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+## The same data can be long or wide
+
+:::: {.columns}
+::: {.column width="48%"}
+```{r}
+#| label: long
+long <- tibble(
+  geo = c("a", "a", "b", "b"),
+  var = c("x", "y", "x", "y"),
+  val = c(5, 6, 7, 8))
+long
+```
+:::
+
+::: {.column width="48%"}
+```{r}
+#| label: wide
+wide <- long |>
+  pivot_wider(names_from = var,
+              values_from = val)
+wide
+```
+:::
+::::
+
+Long: one row per place **and** variable. Wide: one row per place.
+
+## pivot_longer() reverses it
+
+```{r}
+#| label: longer
+wide |> pivot_longer(cols = c(x, y), names_to = "var", values_to = "val")
+```
+
+## Practice: renter shares from long data
+
+`data/renter_l.rds` has two rows per municipality: renter households and total households.
+
+```{r}
+#| label: renter-l
+renter_l <- read_rds("data/renter_l.rds")
+renter_l |> head(4)
+```
+
+Compute the renter share for each municipality and sort from the highest.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: renter-answer
+renter_l |>
+  pivot_wider(names_from = vector, values_from = value) |>
+  rename(renters = contains("Renter"), households = contains("Total")) |>
+  mutate(renter_share = renters / households) |>
+  arrange(desc(renter_share)) |>
+  head(5)
+```
+:::
+
+## Duplicate keys break pivot_wider()
+
+::: {.small}
+```{r}
+#| label: dup-pivot
+#| warning: true
+long_dup <- long |> add_row(geo = "a", var = "x", val = 9)
+long_dup |> pivot_wider(names_from = var, values_from = val)
+```
+:::
+
+::: {.warning}
+Two values for `a`/`x` produce a list column. Check first: `count(geo, var) |> filter(n > 1)`.
+:::
+
+## Practice: price index from wide data
+
+`data/pindex_w.rds` has one row per CMA and one column per month of a new housing price index.
+
+```{r}
+#| label: pindex
+pindex_w <- read_rds("data/pindex_w.rds")
+dim(pindex_w)
+```
+
+Make it long, turn the month names into dates with `ym()`, and plot one line per CMA.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: pindex-answer
+#| fig-height: 3.2
+pindex_w |>
+  pivot_longer(cols = -GEO, names_to = "month", values_to = "index") |>
+  mutate(month = ym(month)) |>
+  ggplot(aes(month, index, colour = GEO)) +
+  geom_line() +
+  labs(x = NULL, y = "New housing price index", colour = NULL)
+```
+:::
+
+## Joins combine tables by a key
+
+```{r}
+#| label: bands
+band_members
+band_instruments
+```
+
+## inner_join() and left_join()
+
+:::: {.columns}
+::: {.column width="48%"}
+```{r}
+#| label: inner
+band_members |>
+  inner_join(band_instruments,
+             by = "name")
+```
+
+Only names in both tables.
+:::
+
+::: {.column width="48%"}
+```{r}
+#| label: left
+band_members |>
+  left_join(band_instruments,
+            by = "name")
+```
+
+Every row of the left table.
+:::
+::::
+
+## right_join() and full_join()
+
+:::: {.columns}
+::: {.column width="48%"}
+```{r}
+#| label: right
+band_members |>
+  right_join(band_instruments,
+             by = "name")
+```
+
+Every row of the right table.
+:::
+
+::: {.column width="48%"}
+```{r}
+#| label: full
+band_members |>
+  full_join(band_instruments,
+            by = "name")
+```
+
+Every row of both tables.
+:::
+::::
+
+## Keys with different names
+
+```{r}
+#| label: by-different
+band_instruments2
+band_members |> left_join(band_instruments2, by = join_by(name == artist))
+```
+
+## Check the row count after every join
+
+```{r}
+#| label: dup-join
+extra <- band_instruments |> add_row(name = "John", plays = "piano")
+
+nrow(band_members)
+band_members |> left_join(extra, by = "name") |> nrow()
+```
+
+One duplicate key in `extra` added a row. Make R check for you:
+
+```{r}
+#| label: relationship
+band_members |> left_join(extra, by = "name", relationship = "many-to-one")
+```
+
+## Find the rows that did not match
+
+```{r}
+#| label: anti
+band_members |> anti_join(band_instruments, by = "name")
+```
+
+`anti_join()` returns the rows of the left table with no match on the right. Mick has no instrument recorded.
+
+## Names make poor keys
+
+```{r}
+#| label: names
+renter_l |>
+  distinct(`Region Name`) |>
+  filter(str_detect(`Region Name`, "Langley"))
+```
+
+Two municipalities share the name "Langley". Join on codes such as `GeoUID` whenever you can.
+
+## Application: life satisfaction by province
+
+```{r}
+#| label: health
+health <- cansim::get_cansim("13-10-0905-01") |>
+  filter(REF_DATE == "2024", GEO != "Canada (excluding territories)",
+         Indicators == "Life satisfaction, satisfied or very satisfied",
+         `Age group` == "18 to 34 years", Sex == "Both sexes",
+         Characteristics == "Percent") |>
+  select(GeoUID, GEO, satisfied = VALUE)
+nrow(health)
+```
+
+## Join it to census data by GeoUID
+
+::: {.small}
+```{r}
+#| label: health-join
+provinces <- cancensus::get_census("CA21", regions = list(C = "01"), level = "PR") |>
+  select(GeoUID, province = `Region Name`, Population)
+
+provinces |> left_join(health, by = "GeoUID", relationship = "one-to-one") |> nrow()
+provinces |> anti_join(health, by = "GeoUID") |> select(province)
+```
+:::
+
+The survey does not cover the territories, so they get `NA`. Say so in your caption.

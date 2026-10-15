@@ -1,6 +1,6 @@
 ---
-title: "Install R and Positron"
-subtitle: "COMM 407 course setup"
+title: "Set up R, Positron, and the course folder"
+subtitle: "COMM 407 · Course setup"
 author: "Sanghoon Lee"
 date: today
 date-format: "D MMMM YYYY"
@@ -40,12 +40,6 @@ Restart the computer after the update.
 An outdated system can produce mysterious errors that your classmates do not encounter.
 :::
 
-::: {.notes}
-[Sources]
-
-- Course source: `../docs_2026/01_R_and_RStudio_Installation.Rmd`.
-:::
-
 ## Install R before installing Positron
 
 1. Go to [cloud.r-project.org](https://cloud.r-project.org/).
@@ -59,8 +53,6 @@ Positron requires R 4.2 or newer.
 :::
 
 ::: {.notes}
-[Sources]
-
 - Positron installation prerequisites: https://positron.posit.co/install
 - The Comprehensive R Archive Network: https://cloud.r-project.org/
 :::
@@ -74,12 +66,10 @@ Positron requires R 4.2 or newer.
 On macOS, choose the download that matches your computer: **Apple Silicon** or **Intel**.
 
 ::: {.key-point}
-Install Positron once; it updates itself afterward.
+Positron includes Quarto, which we use for all coursework. You do not need to install it separately.
 :::
 
 ::: {.notes}
-[Sources]
-
 - Install Positron: https://positron.posit.co/install
 :::
 
@@ -90,88 +80,103 @@ Open Positron. In the **Interpreter picker** at the top right, select an R sessi
 Then run this in the Console:
 
 ```{r}
+#| label: r-version
 R.version.string
 ```
 
 You should see an R version of **4.2 or newer** and no error message.
 
 ::: {.notes}
-[Sources]
-
 - Managing interpreters in Positron: https://positron.posit.co/managing-interpreters.html
-- Discovering R installations: https://positron.posit.co/r-installations.html
 :::
 
 ## Download and extract the course folder
 
-Download **C407.zip** from **Canvas → Files**.
+Download **c407.zip** from **Canvas**.
 
 Extract it to a folder that is easy to find.
 
 ::: {.warning}
-On Windows, right-click the ZIP file and choose **Extract All…**. Merely opening the ZIP file is not the same as extracting it.
+On Windows, right-click the ZIP file and choose **Extract All…**. Opening the ZIP file is not the same as extracting it.
 :::
 
-::: {.notes}
-[Sources]
+## What is in the course folder
 
-- Course source: `../docs_2026/01_R_and_RStudio_Installation.Rmd`.
-:::
+| Folder or file | What it holds |
+|---|---|
+| `data/` | Course datasets. Read from here; never edit these files. |
+| `scripts/` | Your Quarto documents (`.qmd`). |
+| `temp/` | Disposable output, such as saved figures. |
+| `_quarto.yml` | Makes code run from the `c407` folder. Do not move it. |
+| `AGENTS.md` | Course rules for AI coding tools. |
+| `README.md` | A summary of this setup. |
 
 ## Check that the data were extracted
 
-In the extracted **C407** folder, open the **Data** folder.
+In the extracted **c407** folder, open the **data** folder.
 
 ### How many `.rds` files are there?
 
 ::: {.answer-grid}
-**A.** 1  
-**B.** 2  
-**C.** 3  
-**D.** 4  
+**A.** 1
+
+**B.** 2
+
+**C.** 3
+
+**D.** 4
+
 **E.** 5
 :::
 
 ::: {.notes}
-[Sources]
-
-- Course source: `../docs_2026/01_R_and_RStudio_Installation.Rmd`.
+Answer: **E. 5.** `2016_census_pumf_ind.rds`, `2021_census_pumf_ind.rds`, `bca262.rds`, `pindex_w.rds`, and `renter_l.rds`.
 :::
 
-## Open the C407 folder as a workspace
+## Open the c407 folder as a workspace
 
-In Positron, choose **File → Open Folder…** and select the extracted **C407** folder.
+In Positron, choose **File → Open Folder…** and select the extracted **c407** folder.
 
 Opening the folder:
 
-- makes **C407** the workspace;
+- makes **c407** the workspace;
 - shows its files in the Explorer; and
 - sets the R working directory to that folder.
 
-::: {.key-point .fragment}
-For this course, begin by opening the **C407 folder** in Positron.
+::: {.key-point}
+Always open the **c407 folder** itself, not a folder inside it.
 :::
 
 ::: {.notes}
-[Sources]
+- Positron workspaces: https://positron.posit.co/migrate-rstudio-rproj.html
+:::
 
-- Positron workspaces and R project files: https://positron.posit.co/migrate-rstudio-rproj.html
+## Install the course packages once
+
+Run this once in the **Console**:
+
+```{r}
+#| label: install
+#| eval: false
+install.packages(c(
+  "tidyverse", "rmarkdown", "sf", "tmap", "maptiles", "cancensus",
+  "cansim", "VancouvR", "tidygeocoder", "fixest", "modelsummary"
+))
+```
+
+Installation can take several minutes. Rerun it if you get a new computer or a new version of R.
+
+::: {.key-point}
+Install packages in the Console, never inside a Quarto document.
 :::
 
 ## Use this start-up routine every class
 
 1. Open **Positron**.
-2. Open the **C407 folder** as your workspace.
+2. Open the **c407 folder** as your workspace.
 3. Confirm that an **R interpreter** is active.
-4. Open the `.qmd` file used in class.
+4. Open the class `.qmd` file in `scripts/`.
 
 ::: {.key-point}
-Keep scripts, data, and outputs together inside the course folder.
-:::
-
-::: {.notes}
-[Sources]
-
-- First data analysis with R in a Quarto document: https://positron.posit.co/tutorial-get-started-quarto.html
-- Positron workspaces and R project files: https://positron.posit.co/migrate-rstudio-rproj.html
+Keep your documents, data, and outputs together inside the course folder.
 :::

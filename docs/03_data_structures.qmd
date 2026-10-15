@@ -1,0 +1,238 @@
+---
+title: "Data structures"
+subtitle: "COMM 407 · Tibbles, vectors, and types"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+## A tibble is a set of equal-length columns
+
+```{r}
+#| label: bca
+bca <- read_rds("data/bca262.rds")
+
+bca |>
+  select(sale_date, aa_label, floorarea, price) |>
+  head(4)
+```
+
+Each column is a **vector**. Every column has the same number of values.
+
+## A vector holds values of one type
+
+```{r}
+#| label: vectors
+a <- c(0, 1, 2)
+b <- c("A", "B", "C")
+class(a)
+class(b)
+```
+
+`c()` combines values into a vector.
+
+## Quick check: what type is this vector?
+
+```{r}
+#| label: quiz-type
+#| eval: false
+x <- c("0", "1", "2")
+```
+
+**A.** numeric  **B.** character
+
+::: {.fragment}
+```{r}
+#| label: quiz-type-answer
+x <- c("0", "1", "2")
+class(x)
+```
+
+The quotation marks make each value text.
+:::
+
+## The type decides what you can do
+
+```{r}
+#| label: types
+a * a
+b * b
+```
+
+Arithmetic works on numbers, not text.
+
+## A comparison returns a logical vector
+
+```{r}
+#| label: logical
+price <- c(450000, 1200000, 800000)
+price > 1000000
+class(price > 1000000)
+```
+
+`TRUE` and `FALSE` are **logical** values, the third type after numeric and character.
+
+Compare with `>`, `<`, `>=`, `<=`, `==` (equal), and `!=` (not equal). A single `=` does not compare.
+
+## TRUE counts as 1
+
+```{r}
+#| label: logical-count
+sum(price > 1000000)
+mean(price > 1000000)
+```
+
+`sum()` counts the `TRUE` values, and `mean()` gives their share.
+
+::: {.key-point}
+To find what share of sales meet a condition, take the `mean()` of the condition.
+:::
+
+## [ ] picks elements by position
+
+```{r}
+#| label: index-position
+price[2]
+price[c(1, 3)]
+price[-1]
+```
+
+Positions start at 1. A minus sign drops an element.
+
+## [ ] with a logical vector keeps the TRUEs
+
+```{r}
+#| label: index-logical
+price > 1000000
+price[price > 1000000]
+```
+
+`filter()` in the next deck does the same to the rows of a tibble: it keeps the rows where the condition is `TRUE`.
+
+## A comparison with NA gives NA
+
+```{r}
+#| label: na-compare
+price2 <- c(450000, NA, 800000)
+price2 > 500000
+sum(price2 > 500000)
+sum(price2 > 500000, na.rm = TRUE)
+```
+
+R cannot tell whether a missing price is above 500,000, so the answer is `NA`.
+
+::: {.warning}
+`na.rm = TRUE` drops the missing values. Count them first with `sum(is.na(price2))`.
+:::
+
+## Create a tibble with tibble()
+
+```{r}
+#| label: tibble
+tb <- tibble(a = c(0, 1, 2), b = c("A", "B", "C"))
+tb
+```
+
+## Practice: create this tibble and name it tb2
+
+```{r}
+#| label: tb2-show
+#| echo: false
+tibble(name = c("a", "b", "c"), x = c(1, 2, 3), y = c(3, 2, 1))
+```
+
+::: {.fragment}
+```{r include=params$answers}
+#| label: tb2-answer
+tb2 <- tibble(name = c("a", "b", "c"), x = c(1, 2, 3), y = c(3, 2, 1))
+```
+:::
+
+## Functions for looking at a tibble
+
+| Function | Returns |
+|---|---|
+| `tb$a` | Column `a` as a vector |
+| `class(tb$a)` | The type of column `a` |
+| `names(tb)` | Column names |
+| `nrow(tb)` | Number of rows |
+| `head(tb, 2)` | First two rows (six by default) |
+| `summary(tb)` | A summary of each column |
+| `glimpse(tb)` | Names, types, and first values of every column |
+
+## View() opens the data in the Data Explorer
+
+Run this in the **Console**, not in your document:
+
+```{r}
+#| label: view
+#| eval: false
+View(bca)
+```
+
+- Scroll through the rows, sort by a column, and add filters.
+- The summary panel shows each column's type and missing values.
+- Note the capital V. With the tidyverse loaded, `view()` also works.
+
+::: {.key-point}
+Sorting or filtering in the Data Explorer does not change `bca`. Use code for anything your analysis needs.
+:::
+
+**Try it:** sort `bca` by `price`. What kind of property sold for the most?
+
+::: {.notes}
+- Answer: a "`r bca$act_use_name[which.max(bca$price)]`" property in `r bca$juris_label[which.max(bca$price)]`, `r scales::label_dollar()(max(bca$price, na.rm = TRUE))`, sold on `r format(bca$sale_date[which.max(bca$price)], "%d %B %Y")`. A single sale like this pulls up an average: look before you summarise.
+- `View()` and `view()` do nothing when the document renders, so keep them in the Console.
+- The Variables pane also opens the Data Explorer: click the table icon next to `bca`.
+- TODO: confirm the summary panel and the Variables pane icon in the current Positron release.
+:::
+
+## Practice: explore bca
+
+1. How many rows does `bca` have?
+2. What is the median sale price?
+3. What are the types of `postalcode`, `price`, and `sale_date`?
+4. What share of sales were above $1 million?
+
+## Answer
+
+```{r include=params$answers}
+#| label: bca-answers
+nrow(bca)
+median(bca$price, na.rm = TRUE)
+c(class(bca$postalcode), class(bca$price), class(bca$sale_date))
+mean(bca$price > 1000000, na.rm = TRUE)
+```

@@ -1,0 +1,246 @@
+---
+title: "dplyr II"
+subtitle: "COMM 407 · Summaries, groups, and changes over time"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+## summarise() turns many rows into one
+
+```{r}
+#| label: toy
+people <- tibble(
+  WEIGHT = c(1, 2, 3, 4, 5),
+  TotInc = c(14, 13, 12, 8, 10),
+  CMA    = c("x", "x", "y", "y", "y")
+)
+
+people |> summarise(avg_income = mean(TotInc), population = sum(WEIGHT))
+```
+
+## Weighted and unweighted averages differ
+
+```{r}
+#| label: weighted
+people |>
+  summarise(unweighted = mean(TotInc),
+            weighted = weighted.mean(TotInc, w = WEIGHT))
+```
+
+Each row represents `WEIGHT` people, so the weighted average describes the population.
+
+Other summary functions: `sum()`, `median()`, `min()`, `max()`, and `n()` (number of rows).
+
+## group_by() makes summarise() work per group
+
+```{r}
+#| label: group
+people |>
+  group_by(CMA) |>
+  summarise(population = sum(WEIGHT),
+            avg_income = weighted.mean(TotInc, w = WEIGHT))
+```
+
+## Predict the output
+
+```{r}
+#| label: predict-code
+#| eval: false
+people |>
+  filter(TotInc > 9) |>
+  group_by(CMA) |>
+  summarise(n = n())
+```
+
+::: {.fragment}
+```{r}
+#| label: predict-out
+#| echo: false
+people |>
+  filter(TotInc > 9) |>
+  group_by(CMA) |>
+  summarise(n = n())
+```
+
+`n()` counts rows, not people. Use `sum(WEIGHT)` for people.
+:::
+
+## summarise() removes one level of grouping
+
+```{r}
+#| label: groups
+two_levels <- people |>
+  mutate(group = c("a", "b", "a", "b", "b")) |>
+  group_by(CMA, group) |>
+  summarise(population = sum(WEIGHT))
+group_vars(two_levels)
+```
+
+The result is still grouped by `CMA`. Later steps then work within each CMA, which may not be what you want.
+
+::: {.key-point}
+Add `.groups = "drop"` to `summarise()`, or call `ungroup()`, when you are done with groups.
+:::
+
+## group_by() + mutate() keeps every row
+
+```{r}
+#| label: group-mutate
+tb <- tibble(a = c(1, 1, 1, 2, 2, 2), b = c(1, 2, 3, 3, 4, 4))
+tb |>
+  group_by(a) |>
+  mutate(share_of_group = b / sum(b)) |>
+  ungroup()
+```
+
+## lag() looks at the previous row
+
+```{r}
+#| label: lag
+tb |>
+  group_by(a) |>
+  mutate(previous = lag(b), change = b - lag(b)) |>
+  ungroup()
+```
+
+## Application: average prices by year
+
+```{r}
+#| label: avg-price
+bca <- read_rds("data/bca262.rds")
+
+avg_price <- bca |>
+  mutate(sale_year = year(sale_date)) |>
+  group_by(act_use_cat, sale_year) |>
+  summarise(avg_price = mean(price, na.rm = TRUE), .groups = "drop")
+
+avg_price |> head(3)
+```
+
+## Check the last date before you compare years
+
+```{r}
+#| label: partial-year
+bca |>
+  filter(year(sale_date) >= 2024) |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(sales = n(), first_sale = min(sale_date), last_sale = max(sale_date))
+```
+
+::: {.warning}
+The file ends on `r paste(mday(max(bca$sale_date)), format(max(bca$sale_date), "%B %Y"))`. On a chart by year, 2026 looks like a collapse in sales, and its average covers only winter sales. Drop incomplete years, or compare the same months in each year.
+:::
+
+## An average can fall while every type rises
+
+::: {.small}
+```{r}
+#| label: mix-shift
+bca |>
+  filter(year(sale_date) %in% 2016:2017) |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(all = mean(price, na.rm = TRUE),
+            sf = mean(price[act_use_cat == "S/F Res"], na.rm = TRUE),
+            strata = mean(price[act_use_cat == "Strata Res"], na.rm = TRUE),
+            sf_share = mean(act_use_cat == "S/F Res"))
+```
+:::
+
+```{r}
+#| label: mix-shift-numbers
+#| include: false
+mix <- bca |>
+  filter(year(sale_date) %in% 2016:2017) |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(sf_share = mean(act_use_cat == "S/F Res"))
+```
+
+::: {.key-point}
+Both types rose in 2017, yet the average fell, because single-family homes dropped from `r round(100 * mix$sf_share[1])`% to `r round(100 * mix$sf_share[2])`% of sales. An average price describes the mix of homes sold. Compare within types, or use a regression (deck 17).
+:::
+
+## Practice: a price index
+
+Using `avg_price`, compute a price index for each `act_use_cat`: the average price divided by the average price in **2010**.
+
+## Answer
+
+```{r include=params$answers}
+#| label: index
+price_index <- avg_price |>
+  group_by(act_use_cat) |>
+  mutate(index_2010 = avg_price / avg_price[sale_year == 2010]) |>
+  ungroup()
+
+price_index |> filter(sale_year %in% c(2010, 2020))
+```
+
+## Row positions are fragile
+
+An AI might write `nth(avg_price, 11)` for "the 2010 value", because 2010 is the 11th year:
+
+```{r}
+#| label: nth
+avg_price |>
+  arrange(desc(sale_year)) |>
+  group_by(act_use_cat) |>
+  summarise(nth_11 = sale_year[11])
+```
+
+::: {.warning}
+After a different sort, or with a missing year, the 11th row is no longer 2010. Select the year by its value, as in `avg_price[sale_year == 2010]`.
+:::
+
+## Practice: annual growth
+
+Compute the annual growth rate of `avg_price` for each `act_use_cat`: (this year − last year) / last year.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: growth
+avg_price |>
+  arrange(act_use_cat, sale_year) |>
+  group_by(act_use_cat) |>
+  mutate(growth = (avg_price - lag(avg_price)) / lag(avg_price)) |>
+  ungroup() |>
+  filter(sale_year %in% 2023:2025)
+```
+:::
+
+`lag()` uses row order, so sort by year first.

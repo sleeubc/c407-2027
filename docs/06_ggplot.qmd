@@ -1,0 +1,417 @@
+---
+title: "The grammar of graphics"
+subtitle: "COMM 407 · Building and reading ggplot2 charts"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.8)
+suppressPackageStartupMessages(library(tidyverse))
+bca <- read_rds("data/bca262.rds")
+```
+
+## A chart maps columns to visual properties
+
+```{r}
+#| label: template
+#| eval: false
+ggplot(data, aes(x = column1, y = column2)) +
+  geom_point()
+```
+
+- `data`: the tibble to plot.
+- `aes()`: **mappings** from columns to visual properties: x, y, colour, size, fill.
+- `geom_*()`: the **geometry** that draws the data: points, lines, bars.
+- `+` adds layers.
+
+## Summarise first, then plot
+
+```{r}
+#| label: by-aa
+by_aa <- bca |>
+  filter(!is.na(aa_label)) |>
+  group_by(aa_label) |>
+  summarise(avg_floorarea = mean(floorarea, na.rm = TRUE),
+            avg_price = mean(price, na.rm = TRUE),
+            n = n())
+by_aa |> head(4)
+```
+
+## geom_point() shows a relationship
+
+```{r}
+#| label: point
+ggplot(by_aa, aes(avg_floorarea, avg_price)) +
+  geom_point()
+```
+
+## Map more columns to colour and size
+
+```{r}
+#| label: colour-size
+ggplot(by_aa, aes(avg_floorarea, avg_price, colour = aa_label, size = n)) +
+  geom_point()
+```
+
+## Mapping and setting are different
+
+:::: {.columns}
+::: {.column width="49%"}
+```{r}
+#| label: mapped
+#| fig-width: 5
+#| fig-height: 3.2
+ggplot(by_aa,
+       aes(avg_floorarea, avg_price)) +
+  geom_point(aes(colour = "blue"))
+```
+:::
+
+::: {.column width="49%"}
+```{r}
+#| label: set
+#| fig-width: 5
+#| fig-height: 3.2
+ggplot(by_aa,
+       aes(avg_floorarea, avg_price)) +
+  geom_point(colour = "blue")
+```
+:::
+::::
+
+Inside `aes()`, `"blue"` is treated as data. Outside `aes()`, it sets the colour.
+
+## Layers stack: lines and points
+
+```{r}
+#| label: lines
+avg_price <- bca |>
+  group_by(act_use_cat, sale_year = year(sale_date)) |>
+  summarise(avg_price = mean(price, na.rm = TRUE), .groups = "drop")
+
+ggplot(avg_price, aes(sale_year, avg_price, colour = act_use_cat)) +
+  geom_line() +
+  geom_point()
+```
+
+## Global and local mappings
+
+:::: {.columns}
+::: {.column width="45%"}
+```{r}
+#| label: global
+#| fig-width: 5
+#| fig-height: 2.4
+ggplot(avg_price,
+       aes(sale_year, avg_price,
+           colour = act_use_cat)) +
+  geom_line() +
+  geom_point()
+```
+:::
+
+::: {.column width="53%"}
+```{r}
+#| label: local
+#| fig-width: 5
+#| fig-height: 2.4
+ggplot(avg_price,
+       aes(sale_year, avg_price)) +
+  geom_line() +
+  geom_point(aes(colour = act_use_cat))
+```
+:::
+::::
+
+`aes()` in `ggplot()` is **global**: every layer uses it. `aes()` in a `geom_*()` is **local**: only that layer uses it. On the right, the line ignores the type and zigzags.
+
+## A smaller dataset: Vancouver in 2017
+
+```{r}
+#| label: van17
+van17 <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) == 2017) |>
+  mutate(price_m = price / 1e6)
+nrow(van17)
+```
+
+The next charts use `van17`: one city in one year, so the points do not pile up. `price_m` is the price in millions of dollars.
+
+## Quick check: how many fitted lines?
+
+```{r}
+#| label: quiz-local
+#| eval: false
+ggplot(van17, aes(floorarea, price)) +
+  geom_point(aes(colour = act_use_cat), alpha = 0.2) +
+  geom_smooth(method = "lm")
+```
+
+**A.** One  **B.** Two, one for each property type
+
+::: {.fragment}
+```{r}
+#| label: quiz-local-answer
+#| echo: false
+#| fig-height: 2.6
+ggplot(van17, aes(floorarea, price)) +
+  geom_point(aes(colour = act_use_cat), alpha = 0.2) +
+  geom_smooth(method = "lm")
+```
+
+**A.** `colour` is local to `geom_point()`, so `geom_smooth()` fits one line to all the points. Move `colour` into `ggplot()` to get one line per type.
+:::
+
+## Choose the geometry for the question
+
+| Question | Geometry |
+|---|---|
+| How are two numbers related? | `geom_point()` |
+| How does a value change over time? | `geom_line()` |
+| How do groups compare? | `geom_col()` for values you computed, `geom_bar()` to count rows |
+| How is one number distributed? | `geom_histogram()` |
+
+## geom_bar() counts for you; geom_col() does not
+
+:::: {.columns}
+::: {.column width="49%"}
+```{r}
+#| label: bar-count
+#| fig-width: 5
+#| fig-height: 2.4
+ggplot(van17, aes(y = act_use_cat)) +
+  geom_bar()
+```
+:::
+
+::: {.column width="49%"}
+```{r}
+#| label: col-count
+#| fig-width: 5
+#| fig-height: 2.4
+van17 |>
+  count(act_use_cat) |>
+  ggplot(aes(n, act_use_cat)) +
+  geom_col()
+```
+:::
+::::
+
+The same chart. `geom_bar()` counts the rows itself, so its axis says `count`, a column it computed. `geom_col()` draws the `n` you computed.
+
+## Some geoms compute what they draw
+
+| Geom | Computes before drawing |
+|---|---|
+| `geom_bar()` | The number of rows in each group |
+| `geom_histogram()` | Bins, then the number of rows in each bin |
+| `geom_smooth()` | A fitted line, as in the quick check |
+| `geom_boxplot()` | The median and quartiles |
+| `geom_col()`, `geom_point()`, `geom_line()` | Nothing: they draw the values as given |
+
+::: {.key-point}
+When a geom computes, ask what it computed. `geom_bar()` counts rows, not people (deck 07).
+:::
+
+::: {.notes}
+- `geom_bar(stat = "identity")` is the same as `geom_col()`. AI-written and older code often uses it.
+- `after_stat(count)`, or the older `..count..`, refers to a column the geom computed.
+- `geom_bar(aes(x, y))` fails with "`stat_count()` must only have an x or y aesthetic": `geom_bar()` computes y itself.
+:::
+
+## Look up what a geom draws
+
+| Resource | Use it to |
+|---|---|
+| [ggplot2 cheat sheet](https://rstudio.github.io/cheatsheets/html/data-visualization.html) ([PDF](https://rstudio.github.io/cheatsheets/data-visualization.pdf)) | See every geom as a small picture |
+| [ggplot2 reference](https://ggplot2.tidyverse.org/reference/) | Read one function's arguments and example charts |
+| [R Graph Gallery](https://r-graph-gallery.com/) | Find a chart type and see working code |
+| [From Data to Viz](https://www.data-to-viz.com/) | Choose a chart from the kind of data you have |
+
+In Positron, `?geom_histogram` opens the help page, and `example(geom_histogram)` draws its examples.
+
+**Try it:** pick a geom from the cheat sheet that we have not used, read its page, and draw it with `van17`.
+
+## Axis limits can remove data
+
+`van17` holds City of Vancouver sales in 2017, with `price_m` in millions.
+
+:::: {.columns}
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: limits
+#| fig-width: 5
+#| fig-height: 3.2
+ggplot(van17, aes(floorarea, price_m)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm") +
+  scale_x_continuous(limits = c(0, 2000)) +
+  coord_cartesian(ylim = c(0, 5))
+```
+:::
+:::
+
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: coord
+#| fig-width: 5
+#| fig-height: 3.2
+ggplot(van17, aes(floorarea, price_m)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm") +
+  coord_cartesian(xlim = c(0, 2000),
+                  ylim = c(0, 5))
+```
+:::
+:::
+::::
+
+Left: `limits` dropped the `r sum(van17$floorarea > 2000, na.rm = TRUE)` homes over 2,000 sq ft **before** fitting the line. Right: `coord_cartesian()` only zooms.
+
+## Log scales spread out skewed data
+
+```{r}
+#| label: log
+ggplot(van17, aes(floorarea, price)) +
+  geom_point(alpha = 0.1) +
+  scale_x_log10() + scale_y_log10(labels = scales::label_dollar())
+```
+
+## The functions around the geoms
+
+::: {.small}
+| Family | Controls | Example |
+|---|---|---|
+| `scale_*()` | How values become axes and colours: limits, breaks, number formats, log scales | `scale_y_log10()` |
+| `coord_*()` | The plotting area: zoom, flip | `coord_flip()` |
+| `facet_*()` | One panel per group | `facet_wrap(~ act_use_cat)` |
+| `labs()` | Text: title, axis names, legend title, caption | `labs(y = "Price")` |
+| `theme_*()`, `theme()` | The look that is not data: background, fonts, legend position | `theme_minimal()` |
+| `guides()` | Legends | `guides(colour = "none")` |
+:::
+
+Inside a geom, `alpha`, `linewidth`, and `position = "dodge"` set that layer's look. Use these names when you ask AI to restyle a chart; to sort bars by value, ask for `fct_reorder()`.
+
+## Read a long AI-written chart
+
+:::: {.columns}
+::: {.column width="58%"}
+::: {.small}
+```{r}
+#| label: ai-chart
+#| eval: false
+# 1. data and mappings
+ggplot(avg_price,
+       aes(sale_year, avg_price, colour = act_use_cat)) +
+  # 2. what to draw
+  geom_line(linewidth = 1) +
+  # 3. how values become labels and colours
+  scale_y_continuous(labels = scales::label_dollar()) +
+  scale_colour_brewer(palette = "Dark2") +
+  # 4. text
+  labs(title = "Average sale price",
+       x = NULL, y = NULL, colour = NULL) +
+  # 5. the look that is not data
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+:::
+:::
+
+::: {.column width="40%"}
+```{r}
+#| label: ai-chart-plot
+#| echo: false
+#| fig-width: 4.5
+#| fig-height: 3.6
+ggplot(avg_price,
+       aes(sale_year, avg_price, colour = act_use_cat)) +
+  geom_line(linewidth = 1) +
+  scale_y_continuous(labels = scales::label_dollar()) +
+  scale_colour_brewer(palette = "Dark2") +
+  labs(title = "Average sale price",
+       x = NULL, y = NULL, colour = NULL) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+:::
+::::
+
+::: {.key-point}
+Only `ggplot()`, `aes()`, and `geom_*()` decide what is drawn. The rest changes how it looks, except `limits` in `scale_*()`, which drops rows.
+:::
+
+::: {.notes}
+- Order matters for themes: `theme(legend.position = "bottom") + theme_minimal()` silently resets the legend, because a complete theme replaces earlier `theme()` settings. Put `theme_minimal()` first.
+- To learn what a line does, comment it out and run the chart again.
+:::
+
+## Practice: price trends by property type
+
+For the City of Vancouver, plot the median sale price in each year from 2000 to 2025, with one line for each `act_use_cat`.
+
+1. Summarise first: one row per year and property type.
+2. Map `act_use_cat` to `colour`.
+3. Show the prices in dollars on the y-axis.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: trend-practice
+#| fig-height: 3
+van_trend <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) <= 2025) |>
+  group_by(year = year(sale_date), act_use_cat) |>
+  summarise(median_price = median(price, na.rm = TRUE), .groups = "drop")
+
+trend_plot <- ggplot(van_trend, aes(year, median_price, colour = act_use_cat)) +
+  geom_line() +
+  scale_y_continuous(labels = scales::label_dollar())
+trend_plot
+```
+:::
+
+## Save a chart for your slides
+
+```{r}
+#| label: save
+#| eval: false
+ggsave("temp/van_trend.png", trend_plot, width = 8, height = 4.5)
+```
+
+::: {.key-point}
+Save the chart in an object, then pass it to `ggsave()`. Use the PNG in PowerPoint or Google Slides.
+:::

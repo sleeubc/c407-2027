@@ -1,0 +1,240 @@
+---
+title: "Statistics Canada data tables"
+subtitle: "COMM 407 · Finding, downloading, and checking StatCan tables"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.6)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(cansim)
+})
+```
+
+## StatCan publishes thousands of data tables
+
+Go to [Statistics Canada → Data](https://www150.statcan.gc.ca/n1/en/type/data) and browse:
+
+- **Subject**: which subjects relate to real estate?
+- **Geography**: which level matches municipalities, such as the City of Vancouver?
+- **Frequency**: monthly, quarterly, or annual?
+
+Each table has a number such as **34-10-0127-01**.
+
+## Find a table, then download it with cansim
+
+Search for "vacancy rates", then choose Housing and Census metropolitan area.
+
+```{r}
+#| label: vacancy
+vacancy <- get_cansim("34-10-0127-01")
+dim(vacancy)
+```
+
+`get_cansim()` downloads the whole table: every place and every date.
+
+## Read the columns before you use VALUE
+
+```{r}
+#| label: vacancy-cols
+vacancy |>
+  select(Date, GEO, VALUE, UOM, SCALAR_FACTOR) |>
+  head(4)
+```
+
+- `VALUE` is the number. `UOM` and `SCALAR_FACTOR` give its unit, such as a rate, persons, or thousands of dollars.
+- Other columns describe what each row measures.
+
+## Vacancy rates in two CMAs
+
+```{r}
+#| label: vacancy-plot
+vacancy |>
+  filter(str_detect(GEO, "Vancouver|Toronto")) |>
+  ggplot(aes(Date, VALUE, colour = GEO)) +
+  geom_line() +
+  labs(x = NULL, y = "Vacancy rate (%)", colour = NULL,
+       caption = "Source: CMHC, Statistics Canada Table 34-10-0127-01")
+```
+
+## Check what a partial match caught
+
+```{r}
+#| label: str-detect
+vacancy |>
+  filter(str_detect(GEO, "Vancouver|Toronto")) |>
+  distinct(GEO)
+```
+
+::: {.warning}
+`str_detect()` matches any name that contains the text. Always check which places you kept.
+:::
+
+## A table can hold many series per place
+
+```{r}
+#| label: population
+population <- get_cansim("17-10-0148-01")
+
+population |>
+  filter(str_detect(GEO, "Vancouver")) |>
+  count(Date) |>
+  head(3)
+```
+
+There are `r population |> filter(str_detect(GEO, "Vancouver"), Date == max(Date)) |> nrow()` rows for Vancouver in each year. Why?
+
+## Every dimension needs a filter
+
+```{r}
+#| label: dims
+population |>
+  summarise(genders = n_distinct(Gender),
+            age_groups = n_distinct(`Age group`),
+            units = paste(unique(UOM), collapse = ", "))
+```
+
+Each row is one gender × age group, and some rows are ages in **years**, not persons.
+
+::: {.warning}
+Summing `VALUE` without filtering every dimension adds people to ages. R will not stop you.
+:::
+
+## Filter until there is one row per date
+
+```{r}
+#| label: one-row
+van_pop <- population |>
+  filter(str_detect(GEO, "Vancouver"),
+         Gender == "Total - gender",
+         `Age group` == "All ages")
+
+van_pop |> count(Date) |> distinct(n)
+```
+
+::: {.key-point}
+`count(Date)` should show exactly one row per date before you plot or sum.
+:::
+
+## Vancouver's population over time
+
+```{r}
+#| label: pop-plot
+ggplot(van_pop, aes(Date, VALUE)) +
+  geom_line() + geom_point() +
+  scale_y_continuous(labels = scales::label_number(scale = 1e-6, suffix = "M")) +
+  labs(x = NULL, y = NULL, title = "Vancouver CMA population, July 1 estimates",
+       caption = "Source: Statistics Canada Table 17-10-0148-01")
+```
+
+## Prices from different years need the same dollars
+
+Table **18-10-0004-01** has a monthly consumer price index (CPI) for Vancouver.
+
+```{r}
+#| label: cpi
+cpi <- get_cansim("18-10-0004-01") |>
+  filter(GEO == "Vancouver, British Columbia",
+         `Products and product groups` == "All-items")
+cpi |> count(Date) |> distinct(n)
+
+cpi_year <- cpi |>
+  group_by(sale_year = year(Date)) |>
+  summarise(cpi = mean(VALUE), months = n())
+```
+
+The annual CPI is the average of 12 monthly values. `months` flags a partial year: so far, `r tail(cpi_year$sale_year, 1)` has only `r tail(cpi_year$months, 1)` months.
+
+## Convert sale prices to 2025 dollars
+
+::: {.small}
+```{r}
+#| label: real-prices
+bca <- read_rds("data/bca262.rds")
+
+prices <- bca |>
+  filter(year(sale_date) <= 2025) |>  # 2026 is a partial year
+  group_by(sale_year = year(sale_date)) |>
+  summarise(nominal = median(price, na.rm = TRUE)) |>
+  left_join(cpi_year, by = "sale_year") |>
+  mutate(real = nominal * cpi[sale_year == 2025] / cpi)
+
+prices |> filter(sale_year %in% c(2000, 2025))
+```
+:::
+
+A price in 2025 dollars is the price × (CPI in 2025 ÷ CPI in the year of sale).
+
+## Real prices rose less than nominal prices
+
+```{r}
+#| label: real-plot
+#| fig-height: 3.4
+#| code-fold: true
+#| code-summary: "Chart code"
+ggplot(prices, aes(sale_year)) +
+  geom_line(aes(y = nominal, colour = "Nominal dollars")) +
+  geom_line(aes(y = real, colour = "2025 dollars")) +
+  scale_y_continuous(labels = scales::label_dollar()) +
+  labs(x = NULL, y = "Median sale price", colour = NULL,
+       caption = "Sources: BC Assessment; Statistics Canada Table 18-10-0004-01")
+```
+
+::: {.warning}
+From 2000 to 2025 the median price rose `r round(prices$nominal[prices$sale_year == 2025] / prices$nominal[prices$sale_year == 2000], 1)`-fold in nominal dollars, but `r round(prices$real[prices$sale_year == 2025] / prices$real[prices$sale_year == 2000], 1)`-fold in 2025 dollars. AI reports nominal prices unless you ask, so say which dollars every axis uses.
+:::
+
+## Practice: mortgage rates
+
+Using Table **34-10-0145-01**:
+
+1. Check that there is one row per date.
+2. Plot the conventional 5-year mortgage lending rate over time.
+3. Cite the table in the caption.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: mortgage
+#| fig-height: 3.2
+mortgage <- get_cansim("34-10-0145-01")
+mortgage |> count(Date) |> distinct(n)
+
+ggplot(mortgage, aes(Date, VALUE)) +
+  geom_line() +
+  labs(x = NULL, y = "Rate (%)", title = "Conventional mortgage lending rate, 5-year term",
+       caption = "Source: CMHC, Statistics Canada Table 34-10-0145-01")
+```
+:::

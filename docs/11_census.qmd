@@ -1,0 +1,268 @@
+---
+title: "Census profiles"
+subtitle: "COMM 407 · Areas, vectors, and denominators"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(cancensus)
+})
+```
+
+## PUMF or Census Profile?
+
+:::: {.columns}
+::: {.column width="48%"}
+### PUMF
+
+One row per **person**. The smallest area is a CMA.
+
+Use it when your unit of analysis is individuals.
+:::
+
+::: {.column width="48%"}
+### Census Profile
+
+One row per **area**, from all of Canada down to small neighbourhoods.
+
+Use it when your unit of analysis is places.
+:::
+::::
+
+## Census geographic levels
+
+| Code | Level | Example |
+|---|---|---|
+| `C` | Canada | Canada |
+| `PR` | Province or territory | British Columbia |
+| `CMA` | Census metropolitan area | Vancouver |
+| `CSD` | Census subdivision (municipality) | Burnaby |
+| `CT` | Census tract (usually fewer than 10,000 people) | A neighbourhood |
+| `DA` | Dissemination area (usually 400–700 people) | A few blocks |
+
+## Get a census API key
+
+`cancensus` downloads data from CensusMapper, which needs a free key.
+
+1. Sign up at [censusmapper.ca](https://censusmapper.ca/users/sign_up) and copy your API key.
+2. In the Console, run `file.edit(".Renviron")`. This creates the file in `c407` and opens it.
+3. Add this line with your own key, then save the file:
+
+```text
+CM_API_KEY=your_key_here
+```
+
+4. Restart R: **Session → Restart R**.
+
+::: {.notes}
+TODO: Confirm in Positron that `file.edit(".Renviron")` opens the file in the editor.
+:::
+
+## Check the key without showing it
+
+```{r}
+#| label: key-check
+Sys.getenv("CM_API_KEY") != ""
+```
+
+`TRUE` means R found your key.
+
+::: {.warning}
+Never paste a key into your code, a submission, or an AI chat. Anyone with the key can use it as you.
+:::
+
+## get_census() needs four choices
+
+```{r}
+#| label: anatomy
+#| eval: false
+get_census(
+  dataset = "CA21",               # which census
+  regions = list(CMA = "59933"),  # which area to cover
+  level   = "CSD",                # which units to return
+  vectors = c(total = "v_CA21_4872", chinese = "v_CA21_4881")  # which variables
+)
+```
+
+Your `CM_API_KEY` in `.Renviron` lets `cancensus` download the data.
+
+## Find region codes
+
+```{r}
+#| label: regions
+list_census_regions("CA21") |>
+  filter(level == "CMA", str_detect(name, "Vancouver|Toronto")) |>
+  select(region, name, level, pop)
+```
+
+`regions = list(CMA = c("59933", "35535"))` covers both CMAs.
+
+## Find vectors, then check them
+
+Search for variables with `explore_census_vectors("CA21")` in the Console, or filter the list:
+
+```{r}
+#| label: vectors-search
+list_census_vectors("CA21") |>
+  filter(str_detect(label, "^Chinese$")) |>
+  select(vector, label, parent_vector, type)
+```
+
+## Check every vector code before you use it
+
+```{r}
+#| label: vectors-check
+list_census_vectors("CA21") |>
+  filter(vector %in% c("v_CA21_4872", "v_CA21_4881")) |>
+  select(vector, label, details) |>
+  mutate(details = str_trunc(details, 70))
+```
+
+::: {.warning}
+AI tools often invent vector codes that look right. A wrong code still returns numbers, just for a different variable.
+:::
+
+## Name the vectors for readable columns
+
+```{r}
+#| label: chinese-cma
+chinese_cma <- get_census(
+  dataset = "CA21", regions = list(C = "01"), level = "CMA",
+  vectors = c(total = "v_CA21_4872", chinese = "v_CA21_4881")
+)
+
+chinese_cma |>
+  transmute(name = `Region Name`, share = chinese / total) |>
+  arrange(desc(share)) |>
+  head(4)
+```
+
+## Choose the denominator from the same table
+
+::: {.small}
+```{r}
+#| label: denominator
+chinese_cma |>
+  transmute(name = `Region Name`,
+            share_vector = chinese / total,
+            share_population = chinese / Population) |>
+  arrange(desc(share_vector)) |>
+  head(4)
+```
+:::
+
+::: {.key-point}
+Divide by the parent total of the variable you count. `total` covers people in private households, like `chinese`; `Population` also includes collective dwellings, such as care homes.
+:::
+
+## Practice: renter share by municipality
+
+For each CSD in the Vancouver CMA, compute the share of renter households and sort from the highest.
+
+- `v_CA21_4237`: total private households by tenure
+- `v_CA21_4239`: renter households
+
+Check both codes first.
+
+## Answer: check the codes
+
+```{r include=params$answers}
+#| label: renter-check
+list_census_vectors("CA21") |>
+  filter(vector %in% c("v_CA21_4237", "v_CA21_4239")) |>
+  select(vector, label)
+```
+
+## Answer: renter shares
+
+::: {.small}
+```{r include=params$answers}
+#| label: renter
+get_census("CA21", regions = list(CMA = "59933"), level = "CSD",
+           vectors = c(households = "v_CA21_4237", renters = "v_CA21_4239")) |>
+  transmute(name = `Region Name`, renter_share = renters / households) |>
+  arrange(desc(renter_share)) |>
+  head(5)
+```
+:::
+
+## Add boundaries with geo_format = "sf"
+
+```{r}
+#| label: sf
+renter_ct <- get_census(
+  "CA21", regions = list(CMA = "59933"), level = "CT",
+  vectors = c(households = "v_CA21_4237", renters = "v_CA21_4239"),
+  geo_format = "sf"
+)
+class(renter_ct)
+```
+
+The result carries each area's boundary in a `geometry` column. We map it in the tmap lecture.
+
+## Vector codes change between censuses
+
+The same code means a different variable in 2016:
+
+```{r}
+#| label: ca16-same-code
+list_census_vectors("CA16") |>
+  filter(vector %in% c("v_CA16_4237", "v_CA16_4239")) |>
+  select(vector, label)
+```
+
+::: {.warning}
+Replace every `CA21` with `CA16` in the renter code, and it still runs. It divides the number of people reporting Spanish origins by the number reporting Slovenian origins. Find each census's vectors separately: in 2016, tenure is `v_CA16_4836` and `v_CA16_4838`.
+:::
+
+## Tract boundaries change too
+
+```{r}
+#| label: ct-change
+renter_ct16 <- get_census(
+  "CA16", regions = list(CMA = "59933"), level = "CT",
+  vectors = c(households = "v_CA16_4836", renters = "v_CA16_4838")
+)
+c(tracts_2016 = nrow(renter_ct16), tracts_2021 = nrow(renter_ct),
+  same_code = sum(renter_ct16$GeoUID %in% renter_ct$GeoUID))
+```
+
+- Statistics Canada splits tracts that grow: `9330012.00` became `.01` and `.02`.
+- A join by `GeoUID` silently drops split tracts, often the fastest-growing areas.
+
+::: {.key-point}
+Compare levels whose boundaries rarely change, such as municipalities, or combine tracts into common areas with the `tongfen` package.
+:::

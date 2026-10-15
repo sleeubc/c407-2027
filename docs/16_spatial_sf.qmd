@@ -1,0 +1,234 @@
+---
+title: "Spatial data with sf"
+subtitle: "COMM 407 · Reading, projecting, joining, and buffering"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 4.2)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(sf)
+  library(tmap)
+  library(VancouvR)
+})
+```
+
+## An sf object is a table with a geometry column
+
+```{r}
+#| label: parks
+parks <- st_read("data/Park_Inventory.geojson", quiet = TRUE)
+parks |> select(NAME, CLASSIFICATION) |> head(3)
+```
+
+The `geometry` column holds each park's boundary. It stays attached through `select()` and `filter()`.
+
+## Read spatial files with st_read()
+
+- **GeoJSON**: one file, such as `data/Park_Inventory.geojson`.
+- **Shapefile**: several files with the same name (`.shp`, `.shx`, `.dbf`, `.prj`, …). Keep them together and read the `.shp`.
+
+```{r}
+#| label: shp
+parks_shp <- st_read("data/Park_Inventory/Park_Inventory.shp", quiet = TRUE)
+nrow(parks) == nrow(parks_shp)
+```
+
+## Open data portals publish spatial data
+
+- [City of Vancouver Open Data](https://opendata.vancouver.ca/)
+- [Burnaby Open Data](https://data.burnaby.ca/)
+- [DataBC](https://www.data.gov.bc.ca/)
+
+For Vancouver, `VancouvR` downloads a dataset by its identifier:
+
+```{r}
+#| label: cov
+stations <- get_cov_data("rapid-transit-stations") |> select(station)
+zoning <- get_cov_data("zoning-districts-and-labels") |>
+  select(zoning_classification)
+```
+
+## Turn coordinates into points
+
+```{r}
+#| label: sales
+bca <- read_rds("data/bca262.rds")
+
+sales <- bca |>
+  filter(year(sale_date) == 2023, juris_label == "City of Vancouver",
+         !is.na(lon), !is.na(lat)) |>
+  select(folioid, sale_date, price, lon, lat) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+nrow(sales)
+```
+
+`crs = 4326` says that the coordinates are longitude and latitude.
+
+## A coordinate reference system gives coordinates meaning
+
+| EPSG code | Name | Units | Use it for |
+|---|---|---|---|
+| 4326 | WGS 84 | degrees | Longitude and latitude, from GPS or most web data |
+| 32610 | UTM zone 10N | metres | Distances and buffers in BC |
+| 3347 | Statistics Canada Lambert | metres | Maps of all of Canada or several provinces |
+
+```{r}
+#| label: crs
+st_crs(sales)$epsg
+st_crs(stations)$epsg
+```
+
+## A wrong CRS puts points in the wrong place
+
+VPD crime data store `X` and `Y` in **UTM metres**, not degrees:
+
+```{r}
+#| label: crimes-wrong
+vpd_file <- file.path("data", "crimedata_csv_AllNeighbourhoods_2026",
+                      "crimedata_csv_AllNeighbourhoods_2026.csv")
+crimes <- read_csv(vpd_file) |>
+  filter(X != 0, Y != 0)   # 0 means the location was withheld
+
+st_as_sf(crimes, coords = c("X", "Y"), crs = 4326) |> st_bbox()
+```
+
+A "latitude" of 5 million is impossible. R created the object anyway.
+
+## Declare the CRS the data actually use
+
+```{r}
+#| label: crimes-right
+crimes_sf <- st_as_sf(crimes, coords = c("X", "Y"), crs = 32610)
+crimes_sf |> st_transform(4326) |> st_bbox() |> round(3)
+```
+
+::: {.key-point}
+Read the data's documentation for its CRS. Never guess.
+:::
+
+## A spatial join attaches the polygon each point falls in
+
+::: {.small}
+```{r}
+#| label: zoning-join
+sales_zoning <- sales |> st_join(zoning)
+c(before = nrow(sales), after = nrow(sales_zoning))
+
+sales_zoning |>
+  st_drop_geometry() |>
+  count(zoning_classification, sort = TRUE) |>
+  head(4)
+```
+:::
+
+Both layers must use the same CRS. Check with `st_crs()`.
+
+## Map the result to check it
+
+```{r}
+#| label: zoning-map
+#| fig-height: 4
+tm_shape(zoning) + tm_polygons(fill = "grey95", col = "grey70") +
+  tm_shape(sales_zoning) + tm_dots(fill = "zoning_classification", size = 0.2)
+```
+
+::: {.notes}
+In class, switch to `tmap_mode("view")` and click points near zoning boundaries to check the join.
+:::
+
+## Buffers need metres
+
+```{r}
+#| label: buffer
+stations_300 <- stations |>
+  st_transform(32610) |>
+  st_buffer(300)
+
+sales_near <- sales |>
+  st_transform(32610) |>
+  st_join(stations_300)
+```
+
+`st_buffer(300)` draws a 300-unit circle. In EPSG 32610 that is 300 metres.
+
+## Overlapping buffers duplicate rows
+
+```{r}
+#| label: dup
+nrow(sales)
+nrow(sales_near)
+```
+
+::: {.warning}
+A sale within 300 m of two stations matches both, so it appears twice. Counts per station are fine, but totals and averages across all sales double-count these rows.
+:::
+
+## Count sales near each station
+
+```{r}
+#| label: count
+sales_near |>
+  st_drop_geometry() |>
+  filter(!is.na(station)) |>
+  count(station, sort = TRUE) |>
+  head(5)
+```
+
+Without `filter(!is.na(station))`, sales near no station would appear as an `NA` row.
+
+## Practice: crimes near stations
+
+Count the crimes within 500 m of each rapid transit station.
+
+1. Use `crimes_sf` (EPSG 32610) and `stations`.
+2. Put both layers in EPSG 32610 and buffer the stations by 500 m.
+3. Check the row count before and after the join.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: practice
+stations_500 <- stations |> st_transform(32610) |> st_buffer(500)
+crimes_near <- crimes_sf |> st_join(stations_500)
+c(before = nrow(crimes_sf), after = nrow(crimes_near))
+
+crimes_near |>
+  st_drop_geometry() |>
+  filter(!is.na(station)) |>
+  count(station, sort = TRUE) |>
+  head(5)
+```
+:::

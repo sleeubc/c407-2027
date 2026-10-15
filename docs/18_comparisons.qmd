@@ -1,0 +1,356 @@
+---
+title: "Comparisons and alternative explanations"
+subtitle: "COMM 407 · What else could explain your finding?"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+## A finding is a comparison
+
+- "Port Mann traffic rose 27% after the toll ended" compares after with before.
+- "Restaurants cluster near SkyTrain" compares near with far.
+- Every finding compares two groups. The question is whether the comparison is fair.
+
+::: {.key-point}
+Before you believe a finding, ask: what else differs between the two groups?
+:::
+
+::: {.notes}
+This deck supports the research project requirement to test the strongest alternative explanation. AI writes the code for a comparison easily; it rarely asks whether the comparison is fair.
+:::
+
+## Six common alternative explanations
+
+::: {.small}
+| Alternative | Ask | Example |
+|---|---|---|
+| Timing | Did something else change at the same time? | Season, economy, another policy |
+| Spillover | Was the comparison group affected too? | Drivers switch from Alex Fraser to Port Mann |
+| Location | Is it where things are, not what they are? | Restaurants near SkyTrain are mostly Downtown |
+| Denominator | Did the base of the rate change? | Downtown's population doubled |
+| Composition | Did the set of units counted change? | New storefronts entered the survey |
+| Chance | Are there too few cases? | A location quotient of 4.6 from three businesses |
+:::
+
+::: {.notes}
+The examples come from analyses of Vancouver data: crime, storefronts, and bridge traffic. The rest of the deck works through them.
+:::
+
+## Case: the Port Mann toll ended on 1 September 2017
+
+```{r}
+#| label: load
+traffic <- read_rds("data/tradas_daily.rds")
+traffic |>
+  summarise(days = n(), first = min(date), last = max(date),
+            .by = c(crossing, site))
+```
+
+- One row per counter and day: `crossing`, `site` (the counter), `date`, and `volume`, the vehicles counted in both directions.
+- Counters run by the BC Ministry of Transportation and Infrastructure.
+
+::: {.notes}
+Source: TRADAS monthly hourly volume reports (MV03). Only days with all 24 hours, whose hourly counts add up to the report's daily total, are kept. Port Mann uses the Highway 1 counter east of 152 Street (P-16-22EW), because the bridge's own counter has no reports for December 2017 or after June 2018. It misses traffic that leaves at 152 Street. Alex Fraser is Highway 91; Massey is Highway 99, south of the tunnel. The Golden Ears Bridge toll also ended on 1 September 2017.
+:::
+
+## Before and after, month by month
+
+```{r}
+#| label: monthly
+#| output-location: slide
+#| fig-width: 11
+#| fig-height: 5
+monthly <- traffic |>
+  mutate(month = floor_date(date, "month")) |>
+  summarise(daily = mean(volume), .by = c(crossing, month)) |>
+  complete(crossing, month)  # missing months become NA: gaps, not lines
+
+ggplot(monthly, aes(month, daily / 1000, colour = crossing)) +
+  geom_line() +
+  geom_vline(xintercept = ymd("2017-09-01"), linetype = "dashed") +
+  labs(x = NULL, y = "Average daily vehicles (thousands)", colour = NULL) +
+  theme_minimal(base_size = 16)
+```
+
+::: {.notes}
+Port Mann jumps in September 2017. Every line also rises in summer and falls in winter, so comparing August with September would mix the toll with the season. complete() adds the missing months as NA, so the lines break at gaps instead of joining across them.
+:::
+
+## Compare the same months a year apart
+
+```{r}
+#| label: seasons
+seasons <- traffic |>
+  filter(month(date) %in% c(9:12, 1:2)) |>  # September to February
+  mutate(season = if_else(month(date) >= 9, year(date), year(date) - 1)) |>
+  summarise(daily = mean(volume), months = n_distinct(month(date)),
+            .by = c(crossing, season)) |>
+  arrange(crossing, season) |>
+  mutate(growth = 100 * (daily / lag(daily) - 1), .by = crossing)
+```
+
+- A season runs from September to February: season 2017 is the first six months without a toll.
+- Each season is compared with the same months a year earlier, so the seasonal pattern cancels out.
+- `growth` is the percentage change from the previous season.
+
+## Season averages, with a coverage check
+
+::: {.small}
+```{r}
+#| label: seasons-print
+seasons |>
+  mutate(daily = round(daily), growth = round(growth, 1)) |>
+  print(n = Inf)
+```
+:::
+
+::: {.notes}
+The months column is a coverage check: Massey's 2015 season is missing February 2016, so its 2016 growth compares five months with six. Alex Fraser has no reports after February 2018.
+:::
+
+## The difference in differences
+
+```{r}
+#| label: did
+seasons |>
+  filter(season == 2017) |>
+  select(crossing, growth) |>
+  pivot_wider(names_from = crossing, values_from = growth) |>
+  mutate(difference = `Port Mann` - Massey)
+```
+
+Port Mann's change minus Massey's change: about 28 percentage points.
+
+::: {.key-point}
+This assumes Port Mann would have changed like Massey without the toll change.
+:::
+
+::: {.notes}
+Massey absorbs whatever changed for every crossing: the economy, fuel prices, the weather. This is the idea behind a difference-in-differences design: the change at the place affected minus the change at a comparison place. The assumption is often called parallel trends. It cannot be tested directly, but other years can make it more or less believable.
+:::
+
+## A placebo year shows no jump
+
+```{r}
+#| label: placebo
+seasons |>
+  filter(crossing == "Port Mann") |>
+  select(season, daily, growth)
+```
+
+- No toll change in 2016 or 2018: growth of 3% and 5%.
+- The toll change in 2017: growth of 27%.
+
+::: {.notes}
+A placebo test repeats the comparison where nothing happened. If Port Mann had grown 27% every year, the toll would not explain the 2017 jump. The 2018 season also shows that traffic did not fall back.
+:::
+
+## A comparison must not be affected by the change
+
+```{r}
+#| label: spillover
+#| include: false
+g <- seasons |> filter(season == 2017) |> select(crossing, growth) |> deframe()
+```
+
+- In season 2017, Alex Fraser fell `r abs(round(g[["Alex Fraser"]], 1))`% and Massey fell `r abs(round(g[["Massey"]], 1))`%.
+- Some drivers who had avoided the toll on Alex Fraser switched back to Port Mann.
+- With Alex Fraser as the comparison, that switch counts twice: as a gain at Port Mann and a loss at Alex Fraser. The estimate rises from `r round(g[["Port Mann"]] - g[["Massey"]], 1)` to `r round(g[["Port Mann"]] - g[["Alex Fraser"]], 1)` points.
+
+::: {.warning}
+A route that people can switch to is a poor comparison. Here the switch is small; a larger one would distort the estimate more.
+:::
+
+## Check coverage before you average
+
+::: {.small}
+```{r}
+#| label: coverage
+traffic |>
+  filter(crossing == "Alex Fraser") |>
+  mutate(period = if_else(date < ymd("2017-09-01"), "before", "after")) |>
+  summarise(daily = mean(volume), days = n(),
+            summer_days = sum(month(date) %in% 5:8), .by = period)
+```
+:::
+
+- All days: down 7.5%. The same months a year apart: down 2.4%.
+- Reports stop in February 2018, so "after" has no summer days.
+
+::: {.warning}
+Averages over different months compare seasons, not periods. Count the days and months first.
+:::
+
+## Quick check: a missing December
+
+Suppose one crossing had no data for December 2017.
+
+Would its September 2017 to February 2018 average be too high or too low?
+
+::: {.fragment}
+Too high. December is one of the lowest months, so leaving it out raises the average and overstates the growth.
+
+Compare only months that both periods have.
+:::
+
+::: {.notes}
+This happened at the Port Mann bridge counter: the December 2017 report is a broken link. It is one reason this deck uses the Highway 1 counter instead.
+:::
+
+## Near SkyTrain often means Downtown
+
+::: {.small}
+| Storefronts in 2026 | Food & Beverage share |
+|---|---|
+| Within 400 m of a SkyTrain station | 36% |
+| More than 800 m from a station | 26% |
+| Within 400 m, compared within the same local area | About 3 points higher; the 95% interval includes zero |
+:::
+
+- Seven of Vancouver's 20 stations are in the Downtown local area, where restaurants are common anyway.
+- Fixed effects (deck 17) compare storefronts within the same neighbourhood.
+
+```{r}
+#| label: location-fe
+#| eval: false
+feols(food_bev ~ near_skytrain | local_area, data = storefronts)
+```
+
+::: {.notes}
+From an analysis of the City of Vancouver storefronts inventory, 2026. food_bev is 0/100, so the coefficient is in percentage points. The raw gap of about 10 points shrinks to about 3 once each storefront is compared with others in its own local area.
+:::
+
+## A rate can fall because its base grew
+
+```{r}
+#| label: denominator
+downtown <- tribble(
+  ~period,   ~incidents, ~residents,
+  "2003–05", 11100,      37200,
+  "2023–25", 10100,      74100
+)
+downtown |> mutate(rate_per_1000 = 1000 * incidents / residents)
+```
+
+- Property crimes fell 9%; residents doubled; the rate fell 54%.
+- Most of the fall in Downtown's rate comes from the denominator.
+
+::: {.notes}
+Rounded annual averages from an analysis of Vancouver Police Department open data and census populations. Residents are also the wrong base for Downtown, where workers and visitors far outnumber residents. Always report the count alongside the rate.
+:::
+
+## Quick check: who is in the sample?
+
+Vacancy among all surveyed storefronts fell from 12.1% in 2021 to 9.5% in 2026.
+
+Among storefronts surveyed in every year, it was 8.1% in 2026. Why might the two differ?
+
+::: {.fragment}
+The survey grew from 8,205 to 9,610 units. Units added after 2020 were more often vacant.
+
+Follow the same units over time to separate real change from a change in what is counted.
+:::
+
+::: {.notes}
+From the City of Vancouver storefronts inventory, 2020–2026. A set of units observed in every year is called a balanced panel.
+:::
+
+## Small counts swing rates
+
+- Shaughnessy's location quotient for automotive storefronts is 4.6: almost five times the city share.
+- It rests on three businesses out of 37.
+- One closure would cut it by a third.
+
+::: {.key-point}
+Report the count beside every rate, share, or ratio. Treat results from a handful of cases as anecdotes.
+:::
+
+## Robustness: does the finding survive?
+
+Change one choice at a time and see whether the finding holds.
+
+- **Another period:** a placebo year where nothing changed.
+- **Another comparison:** a different control group.
+- **Another definition:** weekdays only, or a different distance band.
+- **Another sample:** drop the largest case or the incomplete months.
+
+::: {.key-point}
+A finding that holds under several reasonable choices is more convincing than one precise estimate.
+:::
+
+## Your alternative-explanation slide
+
+State it in three parts:
+
+1. **The alternative:** "Traffic was growing at every crossing anyway."
+2. **What we would see if it were true:** "Massey would have grown as much as Port Mann."
+3. **What we see:** "Massey fell 0.6%; Port Mann grew 27%."
+
+::: {.key-point}
+Pick the alternative a sceptical listener would raise first, and test it with data.
+:::
+
+## Practice: weekdays only
+
+Commuters drive on weekdays. Does the finding hold for weekday traffic?
+
+1. Keep Monday to Friday: `wday(date, week_start = 1) <= 5`.
+2. Repeat the season comparison.
+3. Compute the difference in differences between Port Mann and Massey for 2017.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: practice
+traffic |>
+  filter(wday(date, week_start = 1) <= 5,
+         month(date) %in% c(9:12, 1:2)) |>
+  mutate(season = if_else(month(date) >= 9, year(date), year(date) - 1)) |>
+  summarise(daily = mean(volume), .by = c(crossing, season)) |>
+  arrange(crossing, season) |>
+  mutate(growth = 100 * (daily / lag(daily) - 1), .by = crossing) |>
+  filter(season == 2017) |>
+  select(crossing, growth) |>
+  pivot_wider(names_from = crossing, values_from = growth) |>
+  mutate(difference = `Port Mann` - Massey)
+```
+:::
+
+::: {.notes}
+The weekday difference is about 26 points, close to the 28 points for all days, so the finding survives this check.
+:::

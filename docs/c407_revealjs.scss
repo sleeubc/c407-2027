@@ -224,3 +224,53 @@ $code-block-font-size: 0.82em;
     columns: 1;
   }
 }
+
+// Folded code (code-fold: true), used by the example presentations. Each
+// slide has one faint "Code" toggle in its top-right corner, outside the
+// layout; opened code floats over the slide below the title.
+.reveal details.code-fold {
+  margin: 0;
+}
+
+.reveal details.code-fold > summary {
+  position: absolute;
+  z-index: 30;
+  top: 0;
+  right: 0;
+  padding: 0.1em 0.45em;
+  border-radius: 0.3em;
+  font-size: 0.36em;
+  color: #50616c;
+  opacity: 0.45;
+  cursor: pointer;
+  list-style: none;
+}
+
+.reveal details.code-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.reveal details.code-fold > summary:hover,
+.reveal details.code-fold[open] > summary {
+  opacity: 1;
+  background: var(--c407-pale-blue);
+}
+
+.reveal details.code-fold[open] > summary::after {
+  content: " \00d7";
+}
+
+.reveal details.code-fold[open] > div.sourceCode {
+  position: absolute;
+  z-index: 20;
+  top: 105px;
+  left: 0;
+  right: 0;
+  background: #fff;
+  box-shadow: 0 0.3em 1em rgba(0, 0, 0, 0.25);
+}
+
+.reveal details.code-fold[open] pre code {
+  max-height: 480px;
+  font-size: 0.85em;
+}

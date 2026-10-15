@@ -79,37 +79,59 @@
       main { padding-top: 38px; }
       ol { grid-template-columns: 1fr; }
     }
+    h2 {
+      margin: 48px 0 16px;
+      color: var(--blue);
+      font-size: 1.4rem;
+    }
+    .resources {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px 18px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .resources a { grid-template-columns: 1fr; }
+    .resources a::before { content: none; }
+    @media (max-width: 720px) {
+      .resources { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <main>
     <header>
       <h1>COMM 407</h1>
-      <p>R, data visualization, and spatial analysis lecture slides</p>
+      <p>Real estate data analysis with R: lecture slides and course documents</p>
     </header>
     <ol>
-      <li><a href="01_R_and_Positron_Installation.html">Install R and Positron</a></li>
-      <li><a href="02_How_to_run_R_codes.html">How to run R code</a></li>
-      <li><a href="03_Sample_Session.html">Sample session</a></li>
-      <li><a href="04_Working_Directory_Relative_Path.html">Working directories and relative paths</a></li>
-      <li><a href="05_Data_Structure.html">Data structures and basic operations</a></li>
-      <li><a href="06_dplyr_1.html">dplyr I</a></li>
-      <li><a href="07_dplyr_2.html">dplyr II</a></li>
-      <li><a href="08_dplyr_3.html">dplyr III</a></li>
-      <li><a href="09_ggplot2_1.html">ggplot2 I</a></li>
-      <li><a href="10_ggplot2_2.html">ggplot2 II</a></li>
-      <li><a href="11_ggplot2_3.html">ggplot2 III</a></li>
-      <li><a href="12_ggplot2_4.html">ggplot2 IV</a></li>
-      <li><a href="13_Factor.html">Factors</a></li>
-      <li><a href="14_statcan.html">Statistics Canada data tables</a></li>
-      <li><a href="15_ggmap.html">Basic mapping with ggmap</a></li>
-      <li><a href="16_census_profile.html">Census profiles</a></li>
-      <li><a href="17_sf_1.html">Simple features I</a></li>
-      <li><a href="18_sf_2.html">Simple features II: geoprocessing</a></li>
-      <li><a href="19_pivoting.html">Pivoting data</a></li>
-      <li><a href="20_join.html">Joining tables</a></li>
-      <li><a href="21_discretizing_map_colors.html">Discretizing map colours</a></li>
+      <li><a href="01_setup.html">Set up R, Positron, and the course folder</a></li>
+      <li><a href="02_sample_analysis.html">A sample analysis in Quarto</a></li>
+      <li><a href="03_data_structures.html">Data structures</a></li>
+      <li><a href="04_dplyr_1.html">dplyr I: select, filter, arrange, mutate</a></li>
+      <li><a href="05_dplyr_2.html">dplyr II: summaries and groups</a></li>
+      <li><a href="06_ggplot.html">The grammar of graphics</a></li>
+      <li><a href="07_pumf.html">Census microdata (PUMF)</a></li>
+      <li><a href="08_ai_workflow.html">Working with AI</a></li>
+      <li><a href="09_functions_loops.html">Lists, functions, and loops</a></li>
+      <li><a href="10_statcan.html">Statistics Canada data tables</a></li>
+      <li><a href="11_census.html">Census profiles</a></li>
+      <li><a href="12_maps_tmap.html">Maps with tmap</a></li>
+      <li><a href="13_map_classification.html">Classifying map colours</a></li>
+      <li style="counter-set: lecture 15"><a href="15_pivot_join.html">Reshaping and joining tables</a></li>
+      <li><a href="16_spatial_sf.html">Spatial data with sf</a></li>
+      <li><a href="17_regression.html">Hedonic price regression</a></li>
+      <li><a href="18_comparisons.html">Comparisons and alternative explanations</a></li>
     </ol>
+    <h2>Course documents</h2>
+    <ul class="resources">
+      <li><a href="COMM407_Syllabus_2025W2.docx">Syllabus</a></li>
+      <li><a href="research_project.html">Research project</a></li>
+      <li><a href="example_skytrain.html">Example: Canada Line and house prices</a></li>
+      <li><a href="example_west_side.html">Example: The Value of W</a></li>
+      <li><a href="example_ability_sorting.html">Example: Ability sorting</a></li>
+    </ul>
   </main>
 </body>
 </html>

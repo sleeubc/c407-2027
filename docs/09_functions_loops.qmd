@@ -1,0 +1,477 @@
+---
+title: "Lists, functions, and loops"
+subtitle: "COMM 407 · Reading the code AI writes"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+bca <- read_rds("data/bca262.rds")
+pumf <- read_rds("data/2021_census_pumf_ind.rds")
+```
+
+## AI code uses three things we have not covered
+
+- **Lists** hold results of different types and sizes.
+- **Functions** package steps so they can be repeated.
+- **Loops** repeat a step for each year, city, file, or street.
+
+AI writes these easily. You need to read them:
+
+- In your code defence, you explain code like this line by line.
+- In exams, you predict what it returns and find its bugs.
+
+::: {.key-point}
+Today's goal is reading, not writing: explain every line of a function or loop that AI gives you.
+:::
+
+## A list holds items of any type and length
+
+```{r}
+#| label: list
+listing <- list(address = "2561 Western Ave",
+                price = 274900,
+                past_prices = c(180000, 215000))
+str(listing)
+```
+
+- A vector holds values of one type (deck 03).
+- A list can hold anything: numbers, text, tibbles, even other lists.
+
+## [ ] keeps the list; [[ ]] takes the item out
+
+```{r}
+#| label: brackets
+listing["price"]      # a list with one item
+listing[["price"]]    # the number itself
+listing["price"] * 2  # you cannot multiply a list
+```
+
+`listing$price` is a shortcut for `listing[["price"]]`.
+
+::: {.key-point}
+Think of a train. `[ ]` gives you a shorter train; `[[ ]]` gives you what is inside one car.
+:::
+
+## A tibble is a list of columns
+
+```{r}
+#| label: tibble-list
+tb <- tibble(price = c(5e5, 7.5e5, 1.2e6),
+             city = c("Burnaby", "Surrey", "Vancouver"))
+is.list(tb)
+length(tb)
+tb[["city"]]
+```
+
+::: {.warning}
+`length()` of a tibble counts columns, not rows. Use `nrow()` to count rows.
+:::
+
+## Many R results are lists
+
+```{r}
+#| label: model-list
+fit <- lm(price ~ floorarea, data = bca)
+names(fit)
+coef(fit)[["floorarea"]]
+```
+
+- Models, API responses, and `map()` output (later today) are lists.
+- `names()` and `str()` show what is inside. Helpers such as `coef()` pull out common items.
+
+::: {.notes}
+Regression comes in deck 17. Here the model is only an example of a list. The example presentations use `coef(m)[["westTRUE"]]` and `summary(fit)$coefficients[2, 4]`, which students can now read.
+:::
+
+## A function turns inputs into an output
+
+```{r}
+#| label: function
+pct_change <- function(new, old) {
+  100 * (new - old) / old
+}
+pct_change(new = 1500000, old = 1200000)
+```
+
+- `new` and `old` are the **arguments**: the inputs.
+- The code between `{ }` is the **body**.
+- The function returns the value of the **last line** in the body.
+
+## Arguments match by name, then by position
+
+```{r}
+#| label: arg-order
+pct_change(new = 1500000, old = 1200000)
+pct_change(old = 1200000, new = 1500000)
+pct_change(1200000, 1500000)
+```
+
+::: {.warning}
+Without names, R matches arguments by position. Values in the wrong order run without an error and give a different answer.
+:::
+
+## A default is a choice you may not see
+
+```{r}
+#| label: defaults
+mean_price <- function(data, type = "S/F Res") {
+  data |>
+    filter(act_use_cat == type) |>
+    summarise(avg = mean(price, na.rm = TRUE), sales = n())
+}
+mean_price(bca)
+```
+
+- `mean_price(bca)` looks like the average of all sales, but the default `type = "S/F Res"` leaves out every strata unit.
+- Built-in functions have defaults too: `mean()` has `na.rm = FALSE`, so one missing price makes the average `NA`. Type `?mean` to see them.
+
+## Names in the body come from the arguments, or from outside
+
+```{r}
+#| label: global
+cutoff <- 1000000
+n_above <- function(data) sum(data$price > cutoff, na.rm = TRUE)
+n_above(bca)
+
+cutoff <- 2000000
+n_above(bca)
+```
+
+::: {.warning}
+`cutoff` is not an argument, so R looks for it outside the function. The same call gives a different answer after `cutoff` changes. In Quarto, the result depends on which chunks ran first.
+:::
+
+## return() can end a function early
+
+```{r}
+#| label: return
+price_label <- function(p) {
+  if (is.na(p)) return("unknown")
+  if (p >= 1000000) "$1M or more" else "under $1M"
+}
+price_label(1500000)
+price_label(NA)
+```
+
+- `if (condition) A else B` runs `A` when the condition is `TRUE`, and `B` otherwise.
+- `return()` stops the function and returns its value right away.
+
+## if () takes one TRUE or FALSE; if_else() takes a column
+
+```{r}
+#| label: if-vector
+prices <- c(800000, 1500000)
+price_label(prices)
+if_else(prices >= 1000000, "$1M or more", "under $1M")
+```
+
+::: {.key-point}
+Inside `mutate()`, use `if_else()` or `case_when()`. Use `if` for a single choice, such as whether a file exists.
+:::
+
+## \\(x) is a short way to write a function
+
+```{r}
+#| label: lambda
+#| eval: false
+function(x) x / 1000
+\(x) x / 1000        # the same function
+~ .x / 1000          # older purrr style; also the same
+```
+
+A function written in place has no name. You have seen this before:
+
+```{r}
+#| label: lambda-seen
+#| eval: false
+pumf |> map_chr(\(col) class(col)[1])           # deck 07
+scale_y_continuous(labels = \(x) paste0(x, "%"))  # a chart axis
+```
+
+## A for loop repeats code for each item
+
+```{r}
+#| label: for
+for (yr in 2023:2025) {
+  n <- sum(year(bca$sale_date) == yr)
+  print(paste(yr, n))
+}
+```
+
+- `yr` takes each value in turn: 2023, then 2024, then 2025.
+- The body runs once for each value.
+
+## A loop must save each result somewhere
+
+```{r}
+#| label: overwrite
+for (yr in 2023:2025) {
+  result <- bca |>
+    filter(year(sale_date) == yr) |>
+    summarise(sale_year = yr, avg = mean(price, na.rm = TRUE))
+}
+result
+```
+
+::: {.warning}
+Each pass overwrites `result`, so only 2025 is left. The code runs, and the number looks reasonable.
+:::
+
+## Save each result in a list, then stack them
+
+```{r}
+#| label: accumulate
+results <- list()
+for (yr in 2023:2025) {
+  results[[as.character(yr)]] <- bca |>
+    filter(year(sale_date) == yr) |>
+    summarise(avg = mean(price, na.rm = TRUE))
+}
+bind_rows(results, .id = "sale_year")
+```
+
+`results[["2023"]] <- …` adds an item named "2023". `bind_rows()` stacks the tibbles, and `.id` keeps the names as a column.
+
+## Many loops are group_by() in disguise
+
+```{r}
+#| label: group-by
+bca |>
+  filter(year(sale_date) %in% 2023:2025) |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(avg = mean(price, na.rm = TRUE))
+```
+
+- Same numbers, and no result to overwrite.
+- A loop over groups in one table can usually be a `group_by()`. Ask the AI for that version.
+- Loops are the right tool when each item needs its own input: a file, an API call, a street.
+
+## map() is a loop that returns a list
+
+```{r}
+#| label: map
+avg_in_year <- function(yr) {
+  bca |>
+    filter(year(sale_date) == yr) |>
+    summarise(sale_year = yr, avg = mean(price, na.rm = TRUE))
+}
+map(2023:2025, avg_in_year) |> list_rbind()
+```
+
+```{r}
+#| label: map-same
+#| eval: false
+map(2023:2025, avg_in_year)  # is the same as
+list(avg_in_year(2023), avg_in_year(2024), avg_in_year(2025))
+```
+
+`list_rbind()` stacks the list of tibbles, like `bind_rows()`.
+
+## map_dbl() and map_chr() return a vector
+
+```{r}
+#| label: map-dbl
+median_in_year <- \(yr) median(bca$price[year(bca$sale_date) == yr],
+                               na.rm = TRUE)
+map_dbl(2023:2025, median_in_year)
+```
+
+A tibble is a list of columns, so `map()` over a tibble visits each column. Now you can read this line from deck 07:
+
+```{r}
+#| label: map-chr
+pumf |> map_chr(\(col) class(col)[1]) |> table()
+```
+
+::: {.small}
+Older code uses `lapply()`, which works like `map()`, and `sapply()`, which guesses whether to return a vector or a list.
+:::
+
+## Results can disappear without a warning
+
+::: {.small}
+```{r}
+#| label: null-drop
+avg_2025 <- function(city) {
+  d <- bca |> filter(juris_label == city, year(sale_date) == 2025)
+  if (nrow(d) < 30) return(NULL)   # too few sales to average
+  summarise(d, avg = mean(price, na.rm = TRUE), sales = n())
+}
+cities <- c("City of Vancouver", "University Endowment Lands",
+            "City of Burnaby")
+map(set_names(cities), avg_2025) |> list_rbind(names_to = "city")
+```
+:::
+
+`set_names()` names each result after its city, and `names_to` makes the names a column.
+
+::: {.warning}
+Three cities in, two rows out. The UEL had `r sum(bca$juris_label == "University Endowment Lands" & year(bca$sale_date) == 2025)` sales in 2025, so `avg_2025()` returned `NULL`, and `list_rbind()` dropped it without a warning.
+:::
+
+## across() repeats a function over columns
+
+```{r}
+#| label: across-all
+num_means <- pumf |> summarise(across(where(is.numeric), mean))
+ncol(num_means)
+num_means |> select(PPSORT, WEIGHT, TotInc, Value)
+```
+
+::: {.warning}
+`where(is.numeric)` picked `r ncol(num_means)` columns, including `PPSORT` (a record ID) and the `88888888` codes in `TotInc` and `Value`. Check which columns a selector picks.
+:::
+
+## Read across() as "for each of these columns"
+
+```{r}
+#| label: across-clean
+codes <- c(88888888, 99999999)
+pumf |>
+  filter(CMA == "Vancouver") |>
+  mutate(across(c(TotInc, Wages), \(x) if_else(x %in% codes, NA, x))) |>
+  summarise(across(c(TotInc, Wages),
+                   \(x) weighted.mean(x, WEIGHT, na.rm = TRUE)))
+```
+
+For each of `TotInc` and `Wages`: turn the codes into `NA`, then take the weighted mean.
+
+## Predict the output
+
+:::: {.columns}
+::: {.column width="50%"}
+```{r}
+#| label: predict-1
+#| eval: false
+rate <- 0.01
+tax <- function(price) price * rate
+rate <- 0.02
+tax(1000000)
+```
+
+::: {.fragment}
+`20000`: the function uses `rate` as it is when the function runs, not when it was written.
+:::
+:::
+
+::: {.column width="50%"}
+```{r}
+#| label: predict-2
+#| eval: false
+total <- 0
+for (p in c(5, 10, 20)) {
+  total <- p
+}
+total
+```
+
+::: {.fragment}
+`20`: each pass overwrites `total`. To add up, write `total <- total + p` (35).
+:::
+:::
+::::
+
+## Practice: find the bug
+
+We asked an AI: *"Show the average 2025 sale price in Vancouver, Burnaby, and Richmond."*
+
+```{r}
+#| label: practice-loop
+munis <- c("City of Vancouver", "City of Burnaby", "City of Richmond")
+for (m in munis) {
+  out <- bca |>
+    filter(juris_label == m, year(sale_date) == 2025) |>
+    summarise(avg = mean(price, na.rm = TRUE))
+}
+out
+```
+
+What is wrong? Rewrite it without a loop.
+
+## Answer
+
+```{r include=params$answers}
+#| label: practice-loop-answer
+# The loop overwrites `out`, so it holds only Richmond, the last city,
+# and nothing says which city it is. group_by() keeps every city.
+bca |>
+  filter(juris_label %in% munis, year(sale_date) == 2025) |>
+  group_by(juris_label) |>
+  summarise(avg = mean(price, na.rm = TRUE))
+```
+
+## Practice: explain the placebo code
+
+Simplified from the West Side example. Answer the questions without running it.
+
+::: {.small}
+```{r}
+#| label: practice-placebo
+#| eval: false
+placebo <- function(name) {
+  data <- sales |>
+    mutate(dist = distance_to(name)) |>  # metres from the street
+    filter(abs(dist) < 150)
+  if (nrow(data) < 100) return(NULL)     # too few sales to estimate
+  premium(data)                          # one row: estimate, se, n
+}
+results <- map(set_names(placebo_streets), placebo) |>
+  compact() |>
+  bind_rows(.id = "street")
+```
+:::
+
+1. What goes into `placebo()`, and what comes out?
+2. Which names in the body are not arguments? Where do they come from?
+3. What does `map()` return? What does `compact()` do?
+4. Twenty-one streets go in. Why might fewer rows come out?
+
+## Answer
+
+::: {.small}
+1. A street name goes in. A one-row tibble from `premium()` comes out, or `NULL` when fewer than 100 sales are near the street.
+2. `sales`, `distance_to()`, and `premium()`. They are defined earlier in the file. If `sales` changes before this code runs, the results change.
+3. A named list with one item per street, each a tibble or `NULL`. `compact()` removes the `NULL` items, and `bind_rows(.id = "street")` stacks the rest with the street names as a column.
+4. Streets with fewer than 100 nearby sales return `NULL` and drop out. In the example, 18 of 21 streets remain. Check with `length(placebo_streets)` and `nrow(results)`.
+:::
+
+## A checklist for reading functions and loops
+
+1. **Inputs and output:** what goes into the function, and what comes out (the last line, or `return()`)?
+2. **Outside names:** which names in the body are not arguments? Where are they set?
+3. **Defaults:** what does each default choose for you?
+4. **Loops and map():** what do they repeat over, and where does each result go?
+5. **Counts:** how many items go in, and how many come out?
+6. **across():** which columns did the selector pick?

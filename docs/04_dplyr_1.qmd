@@ -1,0 +1,213 @@
+---
+title: "dplyr I"
+subtitle: "COMM 407 · Select, filter, arrange, and mutate"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA)
+suppressPackageStartupMessages(library(tidyverse))
+```
+
+## Four verbs and a pipe
+
+| Verb | What it does |
+|---|---|
+| `select()` | Keeps columns |
+| `filter()` | Keeps rows that meet conditions |
+| `arrange()` | Sorts rows |
+| `mutate()` | Adds or changes columns |
+| `|>` | Passes the result on to the next step |
+
+::: {.key-point}
+AI tools write these fluently. Your job is to read a pipeline and know what it returns.
+:::
+
+## A small tibble to practise on
+
+```{r}
+#| label: tb
+tb <- tibble(a = c(2, 1, 3), b = c("a", "b", "c"), c = c("y", "y", "x"))
+tb
+```
+
+## select() keeps columns
+
+```{r}
+#| label: select
+select(tb, a, b)
+```
+
+The first argument is the data; the rest are the columns to keep.
+
+## The pipe passes the left side to the right
+
+`x |> f(y)` is the same as `f(x, y)`.
+
+```{r}
+#| label: pipe
+tb |> select(a, b)
+```
+
+Insert `|>` with `Ctrl + Shift + M` (Windows) or `Command + Shift + M` (macOS).
+
+## filter() keeps rows that meet every condition
+
+```{r}
+#| label: filter
+tb |> filter(a >= 2, c == "y")
+```
+
+Commas mean "and": a row must meet both conditions.
+
+## Logical operators
+
+```{r}
+#| label: tb2
+tb2 <- tibble(a = c(1, 1, 1, 2, 2, 2), b = c(1, 2, 3, 3, 4, 4))
+```
+
+| Operator | Meaning | Example |
+|---|---|---|
+| `==`, `!=` | equal, not equal | `a != 2` |
+| `&` | and | `a == 1 & b == 2` |
+| `|` | or | `a == 1 | b == 2` |
+| `%in%` | in a set | `b %in% c(1, 3)` |
+| `!` | not | `!b %in% c(1, 3)` |
+
+## Predict the output
+
+```{r}
+#| label: predict-1-code
+#| eval: false
+tb2 |> filter(a == 1 | b == 3)
+```
+
+How many rows does this return, and which ones?
+
+::: {.fragment}
+```{r}
+#| label: predict-1-out
+#| echo: false
+tb2 |> filter(a == 1 | b == 3)
+```
+
+All rows with `a == 1`, plus the row where `b == 3` and `a == 2`.
+:::
+
+## arrange() sorts rows
+
+```{r}
+#| label: arrange
+tb |> arrange(c, a)
+tb |> arrange(desc(a))
+```
+
+## mutate() adds columns
+
+```{r}
+#| label: mutate
+tb |> mutate(d = 3 * a, e = paste0(b, c))
+```
+
+## Predict the output
+
+```{r}
+#| label: predict-2-code
+#| eval: false
+tb |>
+  mutate(d = a * 2) |>
+  filter(d > 2) |>
+  select(b, d)
+```
+
+::: {.fragment}
+```{r}
+#| label: predict-2-out
+#| echo: false
+tb |>
+  mutate(d = a * 2) |>
+  filter(d > 2) |>
+  select(b, d)
+```
+
+Read a pipeline one step at a time, top to bottom.
+:::
+
+## filter() silently drops missing values
+
+```{r}
+#| label: na-filter
+bca <- read_rds("data/bca262.rds")
+sum(is.na(bca$price))
+
+nrow(bca)
+bca |> filter(price < 500000 | price >= 500000) |> nrow()
+```
+
+The two conditions cover every possible price, yet rows disappear: a missing price meets neither condition.
+
+## A typo returns zero rows, not an error
+
+```{r}
+#| label: typo
+bca |> filter(act_use_cat == "Strata") |> nrow()
+bca |> distinct(act_use_cat)
+```
+
+::: {.warning}
+Check the exact values with `distinct()` before you filter, and count rows after every filter.
+:::
+
+## Practice
+
+From `bca`, find sales that:
+
+- happened in 2017 (add `sale_year` with `year(sale_date)`);
+- are condos or townhouses (`act_use_cat` is `"Strata Res"`); and
+- sold for more than $5 million.
+
+Keep `roll_num`, `sale_year`, `price`, and `neigh_label`, sorted from the highest price. Write it as one pipeline.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: practice-answer
+bca |>
+  mutate(sale_year = year(sale_date)) |>
+  filter(sale_year == 2017, act_use_cat == "Strata Res", price > 5000000) |>
+  select(roll_num, sale_year, price, neigh_label) |>
+  arrange(desc(price))
+```
+:::
