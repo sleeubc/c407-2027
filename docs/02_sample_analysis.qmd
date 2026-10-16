@@ -283,6 +283,85 @@ avg_price_plot <- ggplot(avg_price, aes(sale_year, avg_price)) +
 avg_price_plot
 ```
 
+## Save a figure to use outside Quarto
+
+```{r}
+#| label: save
+#| eval: false
+ggsave("temp/avg_price.png", avg_price_plot, width = 8, height = 4.5)
+```
+
+::: {.path-line}
+`c407` → `temp` → `avg_price.png`
+:::
+
+- Run the chunk, then find `avg_price.png` in the Explorer.
+- Insert the PNG into PowerPoint or Google Slides.
+- `width` and `height` are in inches; 8 × 4.5 fits a 16:9 slide.
+
+::: {.key-point}
+Save figures with `ggsave()`, never with a screenshot.
+:::
+
+## Turn your analysis into a report: setup
+
+Edit `sample_analysis.qmd` to match this, and delete the other chunks:
+
+::: {.small}
+````markdown
+---
+title: "Home prices in Metro Vancouver"
+format: typst
+execute:
+  echo: false
+---
+```{{r}}
+#| label: setup
+#| include: false
+library(tidyverse)
+```
+
+```{{r}}
+#| label: data
+bca <- read_rds("data/bca262.rds")
+avg_price <- bca |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(avg_price = mean(price, na.rm = TRUE))
+```
+````
+:::
+
+::: {.notes}
+The practice chunks go, including `save`: the report shows the chart itself. The next slides explain each part of this file: rendering, Typst, Markdown, and hidden code.
+:::
+
+## Turn your analysis into a report: text and chart
+
+Add the heading and text above your chart chunk:
+
+::: {.small}
+````markdown
+## Average sale prices by year
+
+The chart shows the average sale price in each year,
+from [BC Assessment](https://www.bcassessment.ca) sales data.
+
+- Prices **rose for two decades**, peaked in 2022, and have levelled off since.
+- Prices are *nominal*: they are not adjusted for inflation.
+
+```{{r}}
+#| label: plot
+avg_price_plot <- ggplot(avg_price, aes(sale_year, avg_price)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::label_dollar()) +
+  labs(x = NULL, y = "Average sale price",
+       caption = "2026: January to early March only")
+avg_price_plot
+```
+````
+:::
+
 ## Running and rendering are different
 
 :::: {.columns}
@@ -303,7 +382,7 @@ Starts a **fresh** R session and runs every chunk from top to bottom.
 "It works when I run it but fails when I render" usually means the document uses something you created only in the Console.
 :::
 
-## Render to check that the document works
+## Render your report
 
 - Click **Preview** in Positron, or
 - run this in the **Terminal**:
@@ -312,7 +391,7 @@ Starts a **fresh** R session and runs every chunk from top to bottom.
 quarto render scripts/sample_analysis.qmd
 ```
 
-The result is `scripts/sample_analysis.html`, with your text, code, and output.
+The result is `scripts/sample_analysis.pdf`: your title, text, and chart, without the code.
 
 ::: {.key-point}
 Render often. A document that renders from scratch is reproducible.
@@ -322,47 +401,76 @@ Render often. A document that renders from scratch is reproducible.
 TODO: Confirm that the `quarto` command is available in Positron's Terminal without a separate installation.
 :::
 
-## Render a PDF report with Typst
+## Typst turns your report into a PDF
 
-List both formats in the YAML header:
+`format: typst` makes a PDF. Typst comes with Quarto, so you do not need LaTeX, which `format: pdf` requires.
+
+To make a web page as well, list both formats:
 
 :::: {.columns}
 ::: {.column width="40%"}
 ```yaml
 format:
-  html: default
   typst: default
+  html: default
 ```
 :::
 
 ::: {.column width="56%"}
-- Indent `html` and `typst` more than `format:`.
-- Indent them by the same amount.
+- Indent `typst` and `html` under `format:`, by the same amount.
 - Use spaces, not tabs.
+- **Preview** shows the first format listed.
 :::
 ::::
 
-- `quarto render scripts/sample_analysis.qmd` now makes both `sample_analysis.html` and `sample_analysis.pdf`.
-- **Preview** shows the first format listed. Put `typst` first to preview the PDF.
-
 ::: {.key-point}
-Typst comes with Quarto, so you do not need LaTeX (`format: pdf` needs it). PDF output is static, so use static maps (`tmap_mode("plot")`) and keep tables simple and narrow.
+A PDF is static: use static maps (`tmap_mode("plot")`) and simple, narrow tables. It already includes your chart, so you need a PNG only for slides made outside Quarto.
 :::
 
-## Save a figure to use outside Quarto
+## Write text around your code
 
-```{r}
-#| label: save
-#| eval: false
-ggsave("temp/avg_price.png", avg_price_plot, width = 8, height = 4.5)
-```
+Your report's text uses Markdown:
 
-- A rendered report or Quarto slides already include the figure. You don't need a PNG.
-- For PowerPoint or Google Slides, save a PNG and insert the file. Don't use screenshots.
-- `width` and `height` are in inches; 8 × 4.5 fits a 16:9 slide.
+| You type | The report shows |
+|---|---|
+| `## Average sale prices by year` | a section heading |
+| `**rose for two decades**` | **rose for two decades** |
+| `*nominal*` | *nominal* |
+| `- Prices are …` | a bullet point |
+| `[BC Assessment](https://www.bcassessment.ca)` | [BC Assessment](https://www.bcassessment.ca) |
 
 ::: {.key-point}
-Because `ggsave()` is in the document, every render remakes the PNG, so it always matches your code.
+Leave a blank line before every heading and list, as in the report. Without it, Quarto prints the `##` or `-` as plain text.
+:::
+
+## Hide code from readers
+
+| Chunk option | Code | Output |
+|---|---|---|
+| (default) | shown | shown |
+| `echo: false` | hidden | shown |
+| `include: false` | hidden | hidden, but the chunk still runs |
+
+Your report hides the code of every chunk with this YAML:
+
+```yaml
+execute:
+  echo: false
+```
+
+Its setup chunk also has `include: false`, to hide package startup messages.
+
+::: {.key-point}
+Hiding code changes only the output. The code stays in your `.qmd`, which is what you submit and defend.
+:::
+
+## Exercise: show the code
+
+1. Delete the `execute:` and `echo: false` lines from the YAML header, and render again. What changed?
+2. Put the two lines back, and render once more.
+
+::: {.notes}
+Answer: the code of the `data` and `plot` chunks now appears. The setup chunk stays hidden, because `include: false` hides its code and output whatever the YAML header says.
 :::
 
 ## Quick check: why did the render fail?

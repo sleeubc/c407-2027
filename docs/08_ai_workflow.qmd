@@ -203,6 +203,27 @@ sales |> left_join(neigh_info, by = "neigh", relationship = "many-to-one")
 4. Compare magnitudes with a number you know. Is an average income of $17 million plausible?
 5. Plot the raw data before you summarise it.
 
+## Let R write the numbers in your text
+
+```{r}
+#| label: van
+van <- pumf |> filter(CMA == "Vancouver")
+```
+
+````markdown
+The PUMF has `r knitr::inline_expr('format(nrow(van), big.mark = ",")')` records for the Vancouver CMA.
+They represent `r knitr::inline_expr('format(round(sum(van$WEIGHT)), big.mark = ",")')` people.
+````
+
+The report shows: The PUMF has `r format(nrow(van), big.mark = ",")` records for the Vancouver CMA. They represent `r format(round(sum(van$WEIGHT)), big.mark = ",")` people.
+
+- A number you type stays the same after you or the AI change a filter or fix a join, and nothing warns you.
+- Inline code runs again at every render. In PowerPoint, copy every number again from your final render.
+
+::: {.key-point}
+Every number in your text should come from R.
+:::
+
 ## Work in small steps
 
 1. For anything with more than one step, ask for a plan before any code.
