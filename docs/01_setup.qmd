@@ -109,6 +109,7 @@ On Windows, right-click the ZIP file and choose **Extract All…**. Opening the 
 | `temp/` | Disposable output, such as saved figures. |
 | `_quarto.yml` | Makes code run from the `c407` folder. Do not move it. |
 | `AGENTS.md` | Course rules for AI coding tools. |
+| `CLAUDE.md` | Makes Claude Code read `AGENTS.md`. |
 | `README.md` | A summary of this setup. |
 
 ## Check that the data were extracted
@@ -179,4 +180,64 @@ Install packages in the Console, never inside a Quarto document.
 
 ::: {.key-point}
 Keep your documents, data, and outputs together inside the course folder.
+:::
+
+## Preview: an AI coding agent at work
+
+Later in the course, you will work with an AI coding agent in Positron, such as **Codex** or **Claude Code**.
+
+- It reads the files in your `c407` folder, including `AGENTS.md`.
+- It writes code, runs it, and fixes its own errors.
+
+Today, you only watch. Do not install anything yet.
+
+::: {.notes}
+- Demo on my machine. Students install an agent in "Working with AI".
+- Run it in a fresh copy of the `c407` folder. No API key is needed: the demo uses `data/2021_census_pumf_ind.rds` and `data/provinces.geojson`.
+- Claude Code reads `CLAUDE.md`, which imports `AGENTS.md`. With Claude Code, run `/memory` to confirm that the course rules loaded.
+- Rehearse with these exact prompts on the demo machine, including rendering. Keep the rehearsal output as a fallback.
+:::
+
+## Ask for a map
+
+```text
+Create scripts/ai_demo.qmd. Using the 2021 Census PUMF and the province
+boundaries in data/, show housing prices by province on a map.
+```
+
+::: {.notes}
+- "Housing price" is deliberately vague: the PUMF has no sale prices, only owners' estimates of their dwelling's value (`Value`).
+- `AGENTS.md` tells the agent to ask before making choices that affect the analysis. If it asks, put the question to the class first.
+- Silent traps to look for in the agent's code:
+  - `Value` is `88888888` for renters. Without a filter to owners, averages run to tens of millions of dollars.
+  - Everyone in a household shares its dwelling value. Counting people instead of primary maintainers (`PRIHM`) raises B.C.'s median from about $760,000 to $860,000.
+  - The PUMF combines the three territories as "Northern Canada"; `provinces.geojson` matches that.
+- Published figure for comparison: the 2021 Census Profile gives B.C. a median dwelling value of $785,000.
+:::
+
+## Ask for slides
+
+```text
+Make a three-slide revealjs presentation of the map and its main finding.
+Save it in scripts/ and render it.
+```
+
+## Who checks this map?
+
+- "Housing price" is not a census question. Which variable did the agent use? Is it a sale price or what owners think their home is worth?
+- Did the agent count households or people? Did it drop missing-value codes?
+- Does B.C.'s median match the published census figure? How would you find it?
+
+::: {.key-point}
+You are responsible for every number you report, whoever wrote the code.
+:::
+
+## Learn to read code first
+
+- Until we finish ggplot, write all your code without AI.
+- Reading code is how you check what an AI gives you.
+- After ggplot, you will install an agent and practise checking its work.
+
+::: {.key-point}
+AI makes you faster only if you can tell when it is wrong.
 :::
