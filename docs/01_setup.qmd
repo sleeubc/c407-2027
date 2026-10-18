@@ -202,31 +202,52 @@ Today, you only watch. Do not install anything yet.
 
 ```text
 Create scripts/ai_demo.qmd. Using the 2021 Census PUMF and the province
-boundaries in data/, show housing prices by province on a map.
+boundaries in data/, map the share of young adults who live with their
+parents, by province.
 ```
 
 ::: {.notes}
-- "Housing price" is deliberately vague: the PUMF has no sale prices, only owners' estimates of their dwelling's value (`Value`).
-- `AGENTS.md` tells the agent to ask before making choices that affect the analysis. If it asks, put the question to the class first.
-- Silent traps to look for in the agent's code:
-  - `Value` is `88888888` for renters. Without a filter to owners, averages run to tens of millions of dollars.
-  - Everyone in a household shares its dwelling value. Counting people instead of primary maintainers (`PRIHM`) raises B.C.'s median from about $760,000 to $860,000.
-  - The PUMF combines the three territories as "Northern Canada"; `provinces.geojson` matches that.
-- Published figure for comparison: the 2021 Census Profile gives B.C. a median dwelling value of $785,000.
+- "Young adults" is deliberately vague. `AGENTS.md` tells the agent to ask before making choices that affect the analysis. If it asks, put the question to the class first.
+- Choices to look for in the agent's code:
+  - Ages: Statistics Canada uses 20 to 34. The rehearsal used 25 to 34, which leaves out most students living at home. Ontario is 26% at 25 to 34 but 39% at 20 to 34.
+  - "Living with parents": `CFSTAT` "Child of a couple" or "Child of a parent in a one-parent family". A young adult living with a parent and their own partner or child is a spouse or parent, not a child.
+  - Weights: shares should use `WEIGHT`.
+  - Map classes: tmap's default classes for 25 to 34 are 2 points wide, and their labels round down: Saskatchewan (13.3%) sits in a class labelled "12 - 13".
+- Published figure for comparison: Statistics Canada reports that 35.1% of 20- to 34-year-olds lived with at least one parent in 2021, and 46.6% in Toronto. For the same ages, the PUMF gives 32.7% and 44%, because of the "child" definition. A different age range makes the comparison meaningless.
+- Explanation trap: the agent may blame housing costs. Toronto also has many immigrant families living in multigenerational households, and Quebec's cities are lowest even though Montréal is large. At 25 to 34, Toronto is 31% and Québec City 8.5%.
+- Source: [The Daily, 13 July 2022](https://www150.statcan.gc.ca/n1/daily-quotidien/220713/dq220713a-eng.htm).
+:::
+
+## Ask about change
+
+```text
+Where did the share increase most between the 2016 and 2021 censuses?
+The 2016 PUMF is in data/.
+```
+
+::: {.notes}
+- Traps to look for in the agent's code:
+  - `CFSTAT` labels changed: 2016 says "Child of a lone parent", 2021 "Child of a parent in a one-parent family". Reusing the 2021 labels gives 12.7% for 2016 instead of 18.2%, so the national rise looks like 7.3 points instead of 1.8. No error or warning.
+  - Variable names changed too: 2016 has `TENUR` and `VALUE`; 2021 has `Tenur` and `Value`.
+  - CMA names differ in dashes and spaces, and "Kelowna – Abbotsford" became "Kelowna – Abbotsford-Mission". A join by CMA name silently drops rows.
+  - Sampling error: the PUMF is a 2.7% sample. P.E.I. and Northern Canada have standard errors of about 2.5 points.
+- Rehearsal results (ages 25 to 34): Alberta +3.6 points, Manitoba +3.0, Saskatchewan +2.6, Ontario +1.6; B.C. +0.7. By CMA, Calgary +4.6.
+- Explanation trap: average renter shelter costs rose 23% in B.C. and 21% in Ontario but 0% in Alberta and 1% in Saskatchewan. Rising rents run opposite to the change. Other candidates: the Prairie economies after the 2015 oil price drop, and the pandemic in May 2021.
 :::
 
 ## Ask for slides
 
 ```text
-Make a three-slide revealjs presentation of the map and its main finding.
+Make a four-slide revealjs presentation of these findings.
 Save it in scripts/ and render it.
 ```
 
-## Who checks this map?
+## Who checks these results?
 
-- "Housing price" is not a census question. Which variable did the agent use? Is it a sale price or what owners think their home is worth?
-- Did the agent count households or people? Did it drop missing-value codes?
-- Does B.C.'s median match the published census figure? How would you find it?
+- Which ages count as "young adults"? Who counts as "living with parents"?
+- Did the agent define it the same way in 2016 and 2021?
+- Does the national share match Statistics Canada's published figure? If not, why not?
+- Is housing cost the explanation? Compare where rents rose with where the share rose.
 
 ::: {.key-point}
 You are responsible for every number you report, whoever wrote the code.
