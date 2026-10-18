@@ -195,6 +195,7 @@ tb2 <- tibble(name = c("a", "b", "c"), x = c(1, 2, 3), y = c(3, 2, 1))
 | `head(tb, 2)` | First two rows (six by default) |
 | `summary(tb)` | A summary of each column |
 | `glimpse(tb)` | Names, types, and first values of every column |
+| `View(tb)` | Nothing: opens the data in the Data Explorer (Console only) |
 
 ## View() opens the data in the Data Explorer
 
