@@ -136,9 +136,12 @@ Positions start at 1. A minus sign drops an element.
 
 ```{r}
 #| label: index-logical
+price[c(FALSE, TRUE, FALSE)]
 price > 1000000
 price[price > 1000000]
 ```
+
+Each `TRUE` keeps the element in that position. The comparison builds the TRUE/FALSE vector for you.
 
 `filter()` in the next deck does the same to the rows of a tibble: it keeps the rows where the condition is `TRUE`.
 
