@@ -45,14 +45,18 @@ bca <- read_rds("data/bca262.rds")
 ```{r}
 #| label: template
 #| eval: false
-ggplot(data, aes(x = column1, y = column2)) +
-  geom_point()
+ggplot() +
+  geom_point(aes(x = column1, y = column2), data = my_tibble)
 ```
 
-- `data`: the tibble to plot.
-- `aes()`: **mappings** from columns to visual properties: x, y, colour, size, fill.
+- `ggplot()`: an empty chart. `+` adds layers.
 - `geom_*()`: the **geometry** that draws the data: points, lines, bars.
-- `+` adds layers.
+- `aes()`: **mappings** from columns to visual properties: x, y, colour, size, fill.
+- `data =`: the tibble to plot. Name it: a `geom_*()` takes the mapping first.
+
+::: {.notes}
+- Swapping the order, `geom_point(by_aa, aes(...))`, fails with "`mapping` must be created by `aes()`. ✖ You've supplied a data frame."
+:::
 
 ## Summarise first, then plot
 
@@ -71,16 +75,17 @@ by_aa |> head(4)
 
 ```{r}
 #| label: point
-ggplot(by_aa, aes(avg_floorarea, avg_price)) +
-  geom_point()
+ggplot() +
+  geom_point(aes(avg_floorarea, avg_price), data = by_aa)
 ```
 
 ## Map more columns to colour and size
 
 ```{r}
 #| label: colour-size
-ggplot(by_aa, aes(avg_floorarea, avg_price, colour = aa_label, size = n)) +
-  geom_point()
+ggplot() +
+  geom_point(aes(avg_floorarea, avg_price, colour = aa_label, size = n),
+             data = by_aa)
 ```
 
 ## Mapping and setting are different
@@ -91,9 +96,11 @@ ggplot(by_aa, aes(avg_floorarea, avg_price, colour = aa_label, size = n)) +
 #| label: mapped
 #| fig-width: 5
 #| fig-height: 3.2
-ggplot(by_aa,
-       aes(avg_floorarea, avg_price)) +
-  geom_point(aes(colour = "blue"))
+ggplot() +
+  geom_point(
+    aes(avg_floorarea, avg_price,
+        colour = "blue"),
+    data = by_aa)
 ```
 :::
 
@@ -102,9 +109,11 @@ ggplot(by_aa,
 #| label: set
 #| fig-width: 5
 #| fig-height: 3.2
-ggplot(by_aa,
-       aes(avg_floorarea, avg_price)) +
-  geom_point(colour = "blue")
+ggplot() +
+  geom_point(
+    aes(avg_floorarea, avg_price),
+    colour = "blue",
+    data = by_aa)
 ```
 :::
 ::::
@@ -115,45 +124,67 @@ Inside `aes()`, `"blue"` is treated as data. Outside `aes()`, it sets the colour
 
 ```{r}
 #| label: lines
+#| fig-height: 2.4
 avg_price <- bca |>
   group_by(act_use_cat, sale_year = year(sale_date)) |>
   summarise(avg_price = mean(price, na.rm = TRUE), .groups = "drop")
 
+ggplot() +
+  geom_line(aes(sale_year, avg_price, colour = act_use_cat), data = avg_price) +
+  geom_point(aes(sale_year, avg_price, colour = act_use_cat), data = avg_price)
+```
+
+Each layer has its own mapping and data, so we write both twice.
+
+## Global and local mappings
+
+```{r}
+#| label: global
+#| fig-height: 2.4
 ggplot(avg_price, aes(sale_year, avg_price, colour = act_use_cat)) +
   geom_line() +
   geom_point()
 ```
 
-## Global and local mappings
+The same chart as the last slide. Data and `aes()` in `ggplot()` are **global**: every layer uses them, so you write them once. `aes()` in a `geom_*()`, as on the last slide, is **local**: only that layer uses it.
+
+::: {.notes}
+- `ggplot()` takes the data first; a `geom_*()` takes the mapping first. A layer usually reuses the plot's data but needs its own mapping.
+- Data first in `ggplot()` also lets you pipe into it: `van17 |> count(act_use_cat) |> ggplot(aes(n, act_use_cat))`.
+:::
+
+## geom_line() joins the points within each group
 
 :::: {.columns}
-::: {.column width="45%"}
+::: {.column width="49%"}
 ```{r}
-#| label: global
-#| fig-width: 5
-#| fig-height: 2.4
+#| label: local
+#| fig-width: 6.4
+#| fig-height: 2.8
 ggplot(avg_price,
-       aes(sale_year, avg_price,
-           colour = act_use_cat)) +
-  geom_line() +
-  geom_point()
+       aes(sale_year, avg_price)) +
+  geom_line()
 ```
 :::
 
-::: {.column width="53%"}
+::: {.column width="49%"}
 ```{r}
-#| label: local
-#| fig-width: 5
-#| fig-height: 2.4
+#| label: group
+#| fig-width: 6.4
+#| fig-height: 2.8
 ggplot(avg_price,
        aes(sale_year, avg_price)) +
-  geom_line() +
-  geom_point(aes(colour = act_use_cat))
+  geom_line(aes(group = act_use_cat))
 ```
 :::
 ::::
 
-`aes()` in `ggplot()` is **global**: every layer uses it. `aes()` in a `geom_*()` is **local**: only that layer uses it. On the right, the line ignores the type and zigzags.
+Left: with no groups, the line joins every point in year order. Right: `group` splits the line, as `group_by()` splits rows. On the last slide, `colour` did the same: a text column in `colour` also sets the group.
+
+::: {.notes}
+- A numeric column in `colour` does not set the group, so it does not split the line.
+- ggplot2 groups by every discrete column mapped in the layer: `colour`, `fill`, `linetype`, `shape`, and `group`.
+:::
 
 ## A smaller dataset: Vancouver in 2017
 
@@ -189,7 +220,7 @@ ggplot(van17, aes(floorarea, price)) +
   geom_smooth(method = "lm")
 ```
 
-**A.** `colour` is local to `geom_point()`, so `geom_smooth()` fits one line to all the points. Move `colour` into `ggplot()` to get one line per type.
+**A.** `colour` is local to `geom_point()`, so `geom_smooth()` has one group and fits one line to all the points. Move `colour` into `ggplot()` to get one line per type.
 :::
 
 ## Choose the geometry for the question
@@ -262,6 +293,23 @@ In Positron, `?geom_histogram` opens the help page, and `example(geom_histogram)
 
 **Try it:** pick a geom from the cheat sheet that we have not used, read its page, and draw it with `van17`.
 
+## scale_*() turns values into axes and colours
+
+The name says what changes: `scale_`, the mapping, then how.
+
+::: {.small}
+| Function | Changes |
+|---|---|
+| `scale_x_continuous(breaks = c(2000, 2010, 2020))` | Which x values get a gridline and a label |
+| `scale_x_continuous(limits = c(0, 2000))` | The x-axis range, **dropping rows outside it** |
+| `scale_x_log10()` | The x-axis, to a log scale |
+| `scale_colour_brewer(palette = "Dark2")` | The colours for the `colour` mapping |
+:::
+
+::: {.key-point}
+When you review AI-written code, you can skim most `scale_*()` lines: they change labels and colours. Stop at `limits`, which drops rows, and log scales, which change what geoms compute.
+:::
+
 ## Axis limits can remove data
 
 `van17` holds City of Vancouver sales in 2017, with `price_m` in millions.
@@ -302,12 +350,42 @@ Left: `limits` dropped the `r sum(van17$floorarea > 2000, na.rm = TRUE)` homes o
 
 ## Log scales spread out skewed data
 
+:::: {.columns}
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: no-log
+#| fig-width: 5
+#| fig-height: 2.5
+ggplot(van17, aes(floorarea, price)) +
+  geom_point(alpha = 0.1)
+```
+:::
+:::
+
+::: {.column width="49%"}
+::: {.small}
 ```{r}
 #| label: log
+#| fig-width: 5
+#| fig-height: 2.5
 ggplot(van17, aes(floorarea, price)) +
   geom_point(alpha = 0.1) +
-  scale_x_log10() + scale_y_log10(labels = scales::label_dollar())
+  scale_x_log10() +
+  scale_y_log10(labels = scales::label_dollar())
 ```
+:::
+:::
+::::
+
+Left: a few large, expensive homes stretch the axes, and most sales crowd into a corner. Right: on a log scale each gridline is a multiple of the last, so the spread shows.
+
+`scales::label_dollar()` uses `label_dollar()` from the scales package without loading it. `label_comma()` and `label_percent()` work the same way.
+
+::: {.notes}
+- `label_number(scale = 1e-6, suffix = "M")` writes 2,000,000 as 2M. Decks 07 and 10 use it.
+- A log scale transforms the data before geoms compute. `geom_smooth(method = "lm")` on these axes fits log price on log floor area, a different line from the one on the original axes.
+:::
 
 ## The functions around the geoms
 
@@ -370,7 +448,7 @@ ggplot(avg_price,
 ::::
 
 ::: {.key-point}
-Only `ggplot()`, `aes()`, and `geom_*()` decide what is drawn. The rest changes how it looks, except `limits` in `scale_*()`, which drops rows.
+Only `ggplot()`, `aes()`, and `geom_*()` decide what is drawn. The rest changes how it looks, except `limits`, which drops rows, and log scales, which change what geoms like `geom_smooth()` compute.
 :::
 
 ::: {.notes}
