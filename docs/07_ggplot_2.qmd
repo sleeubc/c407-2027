@@ -1,0 +1,496 @@
+---
+title: "ggplot2 II"
+subtitle: "COMM 407 · Scales, facets, and positions"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.8)
+suppressPackageStartupMessages(library(tidyverse))
+bca <- read_rds("data/bca262.rds")
+```
+
+## Two tibbles from deck 06
+
+```{r}
+#| label: data
+avg_price <- bca |>
+  group_by(act_use_cat, sale_year = year(sale_date)) |>
+  summarise(avg_price = mean(price, na.rm = TRUE), .groups = "drop")
+
+van17 <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) == 2017) |>
+  mutate(price_m = price / 1e6)
+```
+
+In deck 06, `ggplot()`, `aes()`, and `geom_*()` decided what is drawn. This deck covers the functions around them. A few of those change what a chart says, not only how it looks.
+
+## scale_*() turns values into axes and colours
+
+The name says what changes: `scale_`, the mapping, then how.
+
+::: {.small}
+| Function | Changes |
+|---|---|
+| `scale_x_continuous(breaks = c(2000, 2010, 2020))` | Which x values get a gridline and a label |
+| `scale_x_continuous(limits = c(0, 2000))` | The x-axis range, **dropping rows outside it** |
+| `scale_x_log10()` | The x-axis, to a log scale |
+| `scale_colour_brewer(palette = "Dark2")` | The colours for the `colour` mapping |
+:::
+
+::: {.key-point}
+When you review AI-written code, you can skim most `scale_*()` lines: they change labels and colours. Stop at `limits`, which drops rows, and log scales, which change what geoms compute.
+:::
+
+## Axis limits can remove data
+
+`van17` holds City of Vancouver sales in 2017, with `price_m` in millions.
+
+:::: {.columns}
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: limits
+#| fig-width: 5
+#| fig-height: 3.2
+ggplot(van17, aes(floorarea, price_m)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm") +
+  scale_x_continuous(limits = c(0, 2000)) +
+  coord_cartesian(ylim = c(0, 5))
+```
+:::
+:::
+
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: coord
+#| fig-width: 5
+#| fig-height: 3.2
+ggplot(van17, aes(floorarea, price_m)) +
+  geom_point(alpha = 0.1) +
+  geom_smooth(method = "lm") +
+  coord_cartesian(xlim = c(0, 2000),
+                  ylim = c(0, 5))
+```
+:::
+:::
+::::
+
+Left: `limits` dropped the `r sum(van17$floorarea > 2000, na.rm = TRUE)` homes over 2,000 sq ft **before** fitting the line. Right: `coord_cartesian()` only zooms.
+
+## Log scales spread out skewed data
+
+:::: {.columns}
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: no-log
+#| fig-width: 5
+#| fig-height: 2.5
+ggplot(van17, aes(floorarea, price)) +
+  geom_point(alpha = 0.1)
+```
+:::
+:::
+
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: log
+#| fig-width: 5
+#| fig-height: 2.5
+ggplot(van17, aes(floorarea, price)) +
+  geom_point(alpha = 0.1) +
+  scale_x_log10() +
+  scale_y_log10(labels = scales::label_dollar())
+```
+:::
+:::
+::::
+
+Left: a few large, expensive homes stretch the axes, and most sales crowd into a corner. Right: on a log scale each gridline is a multiple of the last, so the spread shows.
+
+`scales::label_dollar()` uses `label_dollar()` from the scales package without loading it. `label_comma()` and `label_percent()` work the same way.
+
+::: {.notes}
+- `label_number(scale = 1e-6, suffix = "M")` writes 2,000,000 as 2M. Decks 08 and 11 use it.
+- A log scale transforms the data before geoms compute. `geom_smooth(method = "lm")` on these axes fits log price on log floor area, a different line from the one on the original axes.
+:::
+
+## Bars start at zero
+
+::: {.small}
+```{r}
+#| label: sf-bars
+van_sf <- bca |>
+  filter(juris_label == "City of Vancouver", act_use_cat == "S/F Res",
+         between(year(sale_date), 2021, 2025)) |>
+  group_by(year = year(sale_date)) |>
+  summarise(median_price = median(price, na.rm = TRUE))
+sf_bars <- ggplot(van_sf, aes(year, median_price)) + geom_col()
+```
+:::
+
+```{r}
+#| label: sf-bars-numbers
+#| include: false
+p22 <- van_sf$median_price[van_sf$year == 2022]
+p25 <- van_sf$median_price[van_sf$year == 2025]
+# coord_cartesian() pads the limits by 5% of the range on each side
+y_bottom <- 2e6 - 0.05 * (2.3e6 - 2e6)
+```
+
+:::: {.columns}
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: sf-bars-full
+#| fig-width: 5
+#| fig-height: 1.8
+sf_bars +
+  coord_cartesian(ylim = c(0, 2.3e6))
+```
+:::
+:::
+
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: sf-bars-zoom
+#| fig-width: 5
+#| fig-height: 1.8
+sf_bars +
+  coord_cartesian(ylim = c(2e6, 2.3e6))
+```
+:::
+:::
+::::
+
+A bar's length shows its value. On the right, the 2022 bar is `r round((p22 - y_bottom) / (p25 - y_bottom), 1)` times as long as the 2025 bar, but the median fell only `r round(100 * (1 - p25 / p22))`%. To zoom in, use points or a line.
+
+::: {.notes}
+- `scale_y_continuous(limits = c(2e6, 2.3e6))` would remove every bar instead: each bar starts at 0, outside the limits.
+- AI tools often zoom bar charts "to show the differences". Ask for points or a line instead.
+:::
+
+## The functions around the geoms
+
+::: {.small}
+| Family | Controls | Example |
+|---|---|---|
+| `scale_*()` | How values become axes and colours: limits, breaks, number formats, log scales | `scale_y_log10()` |
+| `coord_*()` | The plotting area: zoom, flip | `coord_flip()` |
+| `facet_*()` | One panel per group | `facet_wrap(~ act_use_cat)` |
+| `labs()` | Text: title, axis names, legend title, caption | `labs(y = "Price")` |
+| `theme_*()`, `theme()` | The look that is not data: background, fonts, legend position | `theme_minimal()` |
+| `guides()` | Legends | `guides(colour = "none")` |
+:::
+
+Inside a geom, `alpha`, `linewidth`, and `position = "dodge"` set that layer's look. Use these names when you ask AI to restyle a chart; to sort bars by value, ask for `fct_reorder()`.
+
+## Sales in four cities
+
+```{r}
+#| label: city-sales
+cities <- c("City of Vancouver", "City of Surrey",
+            "City of Burnaby", "City of Richmond")
+city_sales <- bca |>
+  filter(juris_label %in% cities, year(sale_date) <= 2025) |>
+  count(juris_label, year = year(sale_date))
+city_sales |> head(3)
+```
+
+`city_sales` has one row per city and year. `n` is the number of sales.
+
+## facet_wrap() draws one panel per group
+
+```{r}
+#| label: facet
+#| fig-height: 2.6
+ggplot(city_sales, aes(year, n)) +
+  geom_line() +
+  facet_wrap(~ juris_label, nrow = 1)
+```
+
+The panels share one y-axis, so heights compare across panels. Use facets when lines in one panel would overlap.
+
+::: {.notes}
+- Richmond's dip in 2012 is a gap in `bca262.rds`, not a crash: about 50 sales a month, against 250 to 600 in 2011 and 2013. Ask students what else could explain a sudden drop.
+:::
+
+## Free scales hide differences in level
+
+```{r}
+#| label: facet-free
+#| fig-height: 2.6
+ggplot(city_sales, aes(year, n)) +
+  geom_line() +
+  facet_wrap(~ juris_label, nrow = 1, scales = "free_y")
+```
+
+```{r}
+#| label: facet-numbers
+#| include: false
+sales25 <- city_sales |> filter(year == 2025)
+n25 <- \(city) sales25$n[sales25$juris_label == city]
+```
+
+`scales = "free_y"` gives each panel its own y-axis. Shapes are easier to compare; levels are not. Burnaby's line now fills its panel like Surrey's, yet Surrey had `r round(n25("City of Surrey") / n25("City of Burnaby"), 1)` times as many sales in 2025. Read the axis labels before you compare panels.
+
+## Bars stack by default
+
+```{r}
+#| label: stack-data
+van_sales <- bca |>
+  filter(juris_label == "City of Vancouver",
+         between(year(sale_date), 2015, 2025)) |>
+  count(year = year(sale_date), act_use_cat)
+sales_plot <- ggplot(van_sales, aes(year, n, fill = act_use_cat))
+```
+
+:::: {.columns}
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: stack
+#| fig-width: 5
+#| fig-height: 1.8
+sales_plot +
+  geom_col()
+```
+:::
+:::
+
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: dodge
+#| fig-width: 5
+#| fig-height: 1.8
+sales_plot +
+  geom_col(position = "dodge")
+```
+:::
+:::
+::::
+
+Left: the stack shows totals, but the top segments start at different heights, so single-family sales are hard to compare. Right: `position = "dodge"` starts every bar at zero.
+
+## position = "fill" turns counts into shares
+
+```{r}
+#| label: fill
+#| fig-height: 2
+sales_plot +
+  geom_col(position = "fill")
+```
+
+Each bar now sums to 1: shares, not counts. The axis still says `n`, and nothing warns you. Label it yourself:
+
+```{r}
+#| label: fill-labels
+#| eval: false
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(y = "Share of sales")
+```
+
+## Quick check: shares or counts?
+
+```{r}
+#| label: quiz-numbers
+#| include: false
+van_wide <- van_sales |>
+  pivot_wider(names_from = act_use_cat, values_from = n) |>
+  mutate(strata_share = round(100 * `Strata Res` / (`Strata Res` + `S/F Res`)))
+pick <- \(y, col) van_wide[[col]][van_wide$year == y]
+```
+
+On the last chart, strata's share of Vancouver sales rose from `r pick(2016, "strata_share")`% in 2016 to `r pick(2019, "strata_share")`% in 2019. Did the number of strata sales rise?
+
+**A.** Yes  **B.** The chart cannot tell you
+
+::: {.fragment}
+**B.** A share can rise while the count falls. Strata sales fell from `r scales::comma(pick(2016, "Strata Res"))` to `r scales::comma(pick(2019, "Strata Res"))`, but single-family sales fell faster, from `r scales::comma(pick(2016, "S/F Res"))` to `r scales::comma(pick(2019, "S/F Res"))`. To compare counts, use `position = "dodge"`.
+:::
+
+## Read a long AI-written chart
+
+:::: {.columns}
+::: {.column width="58%"}
+::: {.small}
+```{r}
+#| label: ai-chart
+#| eval: false
+# 1. data and mappings
+ggplot(avg_price,
+       aes(sale_year, avg_price, colour = act_use_cat)) +
+  # 2. what to draw
+  geom_line(linewidth = 1) +
+  # 3. how values become labels and colours
+  scale_y_continuous(labels = scales::label_dollar()) +
+  scale_colour_brewer(palette = "Dark2") +
+  # 4. text
+  labs(title = "Average sale price",
+       x = NULL, y = NULL, colour = NULL) +
+  # 5. the look that is not data
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+:::
+:::
+
+::: {.column width="40%"}
+```{r}
+#| label: ai-chart-plot
+#| echo: false
+#| fig-width: 4.5
+#| fig-height: 3.6
+ggplot(avg_price,
+       aes(sale_year, avg_price, colour = act_use_cat)) +
+  geom_line(linewidth = 1) +
+  scale_y_continuous(labels = scales::label_dollar()) +
+  scale_colour_brewer(palette = "Dark2") +
+  labs(title = "Average sale price",
+       x = NULL, y = NULL, colour = NULL) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+:::
+::::
+
+::: {.key-point}
+Only `ggplot()`, `aes()`, and `geom_*()` decide what is drawn. Most other lines change only the look. The next slide lists the exceptions.
+:::
+
+::: {.notes}
+- Order matters for themes: `theme(legend.position = "bottom") + theme_minimal()` silently resets the legend, because a complete theme replaces earlier `theme()` settings. Put `theme_minimal()` first.
+- To learn what a line does, comment it out and run the chart again.
+:::
+
+## Lines that change what a chart says
+
+::: {.small}
+| Line | What it changes | What to do |
+|---|---|---|
+| `scale_x_continuous(limits = ...)` | Drops rows before geoms compute | Zoom with `coord_cartesian()` |
+| `scale_x_log10()`, `scale_y_log10()` | Geoms compute on the logs | Say "log scale" on the axis |
+| `coord_cartesian(ylim = ...)` on bars | Bar lengths stop matching values | Start bars at zero |
+| `facet_wrap(scales = "free_y")` | Each panel gets its own y-axis | Read the axis labels |
+| `position = "fill"` | Counts become shares | Label the axis as a share |
+:::
+
+::: {.key-point}
+When you review AI-written chart code, look for these lines first. Each changes what a chart says, and the chart still looks fine.
+:::
+
+## Practice: price trends by property type
+
+For the City of Vancouver, plot the median sale price in each year from 2000 to 2025, with one line for each `act_use_cat`.
+
+1. Summarise first: one row per year and property type.
+2. Map `act_use_cat` to `colour`.
+3. Show the prices in dollars on the y-axis.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: trend-practice
+#| fig-height: 3
+van_trend <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) <= 2025) |>
+  group_by(year = year(sale_date), act_use_cat) |>
+  summarise(median_price = median(price, na.rm = TRUE), .groups = "drop")
+
+trend_plot <- ggplot(van_trend, aes(year, median_price, colour = act_use_cat)) +
+  geom_line() +
+  scale_y_continuous(labels = scales::label_dollar())
+trend_plot
+```
+:::
+
+## Save a chart for your slides
+
+```{r}
+#| label: save
+#| eval: false
+ggsave("temp/van_trend.png", trend_plot, width = 8, height = 4.5)
+```
+
+::: {.key-point}
+Save the chart in an object, then pass it to `ggsave()`. Use the PNG in PowerPoint or Google Slides.
+:::
+
+## Practice: strata's share of sales
+
+For the four cities in `cities`, show strata's share of sales in each year from 2005 to 2025.
+
+1. Count sales by city, year, and property type.
+2. Draw bars of shares, one panel per city.
+3. Label the y-axis as a share, in percent.
+4. In which city did the strata share change most?
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: share-practice
+#| fig-height: 2.6
+city_type <- bca |>
+  filter(juris_label %in% cities, between(year(sale_date), 2005, 2025)) |>
+  count(juris_label, year = year(sale_date), act_use_cat)
+
+ggplot(city_type, aes(year, n, fill = act_use_cat)) +
+  geom_col(position = "fill") +
+  facet_wrap(~ juris_label, nrow = 1) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(y = "Share of sales", fill = NULL)
+```
+:::
+
+```{r}
+#| label: share-numbers
+#| include: false
+surrey <- city_type |>
+  filter(juris_label == "City of Surrey") |>
+  mutate(share = round(100 * n / sum(n)), .by = year) |>
+  filter(act_use_cat == "Strata Res")
+s_share <- \(y) surrey$share[surrey$year == y]
+```
+
+::: {.notes}
+- Surrey changed most: strata rose from `r s_share(2005)`% of its sales in 2005 to `r s_share(2025)`% in 2025.
+- A share chart does not say whether strata sales rose or single-family sales fell. Ask students which chart would tell them.
+:::

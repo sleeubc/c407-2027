@@ -373,4 +373,4 @@ setdiff(levels(pumf$CMA), levels(pumf16$CMA))
 ```
 
 - Many columns were renamed: `TOTINC` became `TotInc`, and `TENUR` became `Tenur`.
-- Some CMA names differ only in a dash or a space: "Ottawa – Gatineau" in 2016, "Ottawa - Gatineau" in 2021. If you stack the two years with `bind_rows()` (deck 09), they become separate groups. Check every factor's levels in both years.
+- Some CMA names differ only in a dash or a space: "Ottawa – Gatineau" in 2016, "Ottawa - Gatineau" in 2021. If you stack the two years with `bind_rows()` (deck 10), they become separate groups. Check every factor's levels in both years.

@@ -104,15 +104,15 @@ You register your data source on February 26. Before you do, download the data o
 | Source | What it has | In R |
 |---|---|---|
 | Course data (`data/` folder) | BC Assessment sales in Metro Vancouver, 2000 to March 2026; 2016 and 2021 Census PUMF | `read_rds()` |
-| [Statistics Canada data tables](https://www150.statcan.gc.ca/n1/en/type/data) | Prices, rents, population, income, and construction, often by CMA | `cansim` (deck 10) |
-| [Census Profile via CensusMapper](https://censusmapper.ca) | Census variables from 1996 to 2021, down to dissemination areas | `cancensus` (deck 11) |
+| [Statistics Canada data tables](https://www150.statcan.gc.ca/n1/en/type/data) | Prices, rents, population, income, and construction, often by CMA | `cansim` (deck 11) |
+| [Census Profile via CensusMapper](https://censusmapper.ca) | Census variables from 1996 to 2021, down to dissemination areas | `cancensus` (deck 12) |
 | [CMHC Housing Market Information Portal](https://www03.cmhc-schl.gc.ca/hmip-pimh/en) | Rents, vacancy rates, and housing starts and completions, for CMAs and smaller zones | `cmhc` package |
 | [City of Vancouver Open Data](https://opendata.vancouver.ca) | Building permits, zoning, property tax, business licences, and more | `VancouvR` |
-| [Vancouver Police Department crime data](https://geodash.vpd.ca/opendata/) | Reported crimes by type, date, and location | CSV download (deck 16) |
+| [Vancouver Police Department crime data](https://geodash.vpd.ca/opendata/) | Reported crimes by type, date, and location | CSV download (deck 17) |
 | [BC Data Catalogue](https://catalogue.data.gov.bc.ca) | Provincial government data on land, transportation, health, and more | Download |
 | [US Census Bureau ACS microdata](https://www.census.gov/programs-surveys/acs/microdata.html) | US person and household records, as in the ability sorting example | Download |
 
-If you compare two census years, check deck 11 first: vector codes, tract boundaries, and PUMF variable names all change between censuses.
+If you compare two census years, check deck 12 first: vector codes, tract boundaries, and PUMF variable names all change between censuses.
 
 ## Example presentations
 

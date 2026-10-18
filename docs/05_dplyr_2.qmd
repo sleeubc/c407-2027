@@ -190,7 +190,7 @@ mix <- bca |>
 ```
 
 ::: {.key-point}
-Both types rose in 2017, yet the average fell, because single-family homes dropped from `r round(100 * mix$sf_share[1])`% to `r round(100 * mix$sf_share[2])`% of sales. An average price describes the mix of homes sold. Compare within types, or use a regression (deck 17).
+Both types rose in 2017, yet the average fell, because single-family homes dropped from `r round(100 * mix$sf_share[1])`% to `r round(100 * mix$sf_share[2])`% of sales. An average price describes the mix of homes sold. Compare within types, or use a regression (deck 18).
 :::
 
 ## Practice: a price index

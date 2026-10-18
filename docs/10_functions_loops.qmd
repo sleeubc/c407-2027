@@ -112,7 +112,7 @@ coef(fit)[["floorarea"]]
 - `names()` and `str()` show what is inside. Helpers such as `coef()` pull out common items.
 
 ::: {.notes}
-Regression comes in deck 17. Here the model is only an example of a list. The example presentations use `coef(m)[["westTRUE"]]` and `summary(fit)$coefficients[2, 4]`, which students can now read.
+Regression comes in deck 18. Here the model is only an example of a list. The example presentations use `coef(m)[["westTRUE"]]` and `summary(fit)$coefficients[2, 4]`, which students can now read.
 :::
 
 ## A function turns inputs into an output
@@ -216,7 +216,7 @@ A function written in place has no name. You have seen this before:
 ```{r}
 #| label: lambda-seen
 #| eval: false
-pumf |> map_chr(\(col) class(col)[1])           # deck 07
+pumf |> map_chr(\(col) class(col)[1])           # deck 08
 scale_y_continuous(labels = \(x) paste0(x, "%"))  # a chart axis
 ```
 
@@ -308,7 +308,7 @@ median_in_year <- \(yr) median(bca$price[year(bca$sale_date) == yr],
 map_dbl(2023:2025, median_in_year)
 ```
 
-A tibble is a list of columns, so `map()` over a tibble visits each column. Now you can read this line from deck 07:
+A tibble is a list of columns, so `map()` over a tibble visits each column. Now you can read this line from deck 08:
 
 ```{r}
 #| label: map-chr

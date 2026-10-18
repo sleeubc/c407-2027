@@ -242,7 +242,7 @@ This happened at the Port Mann bridge counter: the December 2017 report is a bro
 :::
 
 - Seven of Vancouver's 20 stations are in the Downtown local area, where restaurants are common anyway.
-- Fixed effects (deck 17) compare storefronts within the same neighbourhood.
+- Fixed effects (deck 18) compare storefronts within the same neighbourhood.
 
 ```{r}
 #| label: location-fe

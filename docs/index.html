@@ -55,6 +55,7 @@
       display: grid;
       grid-template-columns: 3rem 1fr;
       align-items: center;
+      align-content: center;
       min-height: 72px;
       padding: 12px 16px;
       color: var(--ink);
@@ -66,9 +67,15 @@
     }
     a::before {
       content: counter(lecture, decimal-leading-zero);
+      grid-row: span 2;
       color: var(--red);
       font-weight: 700;
       letter-spacing: .04em;
+    }
+    a time {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: .9rem;
     }
     a:hover, a:focus-visible {
       border-color: var(--blue);
@@ -97,6 +104,29 @@
     @media (max-width: 720px) {
       .resources { grid-template-columns: 1fr; }
     }
+    .dates {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .dates li {
+      display: grid;
+      grid-template-columns: 13rem 1fr;
+      gap: 16px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--line);
+    }
+    .dates li:first-child { border-top: 0; }
+    .dates .when {
+      color: var(--red);
+      font-weight: 700;
+    }
+    @media (max-width: 720px) {
+      .dates li { grid-template-columns: 1fr; gap: 2px; }
+    }
   </style>
 </head>
 <body>
@@ -106,24 +136,33 @@
       <p>Real estate data analysis with R: lecture slides and course documents</p>
     </header>
     <ol>
-      <li><a href="01_setup.html">Set up R, Positron, and the course folder</a></li>
-      <li><a href="02_sample_analysis.html">A sample analysis in Quarto</a></li>
-      <li><a href="03_data_structures.html">Data structures</a></li>
-      <li><a href="04_dplyr_1.html">dplyr I: select, filter, arrange, mutate</a></li>
-      <li><a href="05_dplyr_2.html">dplyr II: summaries and groups</a></li>
-      <li><a href="06_ggplot.html">The grammar of graphics</a></li>
-      <li><a href="07_pumf.html">Census microdata (PUMF)</a></li>
-      <li><a href="08_ai_workflow.html">Working with AI</a></li>
-      <li><a href="09_functions_loops.html">Lists, functions, and loops</a></li>
-      <li><a href="10_statcan.html">Statistics Canada data tables</a></li>
-      <li><a href="11_census.html">Census profiles</a></li>
-      <li><a href="12_maps_tmap.html">Maps with tmap</a></li>
-      <li><a href="13_map_classification.html">Classifying map colours</a></li>
-      <li style="counter-set: lecture 15"><a href="15_pivot_join.html">Reshaping and joining tables</a></li>
-      <li><a href="16_spatial_sf.html">Spatial data with sf</a></li>
-      <li><a href="17_regression.html">Hedonic price regression</a></li>
-      <li><a href="18_comparisons.html">Comparisons and alternative explanations</a></li>
+      <li><a href="01_setup.html"><span>Set up R, Positron, and the course folder</span><time datetime="2027-01-05">Tue, Jan 5</time></a></li>
+      <li><a href="02_sample_analysis.html"><span>A sample analysis in Quarto</span><time datetime="2027-01-07">Thu, Jan 7</time></a></li>
+      <li><a href="03_data_structures.html"><span>Data structures</span><time datetime="2027-01-12">Tue, Jan 12</time></a></li>
+      <li><a href="04_dplyr_1.html"><span>dplyr I: select, filter, arrange, mutate</span><time datetime="2027-01-14">Thu, Jan 14</time></a></li>
+      <li><a href="05_dplyr_2.html"><span>dplyr II: summaries and groups</span><time datetime="2027-01-19">Tue, Jan 19</time></a></li>
+      <li><a href="06_ggplot_1.html"><span>ggplot2 I: mappings, layers, and geoms</span><time datetime="2027-01-21">Thu, Jan 21</time></a></li>
+      <li><a href="07_ggplot_2.html"><span>ggplot2 II: scales, facets, and positions</span><time datetime="2027-01-26">Tue, Jan 26</time></a></li>
+      <li><a href="08_pumf.html"><span>Census microdata (PUMF)</span><time datetime="2027-01-28">Thu, Jan 28</time></a></li>
+      <li><a href="09_ai_workflow.html"><span>Working with AI</span><time datetime="2027-02-02">Tue, Feb 2</time></a></li>
+      <li><a href="10_functions_loops.html"><span>Lists, functions, and loops</span><time datetime="2027-02-04">Thu, Feb 4</time></a></li>
+      <li><a href="11_statcan.html"><span>Statistics Canada data tables</span><time datetime="2027-02-09">Tue, Feb 9</time></a></li>
+      <li><a href="12_census.html"><span>Census profiles</span><time datetime="2027-02-11">Thu, Feb 11</time></a></li>
+      <li><a href="13_maps_tmap.html"><span>Maps with tmap</span><time datetime="2027-02-23">Tue, Feb 23</time></a></li>
+      <li><a href="14_map_classification.html"><span>Classifying map colours</span><time datetime="2027-02-25">Thu, Feb 25</time></a></li>
+      <li style="counter-set: lecture 16"><a href="16_pivot_join.html"><span>Reshaping and joining tables</span><time datetime="2027-03-09">Tue, Mar 9</time></a></li>
+      <li><a href="17_spatial_sf.html"><span>Spatial data with sf</span><time datetime="2027-03-11">Thu, Mar 11</time></a></li>
+      <li><a href="18_regression.html"><span>Hedonic price regression</span><time datetime="2027-03-16">Tue, Mar 16</time></a></li>
+      <li><a href="19_comparisons.html"><span>Comparisons and alternative explanations</span><time datetime="2027-03-18">Thu, Mar 18</time></a></li>
     </ol>
+    <h2>Key dates, 2027</h2>
+    <ul class="dates">
+      <li><span class="when">Tue, Jan 5</span><span>First class</span></li>
+      <li><span class="when">Mon, Feb 15 – Fri, Feb 19</span><span>Midterm break: no classes. February 15 is Family Day.</span></li>
+      <li><span class="when">Tue, Mar 2</span><span>Midterm exam: no class that day</span></li>
+      <li><span class="when">Tue, Mar 30 – Thu, Apr 8</span><span>Research project presentations, in the last four classes</span></li>
+      <li><span class="when">Fri, Apr 16 – Tue, Apr 27</span><span>Final exam period. The exam date will be announced.</span></li>
+    </ul>
     <h2>Course documents</h2>
     <ul class="resources">
       <li><a href="COMM407_Syllabus_2025W2.docx">Syllabus</a></li>
