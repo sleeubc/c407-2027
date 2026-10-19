@@ -37,6 +37,7 @@ execute:
 #| include: false
 knitr::opts_chunk$set(comment = NA)
 suppressPackageStartupMessages(library(tidyverse))
+library(fixest)
 bca <- read_rds("data/bca262.rds")
 pumf <- read_rds("data/2021_census_pumf_ind.rds")
 ```
@@ -103,16 +104,19 @@ tb[["city"]]
 
 ```{r}
 #| label: model-list
-fit <- lm(price ~ floorarea, data = bca)
-names(fit)
-coef(fit)[["floorarea"]]
+condo <- bca |>
+  filter(juris_label == "City of Vancouver", act_use_cat == "Strata Res",
+         between(year(sale_date), 2016, 2025))
+fit <- feols(log(price) ~ log(floorarea), data = condo)
+is.list(fit)
+coef(fit)[["log(floorarea)"]]
 ```
 
-- Models, API responses, and `map()` output (later today) are lists.
-- `names()` and `str()` show what is inside. Helpers such as `coef()` pull out common items.
+- The first model from deck 17 is a list of `r length(names(fit))` items. `names()` and `str()` show what is inside; helpers such as `coef()` pull out common items.
+- API responses and `map()` output (later today) are lists too.
 
 ::: {.notes}
-Regression comes in deck 18. Here the model is only an example of a list. The example presentations use `coef(m)[["westTRUE"]]` and `summary(fit)$coefficients[2, 4]`, which students can now read.
+The example presentations use `coef(m)[["westTRUE"]]` and `summary(fit)$coefficients[2, 4]`, which students can now read.
 :::
 
 ## A function turns inputs into an output

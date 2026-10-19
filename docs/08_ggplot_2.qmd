@@ -145,7 +145,7 @@ Left: a few large, expensive homes stretch the axes, and most sales crowd into a
 `scales::label_dollar()` uses `label_dollar()` from the scales package without loading it. `label_comma()` and `label_percent()` work the same way.
 
 ::: {.notes}
-- `label_number(scale = 1e-6, suffix = "M")` writes 2,000,000 as 2M. Decks 09 and 11 use it.
+- `label_number(scale = 1e-6, suffix = "M")` writes 2,000,000 as 2M. Decks 09 and 10 use it.
 - A log scale transforms the data before geoms compute. `geom_smooth(method = "lm")` on these axes fits log price on log floor area, a different line from the one on the original axes.
 :::
 
