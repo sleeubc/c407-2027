@@ -146,6 +146,28 @@ Check Chapter 2 for codes like these before you average a column.
 - The practice on average income removes them with `filter()`; the housing-value practice turns them into `NA` with `if_else()`.
 :::
 
+## Point the AI to the user guide
+
+A coding agent can read the guide in your `data` folder. Name the PDF and the column:
+
+::: {.small}
+```text
+Before you use CFInc, read its entry in Chapter 2 of
+data/2021 Census Individuals PUMF User Guide_v2.pdf.
+Tell me whose income it measures and which values are codes.
+Give the page number and quote the description.
+```
+:::
+
+::: {.key-point}
+The guide improves the AI's code. Check the quoted page yourself.
+:::
+
+::: {.notes}
+- `AGENTS.md` already lists the PUMF traps from this deck: factors, the 88888888/99999999 codes, and `WEIGHT`. The guide covers everything else, such as whose income `CFInc` measures.
+- In a chat tool, paste the variable's entry from the guide instead.
+:::
+
 ## Practice: the largest CMAs
 
 Using the 2021 PUMF:
@@ -222,14 +244,14 @@ ggplot(by_cma, aes(population, avg_value)) + geom_point()
 pumf |> map_chr(\(col) class(col)[1]) |> table()
 ```
 
-A **factor** stores categories. Its **levels** are the possible categories, in a fixed order.
+As in deck 08's weekday chart, a **factor** stores categories, and its **levels** set their order.
 
 ```{r}
 #| label: tenur-levels
 levels(pumf$Tenur)
 ```
 
-## The level order controls the bar order
+## Quick check: why did the order change?
 
 ```{r}
 #| label: bedrm-code
@@ -264,7 +286,11 @@ ggplot(households, aes(y = as.character(BedRm), weight = WEIGHT)) + geom_bar() +
 :::
 ::::
 
-As text, "No bedroom" moves after "5 bedrooms or more". Keep categories as factors.
+Why does "No bedroom" move after "5 bedrooms or more" on the right?
+
+::: {.notes}
+`as.character()` turns the factor into text, which drops the levels. Text sorts alphabetically, and digits come before letters. It is the same as `as.character(day)` in deck 08's weekday chart. Keep categories as factors.
+:::
 
 ## A factor is not a number
 
@@ -314,6 +340,10 @@ unit_size >= "medium"
 ```
 
 `>=` compares positions in the level order. `as.ordered(pumf$HDGREE)` makes education levels comparable the same way.
+
+::: {.notes}
+`wday(label = TRUE)` and `month(label = TRUE)` in deck 08 also return ordered factors: `class()` printed "ordered" "factor".
+:::
 
 ## Practice: simplify education levels
 
@@ -374,3 +404,30 @@ setdiff(levels(pumf$CMA), levels(pumf16$CMA))
 
 - Many columns were renamed: `TOTINC` became `TotInc`, and `TENUR` became `Tenur`.
 - Some CMA names differ only in a dash or a space: "Ottawa – Gatineau" in 2016, "Ottawa - Gatineau" in 2021. If you stack the two years with `bind_rows()` (deck 10), they become separate groups. Check every factor's levels in both years.
+
+## Practice: find three mistakes
+
+We asked an AI: *"Compare the average total income of owners and renters in the Vancouver CMA, and show the population of each group."*
+
+```{r}
+#| label: practice-wrong
+pumf |>
+  filter(CMA == "Vancouver") |>
+  group_by(Tenur) |>
+  summarise(avg_income = mean(TotInc), population = n())
+```
+
+## Answer
+
+```{r include=params$answers}
+#| label: practice-answer
+pumf |>
+  # 1. Drop the "Not available" group
+  filter(CMA == "Vancouver", Tenur != "Not available") |>
+  # 2. Turn missing-value codes into NA
+  mutate(TotInc = if_else(TotInc %in% c(88888888, 99999999), NA, TotInc)) |>
+  group_by(Tenur) |>
+  # 3. Count people with WEIGHT, not records
+  summarise(avg_income = weighted.mean(TotInc, WEIGHT, na.rm = TRUE),
+            population = sum(WEIGHT))
+```

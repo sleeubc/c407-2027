@@ -1,6 +1,6 @@
 ---
 title: "ggplot2 II"
-subtitle: "COMM 407 · Scales, facets, and positions"
+subtitle: "COMM 407 · Scales, factors, facets, and positions"
 author: "Sanghoon Lee"
 date: today
 date-format: "D MMMM YYYY"
@@ -145,7 +145,7 @@ Left: a few large, expensive homes stretch the axes, and most sales crowd into a
 `scales::label_dollar()` uses `label_dollar()` from the scales package without loading it. `label_comma()` and `label_percent()` work the same way.
 
 ::: {.notes}
-- `label_number(scale = 1e-6, suffix = "M")` writes 2,000,000 as 2M. Decks 08 and 11 use it.
+- `label_number(scale = 1e-6, suffix = "M")` writes 2,000,000 as 2M. Decks 09 and 11 use it.
 - A log scale transforms the data before geoms compute. `geom_smooth(method = "lm")` on these axes fits log price on log floor area, a different line from the one on the original axes.
 :::
 
@@ -204,6 +204,75 @@ A bar's length shows its value. On the right, the 2022 bar is `r round((p22 - y_
 - `scale_y_continuous(limits = c(2e6, 2.3e6))` would remove every bar instead: each bar starts at 0, outside the limits.
 - AI tools often zoom bar charts "to show the differences". Ask for points or a line instead.
 :::
+
+## Which day do sales happen?
+
+```{r}
+#| label: weekday
+#| fig-height: 2.4
+bca25 <- bca |>
+  filter(year(sale_date) == 2025) |>
+  mutate(day = wday(sale_date, label = TRUE))
+
+ggplot(bca25, aes(x = day)) + geom_bar()
+```
+
+The days are in calendar order. How does ggplot know that Mon comes after Sun?
+
+```{r}
+#| label: weekday-numbers
+#| include: false
+n_day <- \(d) sum(bca25$day == d)
+```
+
+::: {.notes}
+- Also ask why weekends are almost empty: `r n_day("Sat")` sales on Saturdays and `r n_day("Sun")` on Sundays in 2025, out of `r format(nrow(bca25), big.mark = ",")`. Recent BC Assessment records use the conveyance date, when ownership transfers, and transfers are registered on business days. The date is not when the buyer agreed to buy.
+- Thursday is the busiest day, with `r round(100 * n_day("Thu") / nrow(bca25))`% of sales. Ask for explanations; the data alone cannot settle them.
+- Use one recent year for anything by day of the week. In 2005–2014, 18–24% of each year's sales fall on a weekend: those records come from an older source whose date definition is not documented.
+- `label = TRUE` uses the computer's language, so a student whose system is set to French or Chinese sees day names in that language.
+:::
+
+## wday() returns a factor
+
+```{r}
+#| label: weekday-factor
+class(bca25$day)
+levels(bca25$day)
+```
+
+::: {.key-point}
+A **factor** stores categories with a fixed order, its **levels**. ggplot draws bars, stacks, and legends in level order.
+:::
+
+::: {.notes}
+"ordered" means the levels can be compared: Sun < Mon. Deck 09 comes back to it.
+:::
+
+## Text goes in alphabetical order
+
+```{r}
+#| label: weekday-text
+#| fig-height: 2.4
+ggplot(bca25, aes(x = as.character(day))) + geom_bar()
+```
+
+`as.character()` turns the factor into text, which has no levels. ggplot sorts text alphabetically.
+
+## lubridate works with dates
+
+`year()` has been in our code since deck 02. It comes from **lubridate**, which loads with the tidyverse.
+
+::: {.small}
+```{r}
+#| label: lubridate
+d <- ymd("2025-03-14")
+c(year(d), mday(d))
+month(d, label = TRUE)
+wday(d, label = TRUE, week_start = 1)
+```
+:::
+
+`ymd()` reads text as a date. `week_start = 1` puts Monday first: the function sets the levels.
 
 ## The functions around the geoms
 
@@ -315,6 +384,10 @@ sales_plot +
 ::::
 
 Left: the stack shows totals, but the top segments start at different heights, so single-family sales are hard to compare. Right: `position = "dodge"` starts every bar at zero.
+
+::: {.notes}
+`act_use_cat` is text, so the legend and the stack follow alphabetical order. As a factor, they would follow its levels.
+:::
 
 ## position = "fill" turns counts into shares
 

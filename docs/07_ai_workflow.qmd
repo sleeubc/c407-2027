@@ -37,7 +37,7 @@ execute:
 #| include: false
 knitr::opts_chunk$set(comment = NA)
 suppressPackageStartupMessages(library(tidyverse))
-pumf <- read_rds("data/2021_census_pumf_ind.rds")
+bca <- read_rds("data/bca262.rds")
 ```
 
 ## AI writes the first draft; you own the result
@@ -73,7 +73,7 @@ You must catch these yourself.
 ::::
 
 ::: {.warning}
-Common silent errors: a join that duplicates rows, a factor converted to numbers, missing-value codes treated as data, a wrong census vector, a geocoding match in the wrong city.
+Common silent errors: a median that mixes property types, a join that duplicates rows, a wrong census vector, a geocoding match in the wrong city.
 :::
 
 ## Two kinds of AI tools
@@ -113,10 +113,11 @@ Check the publisher before you install: **OpenAI** for Codex, **Anthropic** for 
 ::: {.small}
 ```text
 I'm using R and the tidyverse in a Quarto document.
-`pumf` is the 2021 Census PUMF (data/2021_census_pumf_ind.rds).
-Here is glimpse(pumf) for the variables I need: <paste output>
+`bca` holds BC Assessment sales (data/bca262.rds).
+Here is glimpse(bca) for the variables I need: <paste output>
 
-Goal: the share of residents aged 65 and over in each CMA.
+Goal: the median sale price by year in the City of Vancouver,
+separately for single-family and strata homes.
 Follow the rules in AGENTS.md.
 ```
 :::
@@ -135,59 +136,93 @@ Each new message is processed together with the whole conversation so far. Long 
 - Share `glimpse()` or `head()` output, never whole tables.
 - Keep standing rules in `AGENTS.md` instead of repeating them.
 
-## Demo: "average age by CMA"
+## Demo: how have Vancouver prices changed?
 
-An AI's first attempt:
-
-```{r}
-#| label: avg-age-wrong
-pumf |>
-  group_by(CMA) |>
-  summarise(avg_age = mean(as.numeric(AGEGRP))) |>
-  filter(CMA %in% c("Vancouver", "Toronto", "Victoria"))
+::: {.small}
+```text
+How have home prices in the City of Vancouver changed since 2000?
+Make a chart of the median sale price by year from data/bca262.rds,
+in a new Quarto document.
 ```
-
-The code runs without an error or a warning.
-
-## An average age of 11 should stop you
-
-`as.numeric()` on a factor returns the position of each level, not an age.
-
-```{r}
-#| label: agegrp-levels
-levels(pumf$AGEGRP) |> head(8)
-```
-
-::: {.warning}
-`AGEGRP` is a set of age brackets. Its last level is "Not available". You cannot average it directly.
 :::
 
-## Ask a question the data can answer
+The agent's code, shortened:
 
 ```{r}
-#| label: share-65
-seniors <- c("65 to 69 years", "70 to 74 years", "75 to 79 years",
-             "80 to 84 years", "85 years and over")
+#| label: demo-code
+van <- bca |> filter(juris_label == "City of Vancouver")
 
-pumf |>
-  filter(AGEGRP != "Not available") |>
-  group_by(CMA) |>
-  summarise(share_65plus = sum(WEIGHT[AGEGRP %in% seniors]) / sum(WEIGHT)) |>
-  filter(CMA %in% c("Vancouver", "Toronto", "Victoria"))
+by_year <- van |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(median_price = median(price))
 ```
 
-## Missing values can hide as numbers
+## The agent's summary
 
 ```{r}
-#| label: totinc-codes
-pumf |>
-  filter(CMA == "Vancouver") |>
-  summarise(avg_income = mean(TotInc),
-            coded_missing = sum(TotInc %in% c(88888888, 99999999)))
+#| label: demo-chart
+#| echo: false
+#| fig-height: 2.4
+ggplot(by_year, aes(sale_year, median_price)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::label_dollar())
 ```
 
-::: {.warning}
-`TotInc`, `Wages`, and `Value` use `88888888` and `99999999` for "not applicable" and "not available". Convert them to `NA` first.
+::: {.small}
+> The rise was uneven. It was fast in 2004–2007 and 2020–2024, and nearly flat in 2011–2015 and 2017–2019.
+>
+> I included all sales, both houses ("S/F Res") and strata units like condos ("Strata Res"). The median mixes the two, so part of any change could come from a shift in which type sells.
+:::
+
+Were prices nearly flat from 2011 to 2015?
+
+::: {.notes}
+- Tested on 2026-10-18 with Claude Sonnet in a fresh copy of the student `c407` folder, so `AGENTS.md` was loaded. The quotes are its own words. It also filtered on `juris_label`, not the wider `aa_label`, and flagged 2026 as a partial year.
+- A live run will differ. If the agent splits by type on its own, ask the class what the single line would have told them.
+- Two other prompts came out right: sales per year (the agent dropped the partial 2026 and said why) and price per square foot of houses (it dropped sales without a floor area and said how many). Mechanical slips are now rare; choices like this one remain.
+:::
+
+## Split by property type before you trust a trend
+
+```{r}
+#| label: demo-split
+#| fig-width: 9
+#| fig-height: 3.2
+by_type <- van |>
+  group_by(act_use_cat, sale_year = year(sale_date)) |>
+  summarise(median_price = median(price), .groups = "drop")
+
+ggplot(by_type, aes(sale_year, median_price, colour = act_use_cat)) +
+  geom_line()
+```
+
+## Both types rose; the mix hid it
+
+::: {.small}
+```{r}
+#| label: demo-mix
+mix <- van |>
+  filter(year(sale_date) %in% c(2011, 2015)) |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(single_family = median(price[act_use_cat == "S/F Res"]),
+            strata = median(price[act_use_cat == "Strata Res"]),
+            all_sales = median(price),
+            strata_share = mean(act_use_cat == "Strata Res"))
+mix
+```
+:::
+
+```{r}
+#| label: demo-pct
+#| include: false
+pct <- function(x) round(100 * (x[2] / x[1] - 1))
+```
+
+Single-family prices rose `r pct(mix$single_family)`% and strata prices `r pct(mix$strata)`%, yet the median of all sales rose only `r pct(mix$all_sales)`%. Cheaper strata homes grew from `r round(100 * mix$strata_share[1])`% to `r round(100 * mix$strata_share[2])`% of sales, as in deck 05.
+
+::: {.key-point}
+The agent listed its choices. Reading them and acting on them is your job.
 :::
 
 ## Check the row count after every join
@@ -218,23 +253,23 @@ sales |> left_join(neigh_info, by = "neigh", relationship = "many-to-one")
 
 1. Read every line. Ask the AI to explain any line you cannot.
 2. Count rows before and after each filter and join.
-3. Look for missing values, including "Not available" levels and `99999999` codes.
-4. Compare magnitudes with a number you know. Is an average income of $17 million plausible?
+3. Look for missing values in every column you use, and count the rows they drop.
+4. Compare magnitudes with a number you know. Is a median Vancouver house price of $200,000 plausible?
 5. Plot the raw data before you summarise it.
 
 ## Let R write the numbers in your text
 
 ```{r}
 #| label: van
-van <- pumf |> filter(CMA == "Vancouver")
+van <- bca |> filter(juris_label == "City of Vancouver")
 ```
 
 ````markdown
-The PUMF has `r knitr::inline_expr('format(nrow(van), big.mark = ",")')` records for the Vancouver CMA.
-They represent `r knitr::inline_expr('format(round(sum(van$WEIGHT)), big.mark = ",")')` people.
+The data have `r knitr::inline_expr('format(nrow(van), big.mark = ",")')` sales in the City of Vancouver.
+Their median price is `r knitr::inline_expr('format(median(van$price), big.mark = ",")')` dollars.
 ````
 
-The report shows: The PUMF has `r format(nrow(van), big.mark = ",")` records for the Vancouver CMA. They represent `r format(round(sum(van$WEIGHT)), big.mark = ",")` people.
+The report shows: The data have `r format(nrow(van), big.mark = ",")` sales in the City of Vancouver. Their median price is `r format(median(van$price), big.mark = ",")` dollars.
 
 - A number you type stays the same after you or the AI change a filter or fix a join, and nothing warns you.
 - Inline code runs again at every render. In PowerPoint, copy every number again from your final render.
@@ -300,27 +335,25 @@ TODO: Confirm the attribution format for the research project before class.
 
 ## Practice: find three mistakes
 
-We asked an AI: *"Compare the average total income of owners and renters in the Vancouver CMA, and show the population of each group."*
+The task: compare the median price of single-family and strata homes in the City of Vancouver in 2025. This code runs without an error or a warning:
 
 ```{r}
 #| label: practice-wrong
-pumf |>
-  filter(CMA == "Vancouver") |>
-  group_by(Tenur) |>
-  summarise(avg_income = mean(TotInc), population = n())
+bca |>
+  filter(aa_label == "Vancouver", year(sale_date) >= 2025) |>
+  group_by(act_use_cat) |>
+  summarise(median_price = mean(price), sales = n())
 ```
 
 ## Answer
 
 ```{r include=params$answers}
 #| label: practice-answer
-pumf |>
-  # 1. Drop the "Not available" group
-  filter(CMA == "Vancouver", Tenur != "Not available") |>
-  # 2. Turn missing-value codes into NA
-  mutate(TotInc = if_else(TotInc %in% c(88888888, 99999999), NA, TotInc)) |>
-  group_by(Tenur) |>
-  # 3. Count people with WEIGHT, not records
-  summarise(avg_income = weighted.mean(TotInc, WEIGHT, na.rm = TRUE),
-            population = sum(WEIGHT))
+bca |>
+  # 1. The City of Vancouver, not the wider assessment area
+  # 2. 2025 only: 2026 is a partial year
+  filter(juris_label == "City of Vancouver", year(sale_date) == 2025) |>
+  group_by(act_use_cat) |>
+  # 3. median(), as the column name says
+  summarise(median_price = median(price), sales = n())
 ```

@@ -255,9 +255,9 @@ You are responsible for every number you report, whoever wrote the code.
 
 ## Learn to read code first
 
-- Until we finish ggplot, write all your code without AI.
+- For the first three weeks, write all your code without AI.
 - Reading code is how you check what an AI gives you.
-- After ggplot, you will install an agent and practise checking its work.
+- In week 4, you will install an agent and practise checking its work.
 
 ::: {.key-point}
 AI makes you faster only if you can tell when it is wrong.

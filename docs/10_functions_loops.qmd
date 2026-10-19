@@ -216,7 +216,7 @@ A function written in place has no name. You have seen this before:
 ```{r}
 #| label: lambda-seen
 #| eval: false
-pumf |> map_chr(\(col) class(col)[1])           # deck 08
+pumf |> map_chr(\(col) class(col)[1])           # deck 09
 scale_y_continuous(labels = \(x) paste0(x, "%"))  # a chart axis
 ```
 
@@ -308,7 +308,7 @@ median_in_year <- \(yr) median(bca$price[year(bca$sale_date) == yr],
 map_dbl(2023:2025, median_in_year)
 ```
 
-A tibble is a list of columns, so `map()` over a tibble visits each column. Now you can read this line from deck 08:
+A tibble is a list of columns, so `map()` over a tibble visits each column. Now you can read this line from deck 09:
 
 ```{r}
 #| label: map-chr

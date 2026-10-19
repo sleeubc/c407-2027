@@ -271,7 +271,7 @@ The same chart. `geom_bar()` counts the rows itself, so its axis says `count`, a
 | `geom_col()`, `geom_point()`, `geom_line()` | Nothing: they draw the values as given |
 
 ::: {.key-point}
-When a geom computes, ask what it computed. `geom_bar()` counts rows, not people (deck 08).
+When a geom computes, ask what it computed. `geom_bar()` counts rows, not people (deck 09).
 :::
 
 ::: {.notes}
