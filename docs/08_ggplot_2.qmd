@@ -82,7 +82,7 @@ When you review AI-written code, you can skim most `scale_*()` lines: they chang
 ```{r}
 #| label: limits
 #| fig-width: 5
-#| fig-height: 3.2
+#| fig-height: 2.8
 ggplot(van17, aes(floorarea, price_m)) +
   geom_point(alpha = 0.1) +
   geom_smooth(method = "lm") +
@@ -97,7 +97,7 @@ ggplot(van17, aes(floorarea, price_m)) +
 ```{r}
 #| label: coord
 #| fig-width: 5
-#| fig-height: 3.2
+#| fig-height: 2.8
 ggplot(van17, aes(floorarea, price_m)) +
   geom_point(alpha = 0.1) +
   geom_smooth(method = "lm") +
@@ -108,7 +108,7 @@ ggplot(van17, aes(floorarea, price_m)) +
 :::
 ::::
 
-Left: `limits` dropped the `r sum(van17$floorarea > 2000, na.rm = TRUE)` homes over 2,000 sq ft **before** fitting the line. Right: `coord_cartesian()` only zooms.
+Left: `limits` dropped `r format(sum(van17$floorarea > 2000, na.rm = TRUE), big.mark = ",")` homes over 2,000 sq ft **before** fitting. Right: `coord_cartesian()` only zooms.
 
 ## Log scales spread out skewed data
 

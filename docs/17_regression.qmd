@@ -168,10 +168,14 @@ The model dropped `r nrow(condo) - nobs(m1)` sales, the ones with no floor area,
 
 ```{r}
 #| label: m2
-m2 <- feols(log(price) ~ log(floorarea) + bedrooms + full_bath + age + type,
+m2 <- feols(log(price) ~ log(floorarea) + bedrooms + total_bath + age + type,
             data = condo)
 coeftable(m2) |> round(4)
 ```
+
+::: {.notes}
+`total_bath` counts all bathrooms. `full_bath` and `part_bath` change definition in 2020: older records sometimes count a 3-piece bathroom as partial, newer ones as full. For condos the total is consistent across that change; for houses it is not.
+:::
 
 ## The reference level sets the meaning of a dummy
 
@@ -181,7 +185,7 @@ coeftable(m2) |> round(4)
 ```{r}
 #| label: relevel
 condo_th <- condo |> mutate(type = fct_relevel(type, "Townhouse"))
-feols(log(price) ~ log(floorarea) + bedrooms + full_bath + age + type,
+feols(log(price) ~ log(floorarea) + bedrooms + total_bath + age + type,
       data = condo_th) |> coef() |> round(4)
 ```
 
@@ -191,7 +195,7 @@ The sign flips: now the coefficient compares condos with townhouses.
 
 ```{r}
 #| label: m3
-m3 <- feols(log(price) ~ log(floorarea) + bedrooms + full_bath + age + type |
+m3 <- feols(log(price) ~ log(floorarea) + bedrooms + total_bath + age + type |
               neigh_label + sale_year, data = condo)
 coeftable(m3) |> round(4)
 ```
@@ -249,7 +253,7 @@ summary(m3, vcov = ~neigh_label) |> coeftable() |> round(4)
 ```
 
 ::: {.notes}
-Compare with the previous slide: with clustered standard errors, only floor area and age remain clearly different from zero. The townhouse and bathroom coefficients were "significant" only under IID errors.
+Compare with the previous slide: with clustered standard errors, only floor area and age remain clearly different from zero. The bathroom coefficient was "significant" only under IID errors.
 :::
 
 ## Coefficients are associations, not causal effects
