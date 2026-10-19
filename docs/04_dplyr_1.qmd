@@ -169,13 +169,13 @@ Read a pipeline one step at a time, top to bottom.
 ```{r}
 #| label: na-filter
 bca <- read_rds("data/bca262.rds")
-sum(is.na(bca$price))
+sum(is.na(bca$floorarea))
 
 nrow(bca)
-bca |> filter(price < 500000 | price >= 500000) |> nrow()
+bca |> filter(floorarea < 1000 | floorarea >= 1000) |> nrow()
 ```
 
-The two conditions cover every possible price, yet rows disappear: a missing price meets neither condition.
+The two conditions cover every possible floor area, yet rows disappear: a missing floor area meets neither condition.
 
 ## A typo returns zero rows, not an error
 

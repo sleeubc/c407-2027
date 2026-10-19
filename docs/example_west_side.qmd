@@ -75,8 +75,8 @@ das <- get_census("CA21", regions = list(CSD = "5915022"), level = "DA",
   st_transform(26910)
 
 # Single-family sales, 2001-2025, level with Ontario Street (north to south).
-# 2021 sales have no lot size or floor area, so they drop out; lot sizes
-# under 1,000 sq ft are recording errors.
+# Sales without lot size or floor area drop out; lot sizes under 1,000 sq ft
+# are recording errors.
 sales_sf <- read_rds("data/bca262.rds") |>
   filter(juris_label == "City of Vancouver", act_use_cat == "S/F Res",
          !is.na(lon), price > 100000, between(year(sale_date), 2001, 2025),
@@ -431,8 +431,8 @@ About 30 seconds. The paper this example follows began as an in-class presentati
 
 ## Backup: Decision log
 
-1. **Side from the map, not the address.** BC Assessment stopped recording the E/W prefix in 2015; filtering on it silently dropped every later sale.
-2. **Two street-name formats.** East–west streets appear as "41ST AVE W" in early years and "41ST" later; matching one format lost the other years.
+1. **Side from the map, not the address.** Street names carry the W or E only in 2005–2014; filtering on them silently dropped every other year.
+2. **Two street-name formats.** East–west streets appear as "41ST AVE W" in 2005–2014 and "41ST" in other years; matching one format lost the other years.
 3. **Range-labelled street segments.** Some City segments are labelled "4600-4800 ONTARIO ST"; matching single blocks only left gaps in the southern half of the street.
 4. **Placebo samples leave out Ontario Street's band,** so its jump cannot leak into neighbouring streets.
-5. **2021 dropped.** The course file has no lot size or floor area for 2021 sales.
+5. **Sales without a size are left out.** Floor area is often blank in 2005–2012, so those years have fewer sales.

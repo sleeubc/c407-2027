@@ -246,8 +246,16 @@ ggplot(city_sales, aes(year, n)) +
 
 The panels share one y-axis, so heights compare across panels. Use facets when lines in one panel would overlap.
 
+```{r}
+#| label: richmond-numbers
+#| include: false
+drop_12 <- \(n) round(100 * (1 - n[2] / n[1]))
+all_sales <- bca |> filter(year(sale_date) %in% 2011:2012) |> count(year(sale_date))
+richmond <- city_sales |> filter(juris_label == "City of Richmond", year %in% 2011:2012)
+```
+
 ::: {.notes}
-- Richmond's dip in 2012 is a gap in `bca262.rds`, not a crash: about 50 sales a month, against 250 to 600 in 2011 and 2013. Ask students what else could explain a sudden drop.
+- Richmond's 2012 dip is partly real and partly a gap in `bca262.rds`, whose 2012 records for Richmond and Delta are incomplete. Richmond's sales fell `r drop_12(richmond$n)`% from 2011, against `r drop_12(all_sales$n)`% across Metro Vancouver. Ask students what else could explain a sudden drop.
 :::
 
 ## Free scales hide differences in level

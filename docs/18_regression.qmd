@@ -94,23 +94,40 @@ ggplot(condo, aes(price)) +
   labs(x = "Sale price (log scale)", y = "Sales")
 ```
 
-Why does the axis start near $1?
+A few sales near `r scales::label_dollar(scale = 1e-6, suffix = " million", accuracy = 1)(max(condo$price))` stretch the axis. What are they, and are all sales market sales?
 
 ## Check the extremes
 
 ```{r}
 #| label: extremes
 condo |>
-  slice_min(price, n = 4) |>
+  slice_max(price, n = 4) |>
   select(sale_date, price, floorarea, neigh_label)
 ```
 
+The top sales are penthouses and large units: unusual, but plausible market sales.
+
+## Look for bulk sales
+
+```{r}
+#| label: bulk-count
+condo |> count(sale_date, price, sort = TRUE) |> head(3)
+```
+
+```{r}
+#| label: bulk
+#| include: false
+bulk <- condo |> count(sale_date, price, sort = TRUE) |> slice(1)
+bulk_rows <- semi_join(condo, bulk, by = c("sale_date", "price"))
+```
+
 ::: {.warning}
-A $2 sale is not a market transaction, and three identical prices on one day suggest a bulk sale. Decide how to handle rows like these before you model, and say what you did.
+`r bulk$n` units sold on one day at an identical `r scales::label_dollar()(bulk$price)`: one building sold as a block, with the price split evenly. Decide how to handle rows like these before you model, and say what you did.
 :::
 
 ::: {.notes}
-All four rows lack floor area, so the regressions below drop them anyway. Prices are right-skewed, which is why we model log(price).
+- The `r bulk$n` units are all at `r bulk_rows$str_no[1]` `r str_to_title(bulk_rows$str_name[1])` St. `r sum(is.na(bulk_rows$floorarea))` of them have no floor area, so the regressions below drop them anyway.
+- Prices are right-skewed, which is why we model log(price).
 :::
 
 ## Reading coefficients in a log model
@@ -144,7 +161,7 @@ nrow(condo)
 ```
 
 ::: {.warning}
-The model dropped about 13% of sales, mostly because floor area is missing. Ask whether the missing rows differ from the rest.
+The model dropped `r nrow(condo) - nobs(m1)` sales, the ones with no floor area, including the `r bulk$n` bulk-sale units. Ask whether the missing rows differ from the rest.
 :::
 
 ## Add more characteristics
@@ -275,7 +292,14 @@ coeftable(m_sfd) |> round(4)
 nrow(sfd) - nobs(m_sfd)
 ```
 
-```{asis, echo = params$answers}
-Missing floor area or lot size drops most of these sales. A few have no price or a price of zero: `log(0)` is `-Inf`, and `fixest` drops those rows too. For a house, land carries much of the value, so the floor-area elasticity is much lower than for condos.
+```{r include=params$answers}
+#| label: practice-answer-text
+#| echo: false
+#| results: asis
+cat("The model drops ", scales::comma(nrow(sfd) - nobs(m_sfd)), " of ",
+    scales::comma(nrow(sfd)), " sales: ", scales::comma(sum(is.na(sfd$lotsize))),
+    " have no lot size and ", scales::comma(sum(is.na(sfd$floorarea))),
+    " no floor area. For a house, land carries much of the value, so the ",
+    "floor-area elasticity is much lower than for condos.", sep = "")
 ```
 :::
