@@ -136,13 +136,13 @@ Each new message is processed together with the whole conversation so far. Long 
 
 ## Work in small steps
 
-1. For anything with more than one step, ask for a plan before any code.
+1. For anything with more than one step, ask for a plan before any code. Changing the plan is the cheapest way to change direction.
 2. Make one change at a time. Run it and check it before you go on.
 3. Save a copy, or commit if you use Git, before an agent edits several files.
 4. After two failed fixes, stop asking it to "try again". Restate the problem in a new conversation.
 
 ::: {.key-point}
-Small steps keep every answer small enough to check.
+Small steps keep every answer small enough to guide and check.
 :::
 
 ## If you use a chat tool
@@ -216,6 +216,7 @@ Were prices nearly flat from 2011 to 2015?
 ::: {.notes}
 - Tested on 2026-10-18 with Claude Sonnet in a fresh copy of the student `c407` folder, so `AGENTS.md` was loaded. The quotes are its own words. It also filtered on `juris_label`, not the wider `aa_label`, and flagged 2026 as a partial year.
 - A live run will differ. If the agent splits by type on its own, ask the class what the single line would have told them.
+- The test ran before `AGENTS.md` asked agents to offer options and wait (added 2026-10-20). A live run may now stop and ask whether to pool or split the property types before drawing. If it does, ask the class which they would choose, and why.
 - Two other prompts came out right: sales per year (the agent dropped the partial 2026 and said why) and price per square foot of houses (it dropped sales without a floor area and said how many). Mechanical slips are now rare; choices like this one remain.
 :::
 
@@ -281,6 +282,8 @@ The agent writes the code. You decide where the analysis goes.
 :::
 
 ## When you meet a line you don't know
+
+Decks with new functions end with a slide that sorts them into three groups: **know** (write it without help), **recognize** (say what the line does), and **look up** (when you meet it). Use these steps for the last two.
 
 1. **Ask the agent.** Say what you think the line does, then ask: "Explain line 12 of `scripts/prices.qmd`. What does it do to the rows and columns, and why is it there?"
 2. **Run the pipe up to the line**, and compare the result with the explanation.
@@ -404,10 +407,10 @@ Every number in your text should come from R.
 
 ## Say how you used AI
 
-State the tool, what you used it for, and what you checked. For example:
+State the tool, what you used it for, what you changed, and what you checked. For example:
 
 ::: {.small}
-> I used [tool] to draft the code for Figures 2 and 3 and to fix a join error. I checked the row counts after each join and compared our totals with Statistics Canada's published figures.
+> I used [tool] to draft the code for Figures 2 and 3 and to fix a join error. I had it split prices by property type, because the pooled median mixed condos and houses. I checked the row counts after each join and compared our totals with Statistics Canada's published figures.
 :::
 
 ::: {.notes}
