@@ -575,3 +575,45 @@ s_share <- \(y) surrey$share[surrey$year == y]
 - Surrey changed most: strata rose from `r s_share(2005)`% of its sales in 2005 to `r s_share(2025)`% in 2025.
 - A share chart does not say whether strata sales rose or single-family sales fell. Ask students which chart would tell them.
 :::
+
+## What to know from this deck
+
+:::: {.columns}
+::: {.column width="32%"}
+**Know**<br>*Write it without help*
+
+::: {.small}
+- `facet_wrap(~ group)`
+- `position = "dodge"`, `"fill"`
+- `label_dollar()`, `label_percent()` in a `scale_*()`
+- `labs()`
+- `ggsave()`
+:::
+:::
+
+::: {.column width="40%"}
+**Recognize**<br>*Say what the line does*
+
+::: {.small}
+- `scale_*()`, `coord_*()`, `theme()`, `guides()`: the name says what changes
+- Factor levels: the order of bars, stacks, and legends
+- `ymd()`, `month()`, `wday()`: dates and their parts
+- `as.character()` on a factor: text, sorted alphabetically
+:::
+:::
+
+::: {.column width="24%"}
+**Look up**<br>*When you meet it*
+
+::: {.small}
+- `palette = "Dark2"`
+- `legend.position`
+- `week_start = 1`
+- `fct_reorder()`
+:::
+:::
+::::
+
+::: {.key-point}
+Stop at `limits`, log scales, `"free_y"`, and `"fill"`: they change what the chart says.
+:::

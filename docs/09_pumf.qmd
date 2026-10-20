@@ -431,3 +431,45 @@ pumf |>
   summarise(avg_income = weighted.mean(TotInc, WEIGHT, na.rm = TRUE),
             population = sum(WEIGHT))
 ```
+
+## What to know from this deck
+
+:::: {.columns}
+::: {.column width="30%"}
+**Know**<br>*Write it without help*
+
+::: {.small}
+- `sum(WEIGHT)`, `count(x, wt = WEIGHT)`
+- `weighted.mean(x, WEIGHT)`
+- `aes(weight = WEIGHT)` in `geom_bar()`
+- `factor(x, levels = ...)`, `levels()`
+:::
+:::
+
+::: {.column width="40%"}
+**Recognize**<br>*Say what the line does*
+
+::: {.small}
+- `%in% c(88888888, 99999999)`: missing-value codes
+- `if_else()`, `case_when()`: recode values
+- `as.numeric()` on a factor: level positions, not values
+- `as.character()` on a factor: text, sorted alphabetically
+- `str_detect()`: find text, such as `"^Other"`
+:::
+:::
+
+::: {.column width="26%"}
+**Look up**<br>*When you meet it*
+
+::: {.small}
+- `map_chr()`
+- `attr(x, "label")`
+- `setdiff()`
+- `as.ordered()`
+:::
+:::
+::::
+
+::: {.key-point}
+Code without `WEIGHT`, with the codes left in, or with "Not available" kept still runs. Check all three.
+:::
