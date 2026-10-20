@@ -78,8 +78,8 @@ Common silent errors: a median that mixes property types, a join that duplicates
 
 ## Two kinds of AI tools
 
+- **Coding agents in Positron or the Terminal.** They read the files in your `c407` folder, write code, and run it. You need one from deck 08 on.
 - **Chat tools in a browser.** They see only what you paste: your question, code, and output.
-- **Coding agents in Positron or the Terminal.** They read the files in your `c407` folder, write code, and run it.
 
 The same checks apply to both.
 
@@ -99,31 +99,29 @@ Check the publisher before you install: **OpenAI** for Codex, **Anthropic** for 
 ::: {.notes}
 - Positron installs extensions from Open VSX, not the VS Code Marketplace.
 - If the extension does not appear, install the agent's command-line version and run it in Positron's Terminal.
-- TODO: Decide what students without a paid plan should use.
 :::
 
-## AGENTS.md gives AI tools the course rules
+## AGENTS.md gives the agent the course rules
 
 - `AGENTS.md` in your `c407` folder lists where files go, which packages to use, and the data traps in this course.
 - Codex reads it automatically. Claude Code reads it through `CLAUDE.md`, which is also in your folder.
-- For chat tools, paste the "COMM 407 Course Rules" section into the conversation.
+- You don't need to repeat these rules in your requests.
 
-## Give the AI the context it needs
+## Tell the agent the goal and the file
 
 ::: {.small}
 ```text
-I'm using R and the tidyverse in a Quarto document.
-`bca` holds BC Assessment sales (data/bca262.rds).
-Here is glimpse(bca) for the variables I need: <paste output>
-
-Goal: the median sale price by year in the City of Vancouver,
+In a new Quarto document, chart the median sale price by year
+in the City of Vancouver from data/bca262.rds,
 separately for single-family and strata homes.
-Follow the rules in AGENTS.md.
 ```
 :::
 
+- The agent runs `glimpse()` on the data and reads `AGENTS.md` itself. You paste neither.
+- State the choices you have already made: the place, the years, the property types.
+
 ::: {.key-point}
-`glimpse()` output shows names, types, and example values in a few lines.
+The agent knows R. Only you know what you want to measure.
 :::
 
 ## Manage the conversation
@@ -132,9 +130,25 @@ Each new message is processed together with the whole conversation so far. Long 
 
 - Use one conversation per task. Start a new one when the topic changes.
 - When answers get worse, ask for a short summary and paste it into a new conversation.
-- Point a coding agent to files instead of pasting them. In a chat tool, paste only the error and the code that caused it.
-- Share `glimpse()` or `head()` output, never whole tables.
-- Keep standing rules in `AGENTS.md` instead of repeating them.
+- Point the agent to files instead of pasting their contents.
+
+## If you use a chat tool
+
+A chat tool sees only what you paste, so paste what an agent would read for itself:
+
+::: {.small}
+```text
+I'm using R and the tidyverse in a Quarto document.
+<paste the "COMM 407 Course Rules" section of AGENTS.md>
+`bca` holds BC Assessment sales. Here is glimpse(bca): <paste output>
+
+Goal: the median sale price by year in the City of Vancouver,
+separately for single-family and strata homes.
+```
+:::
+
+- Paste `glimpse()` or `head()` output, never whole tables.
+- To fix an error, paste only the error and the code that caused it.
 
 ## Demo: how have Vancouver prices changed?
 
@@ -315,10 +329,11 @@ What goes wrong if you sum `units`, or average `median_rent`?
 AI coding agents can read your data files. Ask the agent to run these checks and show you the output.
 :::
 
-## Keep API keys out of AI chats
+## Keep API keys out of AI conversations
 
 - Keys live in `.Renviron`. Code reads them with `Sys.getenv()`.
 - Never paste a key into a chat, your code, or a submission.
+- A coding agent can open `.Renviron` like any file in `c407`. If a key appears in its output, treat the key as leaked.
 - If a key leaks, delete it in the provider's console and create a new one.
 
 ## Say how you used AI
