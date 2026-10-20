@@ -47,7 +47,7 @@ bca <- read_rds("data/bca262.rds")
 - You are responsible for every number on your slides, whoever typed the code.
 
 ::: {.key-point}
-Your job shifts from writing code to checking it.
+Your job shifts from writing code to guiding and checking it.
 :::
 
 ## Will you notice if the AI is wrong?
@@ -75,6 +75,8 @@ You must catch these yourself.
 ::: {.warning}
 Common silent errors: a median that mixes property types, a join that duplicates rows, a wrong census vector, a geocoding match in the wrong city.
 :::
+
+# Prompt
 
 ## Two kinds of AI tools
 
@@ -132,6 +134,17 @@ Each new message is processed together with the whole conversation so far. Long 
 - When answers get worse, ask for a short summary and paste it into a new conversation.
 - Point the agent to files instead of pasting their contents.
 
+## Work in small steps
+
+1. For anything with more than one step, ask for a plan before any code.
+2. Make one change at a time. Run it and check it before you go on.
+3. Save a copy, or commit if you use Git, before an agent edits several files.
+4. After two failed fixes, stop asking it to "try again". Restate the problem in a new conversation.
+
+::: {.key-point}
+Small steps keep every answer small enough to check.
+:::
+
 ## If you use a chat tool
 
 A chat tool sees only what you paste, so paste what an agent would read for itself:
@@ -149,6 +162,15 @@ separately for single-family and strata homes.
 
 - Paste `glimpse()` or `head()` output, never whole tables.
 - To fix an error, paste only the error and the code that caused it.
+
+## Keep API keys out of AI conversations
+
+- Keys live in `.Renviron`. Code reads them with `Sys.getenv()`.
+- Never paste a key into a chat, your code, or a submission.
+- A coding agent can open `.Renviron` like any file in `c407`. If a key appears in its output, treat the key as leaked.
+- If a key leaks, delete it in the provider's console and create a new one.
+
+# Read
 
 ## Demo: how have Vancouver prices changed?
 
@@ -239,6 +261,42 @@ Single-family prices rose `r pct(mix$single_family)`% and strata prices `r pct(m
 The agent listed its choices. Reading them and acting on them is your job.
 :::
 
+## Guide the agent with your next message
+
+One message asks the agent for both of the last two slides:
+
+::: {.small}
+```text
+Split the line into single-family and strata homes. Then tell me how much
+each type rose from 2011 to 2015, and how the mix of sales changed.
+```
+:::
+
+- **Decide.** When the agent asks or lists a choice, such as the years, property types, or exclusions, the answer is yours.
+- **Suggest.** Bring ideas from the course: "Would price per square foot change the picture?"
+- **Redirect.** When the work drifts from your question, say so and say why.
+
+::: {.key-point}
+The agent writes the code. You decide where the analysis goes.
+:::
+
+## When you meet a line you don't know
+
+1. **Ask the agent.** Say what you think the line does, then ask: "Explain line 12 of `scripts/prices.qmd`. What does it do to the rows and columns, and why is it there?"
+2. **Run the pipe up to the line**, and compare the result with the explanation.
+3. **Remove the line and rerun.** Whatever changes is what it does.
+
+::: {.key-point}
+Guess first, then ask or run. The guess is what you practise for the exam.
+:::
+
+::: {.notes}
+- To run part of a pipe, select it up to the end of the line, without the trailing `|>`, and press Ctrl+Enter (Cmd+Enter on macOS).
+- `?fn` opens the help page, and `example(fn)` runs its examples, as in deck 06.
+:::
+
+# Check
+
 ## Check the row count after every join
 
 ```{r}
@@ -261,46 +319,6 @@ sales |> left_join(neigh_info, by = "neigh", relationship = "many-to-one")
 
 ::: {.key-point}
 `relationship = "many-to-one"` stops with an error if the right-hand table has duplicate keys.
-:::
-
-## A checklist for AI-written code
-
-1. Read every line. Ask the AI to explain any line you cannot.
-2. Count rows before and after each filter and join.
-3. Look for missing values in every column you use, and count the rows they drop.
-4. Compare magnitudes with a number you know. Is a median Vancouver house price of $200,000 plausible?
-5. Plot the raw data before you summarise it.
-
-## Let R write the numbers in your text
-
-```{r}
-#| label: van
-van <- bca |> filter(juris_label == "City of Vancouver")
-```
-
-````markdown
-The data have `r knitr::inline_expr('format(nrow(van), big.mark = ",")')` sales in the City of Vancouver.
-Their median price is `r knitr::inline_expr('format(median(van$price), big.mark = ",")')` dollars.
-````
-
-The report shows: The data have `r format(nrow(van), big.mark = ",")` sales in the City of Vancouver. Their median price is `r format(median(van$price), big.mark = ",")` dollars.
-
-- A number you type stays the same after you or the AI change a filter or fix a join, and nothing warns you.
-- Inline code runs again at every render. In PowerPoint, copy every number again from your final render.
-
-::: {.key-point}
-Every number in your text should come from R.
-:::
-
-## Work in small steps
-
-1. For anything with more than one step, ask for a plan before any code.
-2. Make one change at a time. Run it and check it before you go on.
-3. Save a copy, or commit if you use Git, before an agent edits several files.
-4. After two failed fixes, stop asking it to "try again". Restate the problem in a new conversation.
-
-::: {.key-point}
-Small steps keep every answer small enough to check.
 :::
 
 ## Check a file you did not make
@@ -329,12 +347,60 @@ What goes wrong if you sum `units`, or average `median_rent`?
 AI coding agents can read your data files. Ask the agent to run these checks and show you the output.
 :::
 
-## Keep API keys out of AI conversations
+## A checklist for AI-written code
 
-- Keys live in `.Renviron`. Code reads them with `Sys.getenv()`.
-- Never paste a key into a chat, your code, or a submission.
-- A coding agent can open `.Renviron` like any file in `c407`. If a key appears in its output, treat the key as leaked.
-- If a key leaks, delete it in the provider's console and create a new one.
+1. Read every line. Ask the AI to explain any line you cannot.
+2. Count rows before and after each filter and join.
+3. Look for missing values in every column you use, and count the rows they drop.
+4. Compare magnitudes with a number you know. Is a median Vancouver house price of $200,000 plausible?
+5. Plot the raw data before you summarise it.
+
+## Ask a new conversation to review the work
+
+::: {.small}
+```text
+Review scripts/prices.qmd. My goal: <your goal>.
+List every choice that could change the answer,
+and show row counts before and after each filter and join.
+Do not edit the file.
+```
+:::
+
+- Give it your goal. Whether a choice is right depends on what you want to measure.
+- Ask for evidence, not a verdict.
+
+::: {.key-point}
+Its flags are leads to check. "Looks fine" is not a check.
+:::
+
+::: {.notes}
+- Tested on 2026-10-20 with Claude Opus 5.5 in a fresh copy of the student `c407` folder, with file edits blocked. The file held the demo code and the agent's "nearly flat" paragraph, without its note on the mix. The goal was "How have home prices in the City of Vancouver changed since 2000?"
+- It led with the mix: from 2011 to 2015 the pooled median rose 2%, single-family 34%, strata 6%. It also flagged the partial 2026 and nominal dollars.
+- It listed seven choices and three style points, and said some barely move a median. Ask the class which ones change the answer.
+:::
+
+# Report
+
+## Let R write the numbers in your text
+
+```{r}
+#| label: van
+van <- bca |> filter(juris_label == "City of Vancouver")
+```
+
+````markdown
+The data have `r knitr::inline_expr('format(nrow(van), big.mark = ",")')` sales in the City of Vancouver.
+Their median price is `r knitr::inline_expr('format(median(van$price), big.mark = ",")')` dollars.
+````
+
+The report shows: The data have `r format(nrow(van), big.mark = ",")` sales in the City of Vancouver. Their median price is `r format(median(van$price), big.mark = ",")` dollars.
+
+- A number you type stays the same after you or the AI change a filter or fix a join, and nothing warns you.
+- Inline code runs again at every render. In PowerPoint, copy every number again from your final render.
+
+::: {.key-point}
+Every number in your text should come from R.
+:::
 
 ## Say how you used AI
 
@@ -348,7 +414,9 @@ State the tool, what you used it for, and what you checked. For example:
 TODO: Confirm the attribution format for the research project before class.
 :::
 
-## Practice: find three mistakes
+# Practice
+
+## Find three mistakes
 
 The task: compare the median price of single-family and strata homes in the City of Vancouver in 2025. This code runs without an error or a warning:
 

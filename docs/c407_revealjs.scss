@@ -57,7 +57,9 @@ $code-block-font-size: 0.82em;
   padding-left: 1.35em;
 }
 
-.reveal #title-slide {
+// Section slides (level-1 headings) share the title slide's style.
+.reveal #title-slide,
+.reveal .slides section.level1 {
   color: #ffffff;
   background: var(--c407-blue);
   padding: 1.5em 1.7em;
@@ -67,11 +69,13 @@ $code-block-font-size: 0.82em;
 .reveal #title-slide h1,
 .reveal #title-slide .subtitle,
 .reveal #title-slide .quarto-title-author-name,
-.reveal #title-slide .date {
+.reveal #title-slide .date,
+.reveal .slides section.level1 h1 {
   color: #ffffff !important;
 }
 
-.reveal #title-slide h1 {
+.reveal #title-slide h1,
+.reveal .slides section.level1 h1 {
   max-width: 12ch;
   border-left: 0.13em solid #fbbc13;
   padding-left: 0.35em;
