@@ -189,15 +189,45 @@ bca |> distinct(act_use_cat)
 Check the exact values with `distinct()` before you filter, and count rows after every filter.
 :::
 
-## Practice
+## Practice (AI on)
 
-From `bca`, find sales that:
+From `bca`, find the sales that:
 
-- happened in 2017 (add `sale_year` with `year(sale_date)`);
-- are condos or townhouses (`act_use_cat` is `"Strata Res"`); and
+- happened in 2017;
+- are condos or townhouses; and
 - sold for more than $5 million.
 
-Keep `roll_num`, `sale_year`, `price`, and `neigh_label`, sorted from the highest price. Write it as one pipeline.
+Keep `roll_num`, the sale year, `price`, and `neigh_label`, sorted from the highest price.
+
+## Give the task to your agent
+
+::: {.small}
+```text
+Create scripts/dplyr_1.qmd. From data/bca262.rds, find the 2017 sales
+of strata homes (condos and townhouses) above $5 million. Keep roll_num,
+the sale year, price, and neigh_label, sorted from the highest price.
+Write it as one pipeline.
+```
+:::
+
+Run the code it writes. Then read it before you go on.
+
+::: {.notes}
+- The agent will probably write the same four verbs as the answer slide. It may write `5e6`, which means 5 × 10⁶ = 5,000,000.
+- Tested 2026-10-21 with Claude Code (Opus 5.5) in a fresh copy of the student folder: the same pipeline, 26 rows, `5e6`. It also flagged two things worth discussing:
+  - Strata duplexes are coded `"S/F Res"`, so "strata homes" leaves them out. One sold for $8 million in Kitsilano in 2017.
+  - The second-highest sale, an $8.8 million "condo" in Pitt Meadows, has no unit number, floor area, or year built. The median Pitt Meadows strata sale that year was $419,000. It may be a whole building or a development site. Question 4 on the next slide asks about it; if a student's agent flagged it, ask them how they would check it themselves.
+- The student `AGENTS.md` makes the agent report row counts after each filter and explain any new function. Point students to those lines: they say what the code did, not what would change it. The next slide asks what would change it.
+:::
+
+## Read the agent's code (AI off)
+
+Find the line that does each part of the task. Then answer without asking the agent, editing and running the code yourself.
+
+1. Move the `select()` line up, right after `bca |>`. Predict what happens, then run it.
+2. Change $5 million to $3 million. How many sales now?
+3. If `filter()` used `|` instead of the commas, how many rows would it return? Would R warn you?
+4. Which sale on the list would you check before you report it? Why?
 
 ## Answer
 
@@ -209,5 +239,61 @@ bca |>
   filter(sale_year == 2017, act_use_cat == "Strata Res", price > 5000000) |>
   select(roll_num, sale_year, price, neigh_label) |>
   arrange(desc(price))
+```
+:::
+
+## Answer: reading the code
+
+::: {.small}
+```{r include=params$answers}
+#| label: practice-select-first
+# 1. Each step sees only the columns the steps above it left
+bca |>
+  select(roll_num, sale_year, price, neigh_label) |>
+  mutate(sale_year = year(sale_date))
+```
+
+```{r include=params$answers}
+#| label: practice-3m
+# 2. $3 million
+bca |>
+  mutate(sale_year = year(sale_date)) |>
+  filter(sale_year == 2017, act_use_cat == "Strata Res", price > 3000000) |>
+  nrow()
+```
+:::
+
+## Answer: `|` instead of commas
+
+::: {.small}
+```{r include=params$answers}
+#| label: practice-or
+# 3. | keeps a sale that meets any one condition: 6 in 10 sales, and no warning
+nrow(bca)
+
+bca |>
+  mutate(sale_year = year(sale_date)) |>
+  filter(sale_year == 2017 | act_use_cat == "Strata Res" | price > 5000000) |>
+  nrow()
+```
+:::
+
+## Answer: a sale to check
+
+::: {.small}
+```{r include=params$answers}
+#| label: practice-pitt-meadows
+# 4. An $8.8 million "condo" with no unit number, floor area, or year built
+bca |>
+  filter(year(sale_date) == 2017, act_use_cat == "Strata Res", price > 5000000,
+         juris_label == "City of Pitt Meadows") |>
+  select(juris_label, apt_no, floorarea, year_built, price)
+
+# A typical Pitt Meadows strata sale that year: was it a whole building or a site?
+pitt <- bca |>
+  filter(year(sale_date) == 2017, act_use_cat == "Strata Res",
+         juris_label == "City of Pitt Meadows")
+nrow(pitt)
+median(pitt$price)
 ```
 :::
