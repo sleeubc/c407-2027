@@ -42,53 +42,28 @@ bca <- read_rds("data/bca262.rds")
 
 ## AI writes the first draft; you own the result
 
-- AI tools are allowed for the research project, with attribution. They are not allowed in exams.
-- AI is good at R syntax. It does not know your data.
+- AI tools are allowed for the research project, with attribution.
 - You are responsible for every number on your slides, whoever typed the code.
 
 ::: {.key-point}
 Your job shifts from writing code to guiding and checking it.
 :::
 
-## Will you notice if the AI is wrong?
-
-:::: {.columns}
-::: {.column width="50%"}
-**Visible errors**
-
-- The code stops with an error.
-- The chart looks obviously wrong.
-
-Ask the AI again.
-:::
-
-::: {.column width="50%"}
-**Silent errors**
-
-- The code runs and the chart looks fine.
-- The numbers are wrong.
-
-You must catch these yourself.
-:::
-::::
-
-::: {.warning}
-Common silent errors: a median that mixes property types, a join that duplicates rows, a wrong census vector, a geocoding match in the wrong city.
-:::
-
 # Prompt
 
 ## Two kinds of AI tools
 
-- **Coding agents in Positron or the Terminal.** They read the files in your `c407` folder, write code, and run it. You need one from deck 08 on.
 - **Chat tools in a browser.** They see only what you paste: your question, code, and output.
+- **Coding agents in Positron or the Terminal.** They read the files in your `c407` folder, write code, and run it. 
 
-The same checks apply to both.
+::: {.key-point}
+We will use coding agents in this course.
+:::
 
 ## Install a coding agent in Positron
 
 1. Open the **c407 folder** as your workspace.
-2. Open the **Extensions** view: **Ctrl+Shift+X** on Windows, **Cmd+Shift+X** on macOS.
+2. Open the **Extensions** view.
 3. Search for **Codex** or **Claude Code**, and click **Install**.
 4. Open the agent's panel and sign in with your ChatGPT or Claude account.
 
@@ -99,13 +74,14 @@ Check the publisher before you install: **OpenAI** for Codex, **Anthropic** for 
 :::
 
 ::: {.notes}
+- Shortcut key for the Extensions view: **Ctrl+Shift+X** on Windows, **Cmd+Shift+X** on macOS.
 - Positron installs extensions from Open VSX, not the VS Code Marketplace.
 - If the extension does not appear, install the agent's command-line version and run it in Positron's Terminal.
 :::
 
 ## AGENTS.md gives the agent the course rules
 
-- `AGENTS.md` in your `c407` folder lists where files go, which packages to use, and the data traps in this course.
+- `AGENTS.md` in your `c407` folder lists where files go, which packages to use, the data traps in this course, and the checks the agent should report, such as row counts after each join.
 - Codex reads it automatically. Claude Code reads it through `CLAUDE.md`, which is also in your folder.
 - You don't need to repeat these rules in your requests.
 
@@ -119,14 +95,13 @@ separately for single-family and strata homes.
 ```
 :::
 
-- The agent runs `glimpse()` on the data and reads `AGENTS.md` itself. You paste neither.
 - State the choices you have already made: the place, the years, the property types.
 
 ::: {.key-point}
 The agent knows R. Only you know what you want to measure.
 :::
 
-## Manage the conversation
+## Manage the conversation (context window)
 
 Each new message is processed together with the whole conversation so far. Long conversations use up your plan's limit faster, and the answers can get worse: the AI loses early instructions and mixes in old versions of your code.
 
@@ -145,23 +120,26 @@ Each new message is processed together with the whole conversation so far. Long 
 Small steps keep every answer small enough to guide and check.
 :::
 
-## If you use a chat tool
+## Let R write the numbers in your text
 
-A chat tool sees only what you paste, so paste what an agent would read for itself:
-
-::: {.small}
-```text
-I'm using R and the tidyverse in a Quarto document.
-<paste the "COMM 407 Course Rules" section of AGENTS.md>
-`bca` holds BC Assessment sales. Here is glimpse(bca): <paste output>
-
-Goal: the median sale price by year in the City of Vancouver,
-separately for single-family and strata homes.
+```{r}
+#| label: van
+van <- bca |> filter(juris_label == "City of Vancouver")
 ```
-:::
 
-- Paste `glimpse()` or `head()` output, never whole tables.
-- To fix an error, paste only the error and the code that caused it.
+````markdown
+The data have `r knitr::inline_expr('format(nrow(van), big.mark = ",")')` sales in the City of Vancouver.
+Their median price is `r knitr::inline_expr('format(median(van$price), big.mark = ",")')` dollars.
+````
+
+The report shows: The data have `r format(nrow(van), big.mark = ",")` sales in the City of Vancouver. Their median price is `r format(median(van$price), big.mark = ",")` dollars.
+
+- A number you type stays the same after you or the AI change a filter or fix a join, and nothing warns you.
+- Inline code runs again at every render. In PowerPoint, copy every number again from your final render.
+
+::: {.key-point}
+Every number in your text should come from R.
+:::
 
 ## Keep API keys out of AI conversations
 
@@ -170,9 +148,9 @@ separately for single-family and strata homes.
 - A coding agent can open `.Renviron` like any file in `c407`. If a key appears in its output, treat the key as leaked.
 - If a key leaks, delete it in the provider's console and create a new one.
 
-# Read
+# Demo: how have Vancouver prices changed?
 
-## Demo: how have Vancouver prices changed?
+## The prompt
 
 ::: {.small}
 ```text
@@ -182,51 +160,38 @@ in a new Quarto document.
 ```
 :::
 
-The agent's code, shortened:
-
-```{r}
-#| label: demo-code
-van <- bca |> filter(juris_label == "City of Vancouver")
-
-by_year <- van |>
-  group_by(sale_year = year(sale_date)) |>
-  summarise(median_price = median(price))
-```
-
-## The agent's summary
-
-```{r}
-#| label: demo-chart
-#| echo: false
-#| fig-height: 2.4
-ggplot(by_year, aes(sale_year, median_price)) +
-  geom_line() +
-  geom_point() +
-  scale_y_continuous(labels = scales::label_dollar())
-```
+## The agent asks before it draws
 
 ::: {.small}
-> The rise was uneven. It was fast in 2004–2007 and 2020–2024, and nearly flat in 2011–2015 and 2017–2019.
+> The single-family median is about twice the strata median. The share of each type also changes from year to year. So if you take one median across all sales, it can move just because more condos sold that year, even when prices didn't change.
 >
-> I included all sales, both houses ("S/F Res") and strata units like condos ("Strata Res"). The median mixes the two, so part of any change could come from a shift in which type sells.
+> 1. One line per type (strata and single-family) on the same chart. *(Recommended.)*
+> 2. One median of all sales pooled together.
+> 3. Single-family homes only, or strata only.
+>
+> Sales in the file end on 11 March 2026, so I'll stop the chart at 2025 either way.
 :::
 
-Were prices nearly flat from 2011 to 2015?
+Which would you pick, and why?
+
+::: {.key-point}
+The agent writes the code. You decide where the analysis goes.
+:::
 
 ::: {.notes}
-- Tested on 2026-10-18 with Claude Sonnet in a fresh copy of the student `c407` folder, so `AGENTS.md` was loaded. The quotes are its own words. It also filtered on `juris_label`, not the wider `aa_label`, and flagged 2026 as a partial year.
-- A live run will differ. If the agent splits by type on its own, ask the class what the single line would have told them.
-- The test ran before `AGENTS.md` asked agents to offer options and wait (added 2026-10-20). A live run may now stop and ask whether to pool or split the property types before drawing. If it does, ask the class which they would choose, and why.
-- Two other prompts came out right: sales per year (the agent dropped the partial 2026 and said why) and price per square foot of houses (it dropped sales without a floor area and said how many). Mechanical slips are now rare; choices like this one remain.
+- Run on 2026-10-20 with Claude Opus 5.5 in a fresh copy of the student `c407` folder, so `AGENTS.md` was loaded. The quotes are its own words, shortened. Before asking, it counted the rows: 282,521 City of Vancouver sales. It also asked whether to adjust for inflation, with prices as recorded as its default.
+- A live run may differ. If the agent pools without asking, ask the class what the single line hides, then show the next two slides.
+- An earlier run, on 2026-10-18 with Claude Sonnet and before `AGENTS.md` asked agents to offer options and wait, pooled the types and called 2011–2015 "nearly flat". Two other prompts came out right: sales per year (the agent dropped the partial 2026 and said why) and price per square foot of houses (it dropped sales without a floor area and said how many). Mechanical slips are now rare; choices like this one remain.
 :::
 
-## Split by property type before you trust a trend
+## Option 1: one line per type
 
 ```{r}
 #| label: demo-split
 #| fig-width: 9
 #| fig-height: 3.2
 by_type <- van |>
+  filter(year(sale_date) <= 2025) |>
   group_by(act_use_cat, sale_year = year(sale_date)) |>
   summarise(median_price = median(price), .groups = "drop")
 
@@ -262,30 +227,15 @@ Single-family prices rose `r pct(mix$single_family)`% and strata prices `r pct(m
 The agent listed its choices. Reading them and acting on them is your job.
 :::
 
-## Guide the agent with your next message
+# Check
 
-One message asks the agent for both of the last two slides:
+## Read
 
-::: {.small}
-```text
-Split the line into single-family and strata homes. Then tell me how much
-each type rose from 2011 to 2015, and how the mix of sales changed.
-```
-:::
+You are expected to understand every line of code, whether you or the AI wrote it. 
 
-- **Decide.** When the agent asks or lists a choice, such as the years, property types, or exclusions, the answer is yours.
-- **Suggest.** Bring ideas from the course: "Would price per square foot change the picture?"
-- **Redirect.** When the work drifts from your question, say so and say why.
+When you meet a line you don't know:
 
-::: {.key-point}
-The agent writes the code. You decide where the analysis goes.
-:::
-
-## When you meet a line you don't know
-
-Decks with new functions end with a slide that sorts them into three groups: **know** (write it without help), **recognize** (say what the line does), and **look up** (when you meet it). Use these steps for the last two.
-
-1. **Ask the agent.** Say what you think the line does, then ask: "Explain line 12 of `scripts/prices.qmd`. What does it do to the rows and columns, and why is it there?"
+1. **Ask the agent.** Give your guess: "Line 12 of `scripts/prices.qmd`: I think it drops sales without a floor area. Am I right?" `AGENTS.md` tells it to check your guess, then explain what the line does to the rows and columns, and why.
 2. **Run the pipe up to the line**, and compare the result with the explanation.
 3. **Remove the line and rerun.** Whatever changes is what it does.
 
@@ -298,7 +248,32 @@ Guess first, then ask or run. The guess is what you practise for the exam.
 - `?fn` opens the help page, and `example(fn)` runs its examples, as in deck 06.
 :::
 
-# Check
+## Will you notice if the AI is wrong?
+
+:::: {.columns}
+::: {.column width="50%"}
+**Visible errors**
+
+- The code stops with an error.
+- The chart looks obviously wrong.
+
+Ask the AI again.
+:::
+
+::: {.column width="50%"}
+**Silent errors**
+
+- The code runs and the chart looks fine.
+- The numbers are wrong.
+
+You must catch these yourself.
+:::
+::::
+
+::: {.warning}
+Common silent errors: a median that mixes property types, a join that duplicates rows, a wrong census vector, a geocoding match in the wrong city.
+:::
+
 
 ## Check the row count after every join
 
@@ -311,18 +286,12 @@ neigh_info <- tibble(neigh = c("Kitsilano", "Kitsilano", "West End", "Marpole"),
 sales |> left_join(neigh_info, by = "neigh") |> nrow()
 ```
 
-Three sales became four rows, because Kitsilano appears twice in `neigh_info`.
-
-## Make R check the join for you
+Three sales became four rows, because Kitsilano appears twice in `neigh_info`. `AGENTS.md` tells the agent to add `relationship =`, which turns the silent duplicate into an error:
 
 ```{r}
 #| label: join-relationship
 sales |> left_join(neigh_info, by = "neigh", relationship = "many-to-one")
 ```
-
-::: {.key-point}
-`relationship = "many-to-one"` stops with an error if the right-hand table has duplicate keys.
-:::
 
 ## Check a file you did not make
 
@@ -347,24 +316,23 @@ What goes wrong if you sum `units`, or average `median_rent`?
 3. **One known number:** check that a total matches the published figure.
 
 ::: {.key-point}
-AI coding agents can read your data files. Ask the agent to run these checks and show you the output.
+`AGENTS.md` tells the agent to run these checks and report them. Reading what it reports is your job.
 :::
 
-## A checklist for AI-written code
+## What only you can check
 
-1. Read every line. Ask the AI to explain any line you cannot.
-2. Count rows before and after each filter and join.
-3. Look for missing values in every column you use, and count the rows they drop.
-4. Compare magnitudes with a number you know. Is a median Vancouver house price of $200,000 plausible?
-5. Plot the raw data before you summarise it.
+`AGENTS.md` makes the agent report row counts and the rows that missing values drop. Three checks stay with you:
+
+1. **Choices:** is each one right for your question?
+2. **Magnitudes:** compare with a number you know. Is a median Vancouver house price of $200,000 plausible?
+3. **Raw data:** plot it before you trust a summary.
 
 ## Ask a new conversation to review the work
 
 ::: {.small}
 ```text
 Review scripts/prices.qmd. My goal: <your goal>.
-List every choice that could change the answer,
-and show row counts before and after each filter and join.
+List every choice that could change the answer.
 Do not edit the file.
 ```
 :::
@@ -377,69 +345,24 @@ Its flags are leads to check. "Looks fine" is not a check.
 :::
 
 ::: {.notes}
-- Tested on 2026-10-20 with Claude Opus 5.5 in a fresh copy of the student `c407` folder, with file edits blocked. The file held the demo code and the agent's "nearly flat" paragraph, without its note on the mix. The goal was "How have home prices in the City of Vancouver changed since 2000?"
+- Tested on 2026-10-20 with Claude Opus 5.5 in a fresh copy of the student `c407` folder, with file edits blocked. The file held the pooled code and "nearly flat" paragraph from the 2026-10-18 demo run, without its note on the mix. The goal was "How have home prices in the City of Vancouver changed since 2000?" The prompt also asked for row counts before and after each filter and join; the shorter prompt on this slide relies on `AGENTS.md` for those and is untested.
 - It led with the mix: from 2011 to 2015 the pooled median rose 2%, single-family 34%, strata 6%. It also flagged the partial 2026 and nominal dollars.
 - It listed seven choices and three style points, and said some barely move a median. Ask the class which ones change the answer.
 :::
 
-# Report
+# Exam Prep
 
-## Let R write the numbers in your text
+## Know, Recognize, and Look up
 
-```{r}
-#| label: van
-van <- bca |> filter(juris_label == "City of Vancouver")
-```
+You write the exam without AI. Most questions ask you to read code: say what a line does, predict its output, or find a silent error.
 
-````markdown
-The data have `r knitr::inline_expr('format(nrow(van), big.mark = ",")')` sales in the City of Vancouver.
-Their median price is `r knitr::inline_expr('format(median(van$price), big.mark = ",")')` dollars.
-````
-
-The report shows: The data have `r format(nrow(van), big.mark = ",")` sales in the City of Vancouver. Their median price is `r format(median(van$price), big.mark = ",")` dollars.
-
-- A number you type stays the same after you or the AI change a filter or fix a join, and nothing warns you.
-- Inline code runs again at every render. In PowerPoint, copy every number again from your final render.
+| | What it means | How to study |
+|---|---|---|
+| **Know** | Write it without help | Write it from memory, then run it to check |
+| **Recognize** | Say what the line does | Guess what each line of the deck's code does, then run it to check |
+| **Look up** | Find it when you meet it | Don't memorize it. Use `?fn` or ask the agent |
 
 ::: {.key-point}
-Every number in your text should come from R.
+Each subsequent deck that teaches code ends with these three lists. Spend your study time on the first two.
 :::
 
-## Say how you used AI
-
-State the tool, what you used it for, what you changed, and what you checked. For example:
-
-::: {.small}
-> I used [tool] to draft the code for Figures 2 and 3 and to fix a join error. I had it split prices by property type, because the pooled median mixed condos and houses. I checked the row counts after each join and compared our totals with Statistics Canada's published figures.
-:::
-
-::: {.notes}
-TODO: Confirm the attribution format for the research project before class.
-:::
-
-# Practice
-
-## Find three mistakes
-
-The task: compare the median price of single-family and strata homes in the City of Vancouver in 2025. This code runs without an error or a warning:
-
-```{r}
-#| label: practice-wrong
-bca |>
-  filter(aa_label == "Vancouver", year(sale_date) >= 2025) |>
-  group_by(act_use_cat) |>
-  summarise(median_price = mean(price), sales = n())
-```
-
-## Answer
-
-```{r include=params$answers}
-#| label: practice-answer
-bca |>
-  # 1. The City of Vancouver, not the wider assessment area
-  # 2. 2025 only: 2026 is a partial year
-  filter(juris_label == "City of Vancouver", year(sale_date) == 2025) |>
-  group_by(act_use_cat) |>
-  # 3. median(), as the column name says
-  summarise(median_price = median(price), sales = n())
-```
