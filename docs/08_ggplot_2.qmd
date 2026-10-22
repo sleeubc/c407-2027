@@ -579,37 +579,29 @@ s_share <- \(y) surrey$share[surrey$year == y]
 ## What to know from this deck
 
 :::: {.columns}
-::: {.column width="32%"}
-**Know**<br>*Write it without help*
+::: {.column width="66%"}
+**Know:** *read it and predict what it does*
 
 ::: {.small}
-- `facet_wrap(~ group)`
-- `position = "dodge"`, `"fill"`
-- `label_dollar()`, `label_percent()` in a `scale_*()`
-- `labs()`
-- `ggsave()`
-:::
-:::
-
-::: {.column width="40%"}
-**Recognize**<br>*Say what the line does*
-
-::: {.small}
-- `scale_*()`, `coord_*()`, `theme()`, `guides()`: the name says what changes
+- `facet_wrap(~ group)`: one panel per group
+- `position = "dodge"`, `"fill"`: bars side by side, or stacks scaled to 100%
+- `scale_*()`, `coord_*()`, `labs()`, `theme()`, `guides()`: the name says what changes
+- `label_dollar()`, `label_percent()` in a `scale_*()`: axis labels
 - Factor levels: the order of bars, stacks, and legends
 - `ymd()`, `month()`, `wday()`: dates and their parts
 - `as.character()` on a factor: text, sorted alphabetically
 :::
 :::
 
-::: {.column width="24%"}
-**Look up**<br>*When you meet it*
+::: {.column width="30%"}
+**Look up:** *when you meet it*
 
 ::: {.small}
 - `palette = "Dark2"`
 - `legend.position`
 - `week_start = 1`
 - `fct_reorder()`
+- `ggsave()`
 :::
 :::
 ::::

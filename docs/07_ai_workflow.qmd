@@ -327,17 +327,16 @@ Its flags are leads to check. "Looks fine" is not a check.
 
 # Exam Prep
 
-## Know, Recognize, and Look up
+## Know and Look up
 
-You write the exam without AI. Most questions ask you to read code: say what a line does, predict its output, or find a silent error.
+You write the exam without AI, but no question asks you to write code from memory. Most questions ask you to read code: say what a line does, predict its output, or find a silent error.
 
 | | What it means | How to study |
 |---|---|---|
-| **Know** | Write it without help | Write it from memory, then run it to check |
-| **Recognize** | Say what the line does | Guess what each line of the deck's code does, then run it to check |
-| **Look up** | Find it when you meet it | Don't memorize it. Use `?fn` or ask the agent |
+| **Know** | Read it and predict what it does, without help | Predict the output of each line of the deck's code, then run it to check |
+| **Look up** | Find out when you meet it | Don't memorize it. Use `?fn` or ask the agent. An exam question that uses it will say what it does |
 
 ::: {.key-point}
-Each subsequent deck that teaches code ends with these three lists. Spend your study time on the first two.
+Decks that teach code end with these two lists. Spend your study time on Know.
 :::
 

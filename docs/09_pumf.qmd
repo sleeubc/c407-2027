@@ -435,21 +435,13 @@ pumf |>
 ## What to know from this deck
 
 :::: {.columns}
-::: {.column width="30%"}
-**Know**<br>*Write it without help*
+::: {.column width="66%"}
+**Know:** *read it and predict what it does*
 
 ::: {.small}
-- `sum(WEIGHT)`, `count(x, wt = WEIGHT)`
-- `weighted.mean(x, WEIGHT)`
-- `aes(weight = WEIGHT)` in `geom_bar()`
-- `factor(x, levels = ...)`, `levels()`
-:::
-:::
-
-::: {.column width="40%"}
-**Recognize**<br>*Say what the line does*
-
-::: {.small}
+- `sum(WEIGHT)`, `count(x, wt = WEIGHT)`: people, not rows
+- `weighted.mean(x, WEIGHT)`, `aes(weight = WEIGHT)` in `geom_bar()`
+- `factor(x, levels = ...)`, `levels()`: set and see the level order
 - `%in% c(88888888, 99999999)`: missing-value codes
 - `if_else()`, `case_when()`: recode values
 - `as.numeric()` on a factor: level positions, not values
@@ -458,8 +450,8 @@ pumf |>
 :::
 :::
 
-::: {.column width="26%"}
-**Look up**<br>*When you meet it*
+::: {.column width="30%"}
+**Look up:** *when you meet it*
 
 ::: {.small}
 - `map_chr()`
