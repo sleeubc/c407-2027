@@ -184,15 +184,15 @@ Keep your documents, data, and outputs together inside the course folder.
 
 ## Preview: an AI coding agent at work
 
-Later in the course, you will work with an AI coding agent in Positron, such as **Codex** or **Claude Code**.
+From next class, you will work with an AI coding agent in Positron, such as **Codex** or **Claude Code**.
 
 - It reads the files in your `c407` folder, including `AGENTS.md`.
 - It writes code, runs it, and fixes its own errors.
 
-Today, you only watch. Do not install anything yet.
+Today, you only watch. You will install one next class.
 
 ::: {.notes}
-- Demo on my machine. Students install an agent in "Working with AI".
+- Demo on my machine. Students install an agent at the start of the next class, "A sample analysis in Quarto".
 - Run it in a fresh copy of the `c407` folder. No API key is needed: the demo uses `data/2021_census_pumf_ind.rds` and `data/provinces.geojson`.
 - Claude Code reads `CLAUDE.md`, which imports `AGENTS.md`. With Claude Code, run `/memory` to confirm that the course rules loaded.
 - Rehearse with these exact prompts on the demo machine, including rendering. Keep the rehearsal output as a fallback.
@@ -253,11 +253,11 @@ Save it in scripts/ and render it.
 You are responsible for every number you report, whoever wrote the code.
 :::
 
-## Learn to read code first
+## Before next class: get an AI plan
 
-- For the first three weeks, write all your code without AI.
-- Reading code is how you check what an AI gives you.
-- In week 4, you will install an agent and practise checking its work.
+- Next class, you will install **Codex** or **Claude Code** in Positron.
+- Each needs a paid plan that includes it, such as ChatGPT Plus or Claude Pro. Sign up before class.
+- Exams are without AI, so you must be able to read every line the agent writes.
 
 ::: {.key-point}
 AI makes you faster only if you can tell when it is wrong.

@@ -60,31 +60,6 @@ Your job shifts from writing code to guiding and checking it.
 We will use coding agents in this course.
 :::
 
-## Install a coding agent in Positron
-
-1. Open the **c407 folder** as your workspace.
-2. Open the **Extensions** view.
-3. Search for **Codex** or **Claude Code**, and click **Install**.
-4. Open the agent's panel and sign in with your ChatGPT or Claude account.
-
-Signing in with an account needs no API key. Each tool needs a plan that includes it.
-
-::: {.warning}
-Check the publisher before you install: **OpenAI** for Codex, **Anthropic** for Claude Code. Lookalike extensions exist.
-:::
-
-::: {.notes}
-- Shortcut key for the Extensions view: **Ctrl+Shift+X** on Windows, **Cmd+Shift+X** on macOS.
-- Positron installs extensions from Open VSX, not the VS Code Marketplace.
-- If the extension does not appear, install the agent's command-line version and run it in Positron's Terminal.
-:::
-
-## AGENTS.md gives the agent the course rules
-
-- `AGENTS.md` in your `c407` folder lists where files go, which packages to use, the data traps in this course, and the checks the agent should report, such as row counts after each join.
-- Codex reads it automatically. Claude Code reads it through `CLAUDE.md`, which is also in your folder.
-- You don't need to repeat these rules in your requests.
-
 ## Tell the agent the goal and the file
 
 ::: {.small}

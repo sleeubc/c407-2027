@@ -43,6 +43,50 @@ knitr::knit_hooks$set(output = function(x, options) {
 })
 ```
 
+## Install a coding agent in Positron
+
+1. Open the **c407 folder** as your workspace.
+2. Open the **Extensions** view.
+3. Search for **Codex** or **Claude Code**, and click **Install**.
+4. Open the agent's panel and sign in with your ChatGPT or Claude account.
+
+Signing in with an account needs no API key. Each tool needs a plan that includes it.
+
+::: {.warning}
+Check the publisher before you install: **OpenAI** for Codex, **Anthropic** for Claude Code. Lookalike extensions exist.
+:::
+
+::: {.notes}
+- Shortcut key for the Extensions view: **Ctrl+Shift+X** on Windows, **Cmd+Shift+X** on macOS.
+- Positron installs extensions from Open VSX, not the VS Code Marketplace.
+- If the extension does not appear, install the agent's command-line version and run it in Positron's Terminal.
+- A student whose install fails works with a neighbour today; fix it before the deck 04 practice.
+:::
+
+## AGENTS.md gives the agent the course rules
+
+- `AGENTS.md` in your `c407` folder lists where files go, which packages to use, the data traps in this course, and the checks the agent should report, such as row counts after each join.
+- Codex reads it automatically. Claude Code reads it through `CLAUDE.md`, which is also in your folder.
+- You don't need to repeat these rules in your requests.
+
+## Check that the agent read the rules
+
+Ask the agent:
+
+```text
+What does AGENTS.md say about data/bca262.rds?
+```
+
+It should list the traps in the sales data, such as 2026 being a partial year. If it can't find `AGENTS.md`, check that the **c407 folder** is open as your workspace.
+
+::: {.key-point}
+Stuck on an error today? Ask the agent what it means before you ask it to fix it.
+:::
+
+::: {.notes}
+- With Claude Code, `/memory` also shows whether `CLAUDE.md` and `AGENTS.md` loaded.
+:::
+
 ## R code runs in two places
 
 :::: {.columns}

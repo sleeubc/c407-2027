@@ -314,6 +314,7 @@ Run the code it writes. Then read it before you go on.
   - The second-highest sale, an $8.8 million "condo" in Pitt Meadows, has no unit number, floor area, or year built. The median Pitt Meadows strata sale that year was $419,000. Question 4 on the next slide asks about it; if a student's agent flagged it, ask them how they would check it themselves.
 - The second run looked up the address: no other sales there until 82 new condos sold in 2019, at $300,000 to $628,000. So the 2017 sale was probably the development site. It reported "about 140 sales in 2019"; 142 is the total for 2019–2026. The conclusion holds, but the agent's numbers need checking too.
 - The second run also stopped before dropping the sale, offered three options (keep it, drop it by `roll_num`, drop rows with no floor area), and left a `# TODO`. That is the student `AGENTS.md` rule on choices that change the results.
+- Other agents may write a different pipeline: a third test (another agent, 2026-10-21) read the file inline with `readRDS()`, filtered on `year(sale_date)`, and added `sale_year` after `filter()`. It got the same 26 rows but did not flag the Pitt Meadows sale or the strata duplex. Expect students' code to differ, and expect some agents to miss what question 4 asks about.
 - The student `AGENTS.md` makes the agent report row counts after each filter and explain any new function. Point students to those lines: they say what the code did, not what would change it. The next slide asks what would change it.
 :::
 
@@ -334,7 +335,7 @@ bca |>
 
 Compare the agent's code with yours. Where does it differ, and why? Then answer without asking the agent, editing and running the code yourself.
 
-1. Move the `select()` line up, right after `bca |>`. Predict what happens, then run it.
+1. Move the `select()` line to the top of the pipeline, right after the data. Predict what happens, then run it.
 2. Change $5 million to $3 million. How many sales now?
 3. If `filter()` used `|` instead of the commas, how many rows would it return? Would R warn you?
 4. Which sale on the list would you check before you report it? Why?
