@@ -63,40 +63,81 @@ tb
 
 ## select() keeps columns
 
+:::: {.columns}
+::: {.column .small width="30%"}
+```{r}
+#| label: tb-select
+tb
+```
+:::
+
+::: {.column width="68%"}
 ```{r}
 #| label: select
 select(tb, a, b)
 ```
 
 The first argument is the data; the rest are the columns to keep.
+:::
+::::
 
 ## The pipe passes the left side to the right
 
+:::: {.columns}
+::: {.column .small width="30%"}
+```{r}
+#| label: tb-pipe
+tb
+```
+:::
+
+::: {.column width="68%"}
 `x |> f(y)` is the same as `f(x, y)`.
 
 ```{r}
 #| label: pipe
 tb |> select(a, b)
 ```
+:::
+::::
 
 Insert `|>` with `Ctrl + Shift + M` (Windows) or `Command + Shift + M` (macOS).
 
 ## filter() keeps rows that meet every condition
 
+:::: {.columns}
+::: {.column .small width="30%"}
+```{r}
+#| label: tb-filter
+tb
+```
+:::
+
+::: {.column width="68%"}
 ```{r}
 #| label: filter
 tb |> filter(a >= 2, c == "y")
 ```
 
 Commas mean "and": a row must meet both conditions.
+:::
+::::
 
 ## Logical operators
 
+:::: {.columns}
+::: {.column .small width="30%"}
 ```{r}
 #| label: tb2
-tb2 <- tibble(a = c(1, 1, 1, 2, 2, 2), b = c(1, 2, 3, 3, 4, 4))
+tb2 <- tibble(
+  a = c(1, 1, 1, 2, 2, 2),
+  b = c(1, 2, 3, 3, 4, 4)
+)
+tb2
 ```
+:::
 
+::: {.column width="68%"}
 | Operator | Meaning | Example |
 |---|---|---|
 | `==`, `!=` | equal, not equal | `a != 2` |
@@ -104,9 +145,20 @@ tb2 <- tibble(a = c(1, 1, 1, 2, 2, 2), b = c(1, 2, 3, 3, 4, 4))
 | `|` | or | `a == 1 | b == 2` |
 | `%in%` | in a set | `b %in% c(1, 3)` |
 | `!` | not | `!b %in% c(1, 3)` |
+:::
+::::
 
 ## Predict the output
 
+:::: {.columns}
+::: {.column .small width="30%"}
+```{r}
+#| label: tb2-predict
+tb2
+```
+:::
+
+::: {.column width="68%"}
 ```{r}
 #| label: predict-1-code
 #| eval: false
@@ -124,24 +176,57 @@ tb2 |> filter(a == 1 | b == 3)
 
 All rows with `a == 1`, plus the row where `b == 3` and `a == 2`.
 :::
+:::
+::::
 
 ## arrange() sorts rows
 
+:::: {.columns}
+::: {.column .small width="30%"}
+```{r}
+#| label: tb-arrange
+tb
+```
+:::
+
+::: {.column width="68%"}
 ```{r}
 #| label: arrange
 tb |> arrange(c, a)
 tb |> arrange(desc(a))
 ```
+:::
+::::
 
 ## mutate() adds columns
 
+:::: {.columns}
+::: {.column .small width="30%"}
+```{r}
+#| label: tb-mutate
+tb
+```
+:::
+
+::: {.column width="68%"}
 ```{r}
 #| label: mutate
 tb |> mutate(d = 3 * a, e = paste0(b, c))
 ```
+:::
+::::
 
 ## Predict the output
 
+:::: {.columns}
+::: {.column .small width="30%"}
+```{r}
+#| label: tb-predict
+tb
+```
+:::
+
+::: {.column width="68%"}
 ```{r}
 #| label: predict-2-code
 #| eval: false
@@ -163,6 +248,8 @@ tb |>
 
 Read a pipeline one step at a time, top to bottom.
 :::
+:::
+::::
 
 ## filter() silently drops missing values
 
@@ -199,6 +286,14 @@ From `bca`, find the sales that:
 
 Keep `roll_num`, the sale year, `price`, `juris_label`, and `neigh_label`, sorted from the highest price.
 
+Try writing it yourself first, for five minutes. It doesn't have to run. (`year(sale_date)` gives the year.)
+
+::: {.notes}
+- Time the five minutes. Then everyone moves on to the agent, whether or not their code runs.
+- Ask two or three students to show their attempts before anyone runs the agent.
+- Look for `filter()` before `mutate()`, which fails because `sale_year` doesn't exist yet, and for a guessed value such as `"Strata"`, which returns zero rows. Leave both; comparing with the agent's code on the reading slide catches them.
+:::
+
 ## Give the task to your agent
 
 ::: {.small}
@@ -222,15 +317,6 @@ Run the code it writes. Then read it before you go on.
 - The student `AGENTS.md` makes the agent report row counts after each filter and explain any new function. Point students to those lines: they say what the code did, not what would change it. The next slide asks what would change it.
 :::
 
-## Read the agent's code (AI off)
-
-Find the line that does each part of the task. Then answer without asking the agent, editing and running the code yourself.
-
-1. Move the `select()` line up, right after `bca |>`. Predict what happens, then run it.
-2. Change $5 million to $3 million. How many sales now?
-3. If `filter()` used `|` instead of the commas, how many rows would it return? Would R warn you?
-4. Which sale on the list would you check before you report it? Why?
-
 ## Answer
 
 ::: {.small}
@@ -243,6 +329,15 @@ bca |>
   arrange(desc(price))
 ```
 :::
+
+## Read the agent's code (AI off)
+
+Compare the agent's code with yours. Where does it differ, and why? Then answer without asking the agent, editing and running the code yourself.
+
+1. Move the `select()` line up, right after `bca |>`. Predict what happens, then run it.
+2. Change $5 million to $3 million. How many sales now?
+3. If `filter()` used `|` instead of the commas, how many rows would it return? Would R warn you?
+4. Which sale on the list would you check before you report it? Why?
 
 ## Answer: reading the code
 
