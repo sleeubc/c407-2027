@@ -197,7 +197,7 @@ From `bca`, find the sales that:
 - are condos or townhouses; and
 - sold for more than $5 million.
 
-Keep `roll_num`, the sale year, `price`, and `neigh_label`, sorted from the highest price.
+Keep `roll_num`, the sale year, `price`, `juris_label`, and `neigh_label`, sorted from the highest price.
 
 ## Give the task to your agent
 
@@ -205,8 +205,8 @@ Keep `roll_num`, the sale year, `price`, and `neigh_label`, sorted from the high
 ```text
 Create scripts/dplyr_1.qmd. From data/bca262.rds, find the 2017 sales
 of strata homes (condos and townhouses) above $5 million. Keep roll_num,
-the sale year, price, and neigh_label, sorted from the highest price.
-Write it as one pipeline.
+the sale year, price, juris_label, and neigh_label, sorted from the
+highest price. Write it as one pipeline.
 ```
 :::
 
@@ -214,9 +214,11 @@ Run the code it writes. Then read it before you go on.
 
 ::: {.notes}
 - The agent will probably write the same four verbs as the answer slide. It may write `5e6`, which means 5 × 10⁶ = 5,000,000.
-- Tested 2026-10-21 with Claude Code (Opus 5.5) in a fresh copy of the student folder: the same pipeline, 26 rows, `5e6`. It also flagged two things worth discussing:
+- Tested twice on 2026-10-21 with Claude Code (Opus 5.5) in fresh copies of the student folder: the same pipeline both times, 26 rows, `5e6`. Both runs flagged two things worth discussing:
   - Strata duplexes are coded `"S/F Res"`, so "strata homes" leaves them out. One sold for $8 million in Kitsilano in 2017.
-  - The second-highest sale, an $8.8 million "condo" in Pitt Meadows, has no unit number, floor area, or year built. The median Pitt Meadows strata sale that year was $419,000. It may be a whole building or a development site. Question 4 on the next slide asks about it; if a student's agent flagged it, ask them how they would check it themselves.
+  - The second-highest sale, an $8.8 million "condo" in Pitt Meadows, has no unit number, floor area, or year built. The median Pitt Meadows strata sale that year was $419,000. Question 4 on the next slide asks about it; if a student's agent flagged it, ask them how they would check it themselves.
+- The second run looked up the address: no other sales there until 82 new condos sold in 2019, at $300,000 to $628,000. So the 2017 sale was probably the development site. It reported "about 140 sales in 2019"; 142 is the total for 2019–2026. The conclusion holds, but the agent's numbers need checking too.
+- The second run also stopped before dropping the sale, offered three options (keep it, drop it by `roll_num`, drop rows with no floor area), and left a `# TODO`. That is the student `AGENTS.md` rule on choices that change the results.
 - The student `AGENTS.md` makes the agent report row counts after each filter and explain any new function. Point students to those lines: they say what the code did, not what would change it. The next slide asks what would change it.
 :::
 
@@ -237,7 +239,7 @@ Find the line that does each part of the task. Then answer without asking the ag
 bca |>
   mutate(sale_year = year(sale_date)) |>
   filter(sale_year == 2017, act_use_cat == "Strata Res", price > 5000000) |>
-  select(roll_num, sale_year, price, neigh_label) |>
+  select(roll_num, sale_year, price, juris_label, neigh_label) |>
   arrange(desc(price))
 ```
 :::
@@ -249,7 +251,7 @@ bca |>
 #| label: practice-select-first
 # 1. Each step sees only the columns the steps above it left
 bca |>
-  select(roll_num, sale_year, price, neigh_label) |>
+  select(roll_num, sale_year, price, juris_label, neigh_label) |>
   mutate(sale_year = year(sale_date))
 ```
 
