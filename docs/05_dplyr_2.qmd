@@ -39,50 +39,133 @@ knitr::opts_chunk$set(comment = NA)
 suppressPackageStartupMessages(library(tidyverse))
 ```
 
-## summarise() turns many rows into one
+## A small tibble to practise on
 
 ```{r}
 #| label: toy
-people <- tibble(
-  WEIGHT = c(1, 2, 3, 4, 5),
-  TotInc = c(14, 13, 12, 8, 10),
-  CMA    = c("x", "x", "y", "y", "y")
+sales <- tibble(
+  act_use_cat = c("S/F Res", "S/F Res", "S/F Res",
+                  "Strata Res", "Strata Res", "Strata Res"),
+  sale_year = c(2024, 2025, 2025, 2024, 2024, 2025),
+  price = c(1800000, 2000000, 5000000, 600000, 700000, 800000)
 )
-
-people |> summarise(avg_income = mean(TotInc), population = sum(WEIGHT))
+sales
 ```
 
-## Weighted and unweighted averages differ
+## summarise() turns many rows into one
 
+:::: {.columns}
+::: {.column .small width="36%"}
 ```{r}
-#| label: weighted
-people |>
-  summarise(unweighted = mean(TotInc),
-            weighted = weighted.mean(TotInc, w = WEIGHT))
+#| label: sales-summarise
+sales
+```
+:::
+
+::: {.column width="62%"}
+```{r}
+#| label: summarise
+sales |>
+  summarise(avg_price = mean(price),
+            n = n())
 ```
 
-Each row represents `WEIGHT` people, so the weighted average describes the population.
+`n()` counts the rows.
+:::
+::::
 
-Other summary functions: `sum()`, `median()`, `min()`, `max()`, and `n()` (number of rows).
+Other summary functions: `sum()`, `median()`, `min()`, and `max()`.
 
-## group_by() makes summarise() work per group
+## group_by() only adds a label
 
+:::: {.columns}
+::: {.column .small width="36%"}
+```{r}
+#| label: sales-label
+sales
+```
+:::
+
+::: {.column .small width="62%"}
+```{r}
+#| label: group-label
+by_type <- sales |> group_by(act_use_cat)
+by_type
+```
+:::
+::::
+
+Same rows, same values. The new `# Groups` line records which column defines the groups.
+
+## summarise() reads the label
+
+:::: {.columns}
+::: {.column .small width="36%"}
+```{r}
+#| label: by-type
+by_type
+```
+:::
+
+::: {.column width="62%"}
 ```{r}
 #| label: group
-people |>
-  group_by(CMA) |>
-  summarise(population = sum(WEIGHT),
-            avg_income = weighted.mean(TotInc, w = WEIGHT))
+by_type |>
+  summarise(avg_price = mean(price),
+            n = n())
 ```
+
+`summarise()` runs once per group. `mean()` gets one type's prices at a time.
+:::
+::::
+
+::: {.key-point}
+Two steps, two jobs: `group_by()` adds the label, and the verb after it, such as `summarise()`, `mutate()`, or `filter()`, works within each group.
+:::
+
+## filter() reads the label too
+
+:::: {.columns}
+::: {.column .small width="36%"}
+```{r}
+#| label: by-type-filter
+by_type
+```
+:::
+
+::: {.column .small width="62%"}
+```{r}
+#| label: filter-grouped
+by_type |> filter(price == max(price))
+sales |> filter(price == max(price))
+```
+:::
+::::
+
+With the label, `max(price)` is each type's highest price. Without it, it is the highest of all six sales.
+
+::: {.notes}
+- If students ask whether every verb reads the label: `arrange()` does not. It sorts the whole table unless you add `.by_group = TRUE`, which sorts by the grouping column first. `by_type |> arrange(desc(sale_year))` mixes the two types; `arrange(desc(sale_year), .by_group = TRUE)` keeps them together.
+- For `lag()` this makes no difference: a whole-table sort by year already puts each group's rows in year order. Only the printed order changes, as on the "sort order" answer slide of the growth practice.
+:::
 
 ## Predict the output
 
+:::: {.columns}
+::: {.column .small width="36%"}
+```{r}
+#| label: sales-predict
+sales
+```
+:::
+
+::: {.column width="62%"}
 ```{r}
 #| label: predict-code
 #| eval: false
-people |>
-  filter(TotInc > 9) |>
-  group_by(CMA) |>
+sales |>
+  filter(price > 1000000) |>
+  group_by(act_use_cat) |>
   summarise(n = n())
 ```
 
@@ -90,45 +173,83 @@ people |>
 ```{r}
 #| label: predict-out
 #| echo: false
-people |>
-  filter(TotInc > 9) |>
-  group_by(CMA) |>
+sales |>
+  filter(price > 1000000) |>
+  group_by(act_use_cat) |>
   summarise(n = n())
 ```
 
-`n()` counts rows, not people. Use `sum(WEIGHT)` for people.
+No strata sale is above $1 million, so `Strata Res` is missing, not 0.
 :::
+:::
+::::
 
 ## summarise() removes one level of grouping
 
+:::: {.columns}
+::: {.column .small width="36%"}
+```{r}
+#| label: sales-groups
+sales
+```
+:::
+
+::: {.column width="62%"}
 ```{r}
 #| label: groups
-two_levels <- people |>
-  mutate(group = c("a", "b", "a", "b", "b")) |>
-  group_by(CMA, group) |>
-  summarise(population = sum(WEIGHT))
-group_vars(two_levels)
+by_type_year <- sales |>
+  group_by(act_use_cat, sale_year) |>
+  summarise(n = n())
+group_vars(by_type_year)
 ```
+:::
+::::
 
-The result is still grouped by `CMA`. Later steps then work within each CMA, which may not be what you want.
+The result is still grouped by `act_use_cat`. Later steps then work within each type, which may not be what you want.
 
 ::: {.key-point}
 Add `.groups = "drop"` to `summarise()`, or call `ungroup()`, when you are done with groups.
 :::
 
-## group_by() + mutate() keeps every row
+## mutate() reads the label too, and keeps every row
 
+:::: {.columns}
+::: {.column .small width="30%"}
+```{r}
+#| label: tb
+tb <- tibble(
+  a = c(1, 1, 1, 2, 2, 2),
+  b = c(1, 2, 3, 3, 4, 4)
+)
+tb
+```
+:::
+
+::: {.column width="68%"}
 ```{r}
 #| label: group-mutate
-tb <- tibble(a = c(1, 1, 1, 2, 2, 2), b = c(1, 2, 3, 3, 4, 4))
 tb |>
   group_by(a) |>
-  mutate(share_of_group = b / sum(b)) |>
+  mutate(group_total = sum(b),
+         share_of_group = b / sum(b)) |>
   ungroup()
 ```
+:::
+::::
+
+A summary function such as `sum()` gives one value per group, repeated on every row.
 
 ## lag() looks at the previous row
 
+:::: {.columns}
+::: {.column .small width="30%"}
+```{r}
+#| label: tb-lag
+tb
+```
+:::
+
+::: {.column width="68%"}
 ```{r}
 #| label: lag
 tb |>
@@ -136,6 +257,8 @@ tb |>
   mutate(previous = lag(b), change = b - lag(b)) |>
   ungroup()
 ```
+:::
+::::
 
 ## Application: average prices by year
 
@@ -193,9 +316,39 @@ mix <- bca |>
 Both types rose in 2017, yet the average fell, because single-family homes dropped from `r round(100 * mix$sf_share[1])`% to `r round(100 * mix$sf_share[2])`% of sales. An average price describes the mix of homes sold. Compare within types, or use a regression (deck 17).
 :::
 
-## Practice: a price index
+## Practice (AI on): a price index
 
-Using `avg_price`, compute a price index for each `act_use_cat`: the average price divided by the average price in **2010**.
+Using `avg_price`, compute a price index for each `act_use_cat`: each year's average price divided by that type's average price in **2010**.
+
+The index is 1 in 2010. An index of 1.5 means prices 50% above their 2010 level.
+
+Try writing it yourself first, for five minutes. It doesn't have to run.
+
+::: {.notes}
+- Time the five minutes. Then everyone moves on to the agent, whether or not their code runs.
+- Ask two or three students to show their attempts before anyone runs the agent.
+- Look for a missing `group_by()`, which runs without a warning but divides some years by the other type's 2010 price (question 1); `filter(sale_year == 2010)`, which keeps only 2010; and a row position such as `avg_price[11]` (question 2). Leave them; the reading slide catches them.
+- An index for each type compares within types, as the previous slide advised.
+:::
+
+## Give the task to your agent
+
+::: {.small}
+```text
+Create scripts/dplyr_2.qmd. From data/bca262.rds, save the average sale
+price for each act_use_cat and sale year as avg_price. Then compute a
+price index for each act_use_cat: each year's average price divided by
+that type's average price in 2010. Save it as price_index.
+```
+:::
+
+Run the code it writes. Then read it before you go on.
+
+::: {.notes}
+- Not yet tested with an agent.
+- The student `AGENTS.md` says 2026 is a partial year, and tells the agent to stop and offer options when a choice of years changes the results. If it asks whether to keep 2026, let students choose; question 3 comes back to it.
+- The agent may write `.by = act_use_cat` inside `mutate()` instead of `group_by()` and `ungroup()`; it does the same. It may also multiply by 100, so that 2010 is 100.
+:::
 
 ## Answer
 
@@ -209,25 +362,93 @@ price_index <- avg_price |>
 price_index |> filter(sale_year %in% c(2010, 2020))
 ```
 
-## Row positions are fragile
+## Read the agent's code (AI off)
 
-An AI might write `nth(avg_price, 11)` for "the 2010 value", because 2010 is the 11th year:
+Compare the agent's code with yours. Where does it differ, and why? Then answer without asking the agent, editing and running the code yourself.
 
-```{r}
+1. Remove the grouping (the `group_by()` line, or `.by =`). Predict: an error, a warning, or a wrong index? Run it. Is the index still 1 in 2010?
+2. Another agent took the 2010 price as `avg_price[11]`, because 2010 is the 11th year. Its index matches yours. When would it be wrong?
+3. Does the agent's result include 2026? Would you report its index?
+
+::: {.notes}
+- Question 1: no error and no warning. Both 2010 rows still show 1, so checking the base year does not catch it. Every other year is wrong: the single-family index for 2011 becomes 2.33 instead of 1.17.
+- Question 2 replaces the old "Row positions are fragile" slide.
+- Question 3: the strata index rises from 1.94 in 2025 to 2.01 in 2026, but against 1 January to 11 March 2025, strata prices were flat (about $838,000 then, $836,000 now). Single-family prices fell 8% against the same months, not 6%.
+:::
+
+## Answer: no grouping
+
+::: {.small}
+```{r include=params$answers}
+#| label: index-ungrouped
+# 1. No error, no warning, and 2010 is still 1. Without groups,
+#    avg_price[sale_year == 2010] is two prices, one per type,
+#    and R reuses the pair in turn down all the rows
+avg_price |>
+  mutate(no_groups = avg_price / avg_price[sale_year == 2010]) |>
+  group_by(act_use_cat) |>
+  mutate(with_groups = avg_price / avg_price[sale_year == 2010]) |>
+  ungroup() |>
+  filter(sale_year %in% 2010:2011)
+```
+:::
+
+## Answer: row positions are fragile
+
+```{r include=params$answers}
 #| label: nth
+# 2. Sorted newest first, the 11th year is 2016. A missing or
+#    dropped year moves it too. Pick the year by its value
 avg_price |>
   arrange(desc(sale_year)) |>
   group_by(act_use_cat) |>
-  summarise(nth_11 = sale_year[11])
+  summarise(year_in_row_11 = sale_year[11])
 ```
 
-::: {.warning}
-After a different sort, or with a missing year, the 11th row is no longer 2010. Select the year by its value, as in `avg_price[sale_year == 2010]`.
+## Answer: 2026 is a partial year
+
+::: {.small}
+```{r include=params$answers}
+#| label: index-2026
+# 3. The 2026 index compares winter sales with all of 2025.
+#    Compare the same months instead: 1 January to 11 March
+last_day <- max(bca$sale_date)
+
+bca |>
+  filter(year(sale_date) %in% 2025:2026,
+         yday(sale_date) <= yday(last_day)) |>  # yday(): day of the year
+  group_by(act_use_cat, sale_year = year(sale_date)) |>
+  summarise(avg_price = mean(price), .groups = "drop")
+```
 :::
 
-## Practice: annual growth
+## Practice (AI on): annual growth
 
-Compute the annual growth rate of `avg_price` for each `act_use_cat`: (this year − last year) / last year.
+Using `avg_price`, compute the annual growth rate of the average price for each `act_use_cat`: (this year − last year) / last year.
+
+Try writing it yourself first, for five minutes. It doesn't have to run.
+
+::: {.notes}
+- Time the five minutes, as before.
+- Look for `lag()` without `group_by()`, which changes only one row (question 2), and for no `arrange()`. `avg_price` comes out of `summarise()` sorted by type and year, so it works here, but not after a different sort (question 1).
+:::
+
+## Give the task to your agent
+
+::: {.small}
+```text
+In scripts/dplyr_2.qmd, add the annual growth rate of avg_price for each
+act_use_cat: (this year - last year) / last year. Save it as price_growth.
+```
+:::
+
+Run the code it writes. Then read it before you go on.
+
+::: {.notes}
+- Not yet tested with an agent.
+- The agent may write `avg_price / lag(avg_price) - 1`, the same formula.
+- It may write `lag(avg_price, order_by = sale_year)`, which does not depend on row order. Question 1 then changes nothing, which is worth pointing out.
+:::
 
 ## Answer
 
@@ -243,4 +464,51 @@ avg_price |>
 ```
 :::
 
-`lag()` uses row order, so sort by year first.
+## Read the agent's code (AI off)
+
+Compare the agent's code with yours. Where does it differ, and why? Then answer without asking the agent, editing and running the code yourself.
+
+1. Add `arrange(desc(sale_year))` right before the line that computes the growth rate. Predict the 2025 growth rates, then run it.
+2. Remove the grouping. Which rows change? Would you notice?
+3. Compute the 2023 growth rate for single-family homes by hand, from the two prices in `avg_price`. Does it match the agent's?
+
+::: {.notes}
+- Question 1: single-family growth in 2025 turns from −3.5% to +6.6%, with no error. Unless the agent used `order_by = sale_year`.
+- Question 2: only the first strata year changes, from `NA` to −90%: 2000 strata prices compared with 2026 single-family prices. Hard to notice in a table of recent years.
+:::
+
+## Answer: sort order
+
+::: {.small}
+```{r include=params$answers}
+#| label: growth-desc
+# 1. lag() takes the row above, which is now the next year.
+#    Sort by year first, or write lag(avg_price, order_by = sale_year)
+avg_price |>
+  arrange(desc(sale_year)) |>
+  group_by(act_use_cat) |>
+  mutate(growth = (avg_price - lag(avg_price)) / lag(avg_price)) |>
+  ungroup() |>
+  filter(sale_year %in% 2023:2025)
+```
+:::
+
+## Answer: lag() without groups
+
+```{r include=params$answers}
+#| label: growth-ungrouped
+# 2. One row changes: strata 2000 is compared with single-family 2026
+avg_price |>
+  arrange(act_use_cat, sale_year) |>
+  mutate(growth = (avg_price - lag(avg_price)) / lag(avg_price)) |>
+  filter(sale_year == 2000)
+```
+
+## Answer: a check by hand
+
+```{r include=params$answers}
+#| label: growth-by-hand
+# 3. Single-family homes, 2022 and 2023
+avg_price |> filter(act_use_cat == "S/F Res", sale_year %in% 2022:2023)
+(2004597 - 2059445) / 2059445
+```
