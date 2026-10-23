@@ -40,6 +40,33 @@ suppressPackageStartupMessages(library(tidyverse))
 bca <- read_rds("data/bca262.rds")
 ```
 
+# Grammar of graphics
+
+## ggplot2 builds a chart from parts
+
+The **grammar of graphics** describes any chart by the same parts. ggplot2 gives each part its own function.
+
+::: {.small}
+| Part | Decides | In ggplot2 | Deck |
+|---|---|---|---|
+| Data | Which tibble to plot | `ggplot(data)` | 06 |
+| Aesthetic mappings | Which column becomes x, y, colour, or size | `aes()` | 06 |
+| Geoms | What draws the data: points, lines, bars | `geom_*()` | 06 |
+| Stats | What a geom computes: counts, fitted lines | built into `geom_*()` | 06 |
+| Positions | Where overlapping bars go | `position =` | 06 |
+| Scales | How values become axes and colours | `scale_*()` | 08 |
+| Coordinates | The plotting area | `coord_*()` | 08 |
+| Facets | One panel per group | `facet_wrap()` | 08 |
+| Themes | The look that is not data | `theme_*()` | 08 |
+
+: {tbl-colwidths="[22,46,23,9]"}
+:::
+
+::: {.notes}
+- Leland Wilkinson set out the grammar in *The Grammar of Graphics* (1999). ggplot2 follows Hadley Wickham's version, "A layered grammar of graphics" (2010).
+- The table is for reference. This deck covers the first five rows; deck 08 covers the rest.
+:::
+
 ## A chart maps columns to visual properties
 
 ```{r}
@@ -51,42 +78,104 @@ ggplot() +
 
 - `ggplot()`: an empty chart. `+` adds layers.
 - `geom_*()`: the **geometry** that draws the data: points, lines, bars.
-- `aes()`: **mappings** from columns to visual properties: x, y, colour, size, fill.
+- `aes()`: **aesthetic mappings** from columns to visual properties (*aesthetics*): x, y, colour, size, fill.
 - `data =`: the tibble to plot. Name it: a `geom_*()` takes the mapping first.
 
 ::: {.notes}
-- Swapping the order, `geom_point(by_aa, aes(...))`, fails with "`mapping` must be created by `aes()`. ✖ You've supplied a data frame."
+- Swapping the order, `geom_point(van17, aes(...))`, fails with "`mapping` must be created by `aes()`. ✖ You've supplied a data frame."
 :::
 
-## Summarise first, then plot
+## Change one part, get a different chart
 
 ```{r}
-#| label: by-aa
-by_aa <- bca |>
-  filter(!is.na(aa_label)) |>
-  group_by(aa_label) |>
-  summarise(avg_floorarea = mean(floorarea, na.rm = TRUE),
-            avg_price = mean(price, na.rm = TRUE),
-            n = n())
-by_aa |> head(4)
+#| label: trend
+#| include: false
+trend <- bca |>
+  filter(juris_label == "City of Vancouver", act_use_cat == "S/F Res",
+         year(sale_date) %in% 2000:2025) |>
+  group_by(year = year(sale_date)) |>
+  summarise(price = median(price) / 1e6)
 ```
+
+:::: {.columns}
+::: {.column width="32%"}
+::: {.small}
+```{r}
+#| label: trend-point
+#| fig-width: 3.6
+#| fig-height: 2.6
+ggplot(trend,
+       aes(year, price)) +
+  geom_point()
+```
+:::
+:::
+
+::: {.column width="32%"}
+::: {.small}
+```{r}
+#| label: trend-line
+#| fig-width: 3.6
+#| fig-height: 2.6
+ggplot(trend,
+       aes(year, price)) +
+  geom_line()
+```
+:::
+:::
+
+::: {.column width="32%"}
+::: {.small}
+```{r}
+#| label: trend-col
+#| fig-width: 3.6
+#| fig-height: 2.6
+ggplot(trend,
+       aes(year, price)) +
+  geom_col()
+```
+:::
+:::
+::::
+
+Same data, same mapping; only the geom changes. `trend` holds the median single-family price in Vancouver each year, in millions of dollars. ggplot2 has no function for a "line chart": you choose the parts.
+
+::: {.notes}
+- `trend` comes from `bca |> filter(juris_label == "City of Vancouver", act_use_cat == "S/F Res", year(sale_date) %in% 2000:2025) |> group_by(year = year(sale_date)) |> summarise(price = median(price) / 1e6)`.
+:::
+
+# Mappings
+
+## A smaller dataset: Vancouver in 2017
+
+```{r}
+#| label: van17
+van17 <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) == 2017) |>
+  mutate(price_m = price / 1e6)
+nrow(van17)
+```
+
+Most charts in this deck use `van17`, one city in one year, instead of all 1.3 million sales. `price_m` is the price in millions of dollars.
 
 ## geom_point() shows a relationship
 
 ```{r}
 #| label: point
 ggplot() +
-  geom_point(aes(avg_floorarea, avg_price), data = by_aa)
+  geom_point(aes(floorarea, price_m), data = van17)
 ```
 
-## Map more columns to colour and size
+## Map another column to colour
 
 ```{r}
-#| label: colour-size
+#| label: colour
+#| fig-height: 3.4
 ggplot() +
-  geom_point(aes(avg_floorarea, avg_price, colour = aa_label, size = n),
-             data = by_aa)
+  geom_point(aes(floorarea, price_m, colour = act_use_cat), data = van17)
 ```
+
+Condos (`Strata Res`) are smaller and cheaper than houses (`S/F Res`).
 
 ## Mapping and setting are different
 
@@ -95,12 +184,12 @@ ggplot() +
 ```{r}
 #| label: mapped
 #| fig-width: 5
-#| fig-height: 3.2
+#| fig-height: 2.8
 ggplot() +
   geom_point(
-    aes(avg_floorarea, avg_price,
+    aes(floorarea, price_m,
         colour = "blue"),
-    data = by_aa)
+    data = van17)
 ```
 :::
 
@@ -108,17 +197,51 @@ ggplot() +
 ```{r}
 #| label: set
 #| fig-width: 5
-#| fig-height: 3.2
+#| fig-height: 2.8
 ggplot() +
   geom_point(
-    aes(avg_floorarea, avg_price),
+    aes(floorarea, price_m),
     colour = "blue",
-    data = by_aa)
+    data = van17)
 ```
 :::
 ::::
 
-Inside `aes()`, `"blue"` is treated as data. Outside `aes()`, it sets the colour.
+Inside `aes()`, `"blue"` is treated as data, like `act_use_cat` on the last slide: ggplot2 maps it to a default colour and adds a legend. Outside `aes()`, it sets the colour.
+
+## Set other visual properties: alpha, size, shape, linewidth
+
+:::: {.columns}
+::: {.column width="49%"}
+```{r}
+#| label: alpha
+#| fig-width: 5
+#| fig-height: 2.8
+ggplot() +
+  geom_point(
+    aes(floorarea, price_m),
+    alpha = 0.1,
+    data = van17)
+```
+:::
+
+::: {.column width="49%"}
+::: {.small}
+| Set it with | Changes |
+|---|---|
+| `alpha = 0.1` | Transparency, from 0 (invisible) to 1 (solid) |
+| `size = 0.5` | Point size |
+| `shape = 1` | Point shape (1 is an open circle) |
+| `linewidth = 1` | Line width, for `geom_line()` |
+
+: {tbl-colwidths="[38,62]"}
+:::
+:::
+::::
+
+With `alpha`, the dense area shows. Each one can also go inside `aes()` to map a column, as `colour` did.
+
+# Layers
 
 ## Layers stack: lines and points
 
@@ -146,11 +269,27 @@ ggplot(avg_price, aes(sale_year, avg_price, colour = act_use_cat)) +
   geom_point()
 ```
 
-The same chart as the last slide. Data and `aes()` in `ggplot()` are **global**: every layer uses them, so you write them once. `aes()` in a `geom_*()`, as on the last slide, is **local**: only that layer uses it.
+The same chart as the last slide. Data and `aes()` in `ggplot()` are **global**: every layer uses them, so you write them once. In a `geom_*()`, as on the last slide, they are **local**: only that layer uses them.
 
 ::: {.notes}
 - `ggplot()` takes the data first; a `geom_*()` takes the mapping first. A layer usually reuses the plot's data but needs its own mapping.
-- Data first in `ggplot()` also lets you pipe into it: `van17 |> count(act_use_cat) |> ggplot(aes(n, act_use_cat))`.
+:::
+
+## ggplot() takes the data first, so you can pipe into it
+
+```{r}
+#| label: pipe
+#| fig-height: 2.4
+avg_price |>
+  filter(act_use_cat == "Strata Res") |>
+  ggplot(aes(sale_year, avg_price)) +
+  geom_line()
+```
+
+`|>` passes the filtered rows to `ggplot()` as its data, so you do not have to name a new tibble. After `ggplot()`, add layers with `+`, not `|>`.
+
+::: {.notes}
+- `ggplot(...) |> geom_line()` fails with "`mapping` must be created by `aes()`. ✖ You've supplied a <ggplot2::ggplot> object. ℹ Did you use `%>%` or `|>` instead of `+`?"
 :::
 
 ## geom_line() joins the points within each group
@@ -160,10 +299,11 @@ The same chart as the last slide. Data and `aes()` in `ggplot()` are **global**:
 ```{r}
 #| label: local
 #| fig-width: 6.4
-#| fig-height: 2.8
+#| fig-height: 2.5
 ggplot(avg_price,
        aes(sale_year, avg_price)) +
-  geom_line()
+  geom_line() +
+  geom_point(colour = "blue")
 ```
 :::
 
@@ -171,39 +311,45 @@ ggplot(avg_price,
 ```{r}
 #| label: group
 #| fig-width: 6.4
-#| fig-height: 2.8
+#| fig-height: 2.5
 ggplot(avg_price,
        aes(sale_year, avg_price)) +
-  geom_line(aes(group = act_use_cat))
+  geom_line(aes(group = act_use_cat)) +
+  geom_point(colour = "blue")
 ```
 :::
 ::::
 
-Left: with no groups, the line joins every point in year order. Right: `group` splits the line, as `group_by()` splits rows. On the last slide, `colour` did the same: a text column in `colour` also sets the group.
+Left: with no groups, the line joins every point in year order. Right: `group` splits the line, as `group_by()` splits rows. Two slides back, `colour` did the same: a text column in `colour` also sets the group.
 
 ::: {.notes}
 - A numeric column in `colour` does not set the group, so it does not split the line.
 - ggplot2 groups by every discrete column mapped in the layer: `colour`, `fill`, `linetype`, `shape`, and `group`.
 :::
 
-## A smaller dataset: Vancouver in 2017
+## geom_smooth() draws a fitted line
 
 ```{r}
-#| label: van17
-van17 <- bca |>
-  filter(juris_label == "City of Vancouver", year(sale_date) == 2017) |>
-  mutate(price_m = price / 1e6)
-nrow(van17)
+#| label: smooth
+#| fig-height: 2.4
+ggplot(van17, aes(floorarea, price_m)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm")
 ```
 
-The next charts use `van17`: one city in one year, so the points do not pile up. `price_m` is the price in millions of dollars.
+`geom_smooth()` computes a line that fits the points, then draws it. `method = "lm"` makes it a straight line, a regression line (deck 17). Like `geom_line()`, it draws one line for each group.
+
+::: {.notes}
+- Without `method = "lm"`, `geom_smooth()` draws a curve and prints which method it chose.
+- The grey band around the line shows its uncertainty. With 11,000 sales it is too narrow to see.
+:::
 
 ## Quick check: how many fitted lines?
 
 ```{r}
 #| label: quiz-local
 #| eval: false
-ggplot(van17, aes(floorarea, price)) +
+ggplot(van17, aes(floorarea, price_m)) +
   geom_point(aes(colour = act_use_cat), alpha = 0.2) +
   geom_smooth(method = "lm")
 ```
@@ -215,13 +361,15 @@ ggplot(van17, aes(floorarea, price)) +
 #| label: quiz-local-answer
 #| echo: false
 #| fig-height: 2.6
-ggplot(van17, aes(floorarea, price)) +
+ggplot(van17, aes(floorarea, price_m)) +
   geom_point(aes(colour = act_use_cat), alpha = 0.2) +
   geom_smooth(method = "lm")
 ```
 
 **A.** `colour` is local to `geom_point()`, so `geom_smooth()` has one group and fits one line to all the points. Move `colour` into `ggplot()` to get one line per type.
 :::
+
+# Geoms
 
 ## Choose the geometry for the question
 
@@ -232,16 +380,26 @@ ggplot(van17, aes(floorarea, price)) +
 | How do groups compare? | `geom_col()` for values you computed, `geom_bar()` to count rows |
 | How is one number distributed? | `geom_histogram()` |
 
-## geom_bar() counts for you; geom_col() does not
+## geom_bar() counts the rows for you
+
+```{r}
+#| label: bar-count
+#| fig-height: 2.4
+ggplot(van17, aes(y = act_use_cat)) +
+  geom_bar()
+```
+
+`geom_bar()` counts the rows in each group, then draws the counts. Its axis says `count`, a column it computed.
+
+## geom_col() draws counts you computed
 
 :::: {.columns}
 ::: {.column width="49%"}
 ```{r}
-#| label: bar-count
-#| fig-width: 5
-#| fig-height: 2.4
-ggplot(van17, aes(y = act_use_cat)) +
-  geom_bar()
+#| label: count
+type_counts <- van17 |>
+  count(act_use_cat)
+type_counts
 ```
 :::
 
@@ -250,15 +408,18 @@ ggplot(van17, aes(y = act_use_cat)) +
 #| label: col-count
 #| fig-width: 5
 #| fig-height: 2.4
-van17 |>
-  count(act_use_cat) |>
-  ggplot(aes(n, act_use_cat)) +
+ggplot(type_counts,
+       aes(n, act_use_cat)) +
   geom_col()
 ```
 :::
 ::::
 
-The same chart. `geom_bar()` counts the rows itself, so its axis says `count`, a column it computed. `geom_col()` draws the `n` you computed.
+`geom_col()` draws the `n` that `count()` computed, so the chart matches the last slide. `count()` is a shortcut for `group_by()` and `summarise(n = n())` from deck 05.
+
+::: {.notes}
+- With a pipe, `van17 |> count(act_use_cat) |> ggplot(aes(n, act_use_cat)) + geom_col()` draws the same chart without naming `type_counts`.
+:::
 
 ## Some geoms compute what they draw
 
@@ -280,6 +441,88 @@ When a geom computes, ask what it computed. `geom_bar()` counts rows, not people
 - `geom_bar(aes(x, y))` fails with "`stat_count()` must only have an x or y aesthetic": `geom_bar()` computes y itself.
 :::
 
+## Vancouver sales by year and type
+
+```{r}
+#| label: van-sales
+van_sales <- bca |>
+  filter(juris_label == "City of Vancouver",
+         year(sale_date) %in% 2015:2025) |>
+  count(year = year(sale_date), act_use_cat)
+van_sales |> head(4)
+```
+
+`van_sales` has one row per year and property type. `n` is the number of sales.
+
+## Bars stack by default
+
+:::: {.columns}
+::: {.column width="49%"}
+```{r}
+#| label: stack
+#| fig-width: 5
+#| fig-height: 2.8
+ggplot(van_sales,
+       aes(year, n, fill = act_use_cat)) +
+  geom_col()
+```
+:::
+
+::: {.column width="49%"}
+```{r}
+#| label: dodge
+#| fig-width: 5
+#| fig-height: 2.8
+ggplot(van_sales,
+       aes(year, n, fill = act_use_cat)) +
+  geom_col(position = "dodge")
+```
+:::
+::::
+
+Left: the stack shows totals, but the top segments start at different heights, so single-family sales are hard to compare. Right: `position = "dodge"` starts every bar at zero.
+
+::: {.notes}
+`act_use_cat` is text, so the legend and the stack follow alphabetical order. As a factor, they would follow its levels (deck 08).
+:::
+
+## position = "fill" turns counts into shares
+
+```{r}
+#| label: fill
+#| fig-height: 2
+ggplot(van_sales, aes(year, n, fill = act_use_cat)) +
+  geom_col(position = "fill")
+```
+
+Each bar now sums to 1: shares, not counts. The axis still says `n`, and nothing warns you. Label it yourself (deck 08 explains `scale_*()`):
+
+```{r}
+#| label: fill-labels
+#| eval: false
+  scale_y_continuous(labels = scales::label_percent()) +
+  labs(y = "Share of sales")
+```
+
+## Quick check: shares or counts?
+
+```{r}
+#| label: quiz-numbers
+#| include: false
+van_wide <- van_sales |>
+  pivot_wider(names_from = act_use_cat, values_from = n) |>
+  mutate(strata_share = round(100 * `Strata Res` / (`Strata Res` + `S/F Res`)))
+pick <- \(y, col) van_wide[[col]][van_wide$year == y]
+```
+
+On the last chart, strata's share of Vancouver sales rose from `r pick(2016, "strata_share")`% in 2016 to `r pick(2019, "strata_share")`% in 2019. Did the number of strata sales rise?
+
+**A.** Yes  **B.** The chart cannot tell you
+
+::: {.fragment}
+**B.** A share can rise while the count falls. Strata sales fell from `r scales::comma(pick(2016, "Strata Res"))` to `r scales::comma(pick(2019, "Strata Res"))`, but single-family sales fell faster, from `r scales::comma(pick(2016, "S/F Res"))` to `r scales::comma(pick(2019, "S/F Res"))`. To compare counts, use `position = "dodge"`.
+:::
+
 ## Look up what a geom draws
 
 | Resource | Use it to |
@@ -292,3 +535,283 @@ When a geom computes, ask what it computed. `geom_bar()` counts rows, not people
 In Positron, `?geom_histogram` opens the help page, and `example(geom_histogram)` draws its examples.
 
 **Try it:** pick a geom from the cheat sheet that we have not used, read its page, and draw it with `van17`.
+
+# Practice: price per square foot
+
+## Practice (AI on)
+
+For the City of Vancouver, plot the median price per square foot (`price / floorarea`) in each year from 2000 to 2025, with one line for each `act_use_cat`.
+
+Try writing it yourself first, for five minutes. It doesn't have to run.
+
+::: {.notes}
+- Time the five minutes. Then everyone moves on to the agent, whether or not their code runs.
+- Ask two or three students to show their attempts before anyone runs the agent.
+- Look for a chart with no `colour` or `group` mapping (question 1), and for `median(price) / median(floorarea)`, which divides two medians: a different number from the median of each sale's price per square foot. Leave them; the first comes back on the reading slide, and the second is worth a minute of discussion.
+:::
+
+## Give the task to your agent
+
+::: {.small}
+```text
+Create scripts/ggplot_1.qmd. From data/bca262.rds, compute the median
+price per square foot (price / floorarea) of City of Vancouver sales in
+each year from 2000 to 2025, for each act_use_cat. Draw it as a line
+chart with one line for each act_use_cat.
+```
+:::
+
+Run the code it writes. Then read it before you go on.
+
+::: {.notes}
+- Tested once on 2026-10-22 with Claude Code (Opus 5.5) in a fresh copy of the student folder: 4.4 minutes, the same chart as the answer slide, and no stop to ask.
+  - It dropped sales with missing or zero floor area with `filter()` before computing (6,856 of 281,439 sales), so its `median()` has no `na.rm`. Question 2 covers either version.
+  - Unasked, it reported that 13–19% of single-family sales have no floor area in 2005–2012 and 9–14% in 2017–18, and that this may bias those years' medians. That answers question 4; ask students whether they would have checked it themselves.
+  - It used `.by =`, `between()`, `pivot_wider()`, and `slice_max()`, mostly to put numbers into its commentary, and explained each. Students should read the summary and the chart code closely and can skim the rest.
+  - Its commentary offered land as one explanation for the single-family line, as on the answer slide, and mentioned the 2016 foreign buyers tax and the 2018 mortgage stress test.
+- If an agent asks what to do with missing floor areas, let students choose; question 4 comes back to it.
+:::
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: ppsf
+#| fig-height: 2.2
+van_rows <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) %in% 2000:2025) |>
+  mutate(ppsf = price / floorarea)
+
+van_ppsf <- van_rows |>
+  group_by(year = year(sale_date), act_use_cat) |>
+  summarise(median_ppsf = median(ppsf, na.rm = TRUE), .groups = "drop")
+
+ggplot(van_ppsf, aes(year, median_ppsf, colour = act_use_cat)) +
+  geom_line()
+```
+:::
+
+::: {.notes}
+- From 2000 to 2012, a condo sold for more per square foot than a house. Since 2013 the lines have traded places. Ask students why. One idea to test: a house's price pays for its land too.
+:::
+
+## Read the agent's code (AI off)
+
+Compare the agent's code with yours. Where does it differ, and why? Then answer without asking the agent, editing and running the code yourself.
+
+1. Remove the mapping that splits the lines (`colour =` or `group =`). Predict the chart, then run it.
+2. Remove the step that handles missing floor areas: `na.rm = TRUE`, or a `filter()` on `floorarea`. Predict: an error, a warning, or a different chart?
+3. Change `median()` to `mean()`. Which years jump? Find the sales behind them.
+4. In which years do many single-family sales have no floor area? Did the agent tell you?
+
+```{r}
+#| label: ppsf-numbers
+#| include: false
+sf_ppsf <- van_rows |>
+  filter(act_use_cat == "S/F Res") |>
+  group_by(year = year(sale_date)) |>
+  summarise(med = median(ppsf, na.rm = TRUE), avg = mean(ppsf, na.rm = TRUE))
+pm <- \(y, col) round(sf_ppsf[[col]][sf_ppsf$year == y])
+```
+
+::: {.notes}
+- Question 1: one line zigzags between the two types every year, with no warning.
+- Question 2: a warning about removed rows, and an almost empty chart. `median()` returns `NA` if any value is missing, and almost every year has a missing floor area.
+- Question 3: single-family 2013 jumps from `r pm(2013, "med")` to `r pm(2013, "avg")`, and 2004 from `r pm(2004, "med")` to `r pm(2004, "avg")`, because of sales recorded at 1 or 2 sq ft. If the code keeps a floor area of 0, 2022 becomes `Inf`, and ggplot draws `Inf` at the top edge, where it looks like a real value. The tested agent dropped it.
+- Question 4: `AGENTS.md` warns about 2005–2012. 2017 has a gap of the same size, which it does not mention.
+:::
+
+## Answer: no groups
+
+```{r include=params$answers}
+#| label: ppsf-no-groups
+#| fig-height: 2.4
+# 1. One line through both types: it zigzags between them each year
+ggplot(van_ppsf, aes(year, median_ppsf)) +
+  geom_line()
+```
+
+## Answer: missing values left in
+
+::: {.small}
+```{r include=params$answers}
+#| label: ppsf-no-narm
+#| fig-height: 2.2
+# 2. median() returns NA if any value is missing, so most points are gone.
+#    ggplot warns that it removed rows, and draws what is left
+van_rows |>
+  group_by(year = year(sale_date), act_use_cat) |>
+  summarise(median_ppsf = median(ppsf), .groups = "drop") |>
+  ggplot(aes(year, median_ppsf, colour = act_use_cat)) +
+  geom_line()
+```
+:::
+
+## Answer: sales that pull the mean
+
+::: {.small}
+```{r include=params$answers}
+#| label: ppsf-mean
+# 3. Floor areas of 1 and 2 sq ft lift 2004 and 2013. A floor area of 0,
+#    if kept, gives Inf in 2022, which ggplot draws at the top edge
+van_rows |>
+  arrange(desc(ppsf)) |>
+  select(sale_date, act_use_cat, price, floorarea, ppsf) |>
+  head(4)
+```
+:::
+
+The median ignores a few extreme values. The mean does not, so check the extremes before you average.
+
+## Answer: missing floor areas
+
+::: {.small}
+```{r include=params$answers}
+#| label: ppsf-missing
+# 4. Years in which more than 1 in 10 single-family sales has no floor area
+van_rows |>
+  filter(act_use_cat == "S/F Res") |>
+  group_by(year = year(sale_date)) |>
+  summarise(no_floorarea = sum(is.na(floorarea)),
+            share = mean(is.na(floorarea))) |>
+  filter(share > 0.1)
+```
+:::
+
+# Practice: Surrey sales by type
+
+## Practice (AI on)
+
+For the City of Surrey, count the sales of each `act_use_cat` in each year from 2015 to 2025. Draw a bar chart that shows how single-family sales changed.
+
+Try writing it yourself first, for five minutes. It doesn't have to run.
+
+::: {.notes}
+- Time the five minutes, as before.
+- Look for `geom_bar()` with both `x` and `y`, which fails with "`stat_count()` must only have an x or y aesthetic", and for stacked bars, which make single-family sales hard to compare (question 1).
+:::
+
+## Give the task to your agent
+
+::: {.small}
+```text
+In scripts/ggplot_1.qmd, count the City of Surrey sales of each
+act_use_cat in each year from 2015 to 2025. Draw a bar chart that shows
+how single-family sales changed.
+```
+:::
+
+Run the code it writes. Then read it before you go on.
+
+::: {.notes}
+- Tested once on 2026-10-22, continuing the same session: 1.3 minutes. It drew single-family bars only (`filter()`, then `geom_col()`), printed a table of both types, and noted that single-family fell from 55% to 20% of Surrey's sales. Question 1 asks students to put both types in one chart.
+  - Unasked, it explained why `geom_col()` and not `geom_bar()`, and flagged that `S/F Res` in Surrey includes houses with suites (40% of the category's 2015–2025 sales) and duplexes (3%). Both checked.
+- Other agents may choose `position = "dodge"` or facets. Each answers the task.
+:::
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: surrey
+#| fig-height: 2.4
+surrey_sales <- bca |>
+  filter(juris_label == "City of Surrey", year(sale_date) %in% 2015:2025) |>
+  count(year = year(sale_date), act_use_cat)
+
+ggplot(surrey_sales, aes(year, n, fill = act_use_cat)) +
+  geom_col(position = "dodge")
+```
+:::
+
+```{r}
+#| label: surrey-numbers
+#| include: false
+surrey_wide <- surrey_sales |>
+  pivot_wider(names_from = act_use_cat, values_from = n) |>
+  mutate(strata_share = round(100 * `Strata Res` / (`Strata Res` + `S/F Res`)))
+sur <- \(y, col) surrey_wide[[col]][surrey_wide$year == y]
+```
+
+::: {.notes}
+- Single-family sales fell from `r scales::comma(sur(2016, "S/F Res"))` in 2016 to `r scales::comma(sur(2025, "S/F Res"))` in 2025, while strata sales held up. Strata went from `r sur(2015, "strata_share")`% of Surrey's sales in 2015 to `r sur(2025, "strata_share")`% in 2025. Ask students what could explain it.
+:::
+
+## Read the agent's code (AI off)
+
+Compare the agent's code with yours. Where does it differ, and why? Then answer without asking the agent, editing and running the code yourself.
+
+1. Put both types in one chart with `fill = act_use_cat`. Try the bars stacked (the default), side by side (`"dodge"`), and as shares (`"fill"`). Which shows the change in single-family sales best?
+2. Another agent counted the sales of both types, then drew `geom_bar(aes(year, fill = act_use_cat))` instead of `geom_col()`. Predict the chart, then run it.
+3. Change the years to 2015–2026. What do the 2026 bars suggest? Is it true?
+4. Count Surrey's single-family sales in 2025 yourself, with `filter()` and `nrow()`. Does the agent's bar match?
+
+::: {.notes}
+- Question 1: stacked, the single-family segments start at different heights. As shares, the chart cannot say whether single-family sales fell or strata sales rose, as in the quick check.
+- Question 2: every bar is 2 high, with no error and no warning. `geom_bar()` counts the rows of the counted tibble: one per type and year.
+- Question 3: 2026 looks like a collapse, but sales end on 11 March 2026. The student `AGENTS.md` should make the agent flag it.
+:::
+
+## Answer: positions
+
+:::: {.columns}
+::: {.column width="49%"}
+::: {.small}
+```{r include=params$answers}
+#| label: surrey-stack
+#| fig-width: 5
+#| fig-height: 2.8
+# 1. Stacked: hard to compare
+#    single-family sales
+ggplot(surrey_sales,
+       aes(year, n, fill = act_use_cat)) +
+  geom_col()
+```
+:::
+:::
+
+::: {.column width="49%"}
+::: {.small}
+```{r include=params$answers}
+#| label: surrey-fill
+#| fig-width: 5
+#| fig-height: 2.8
+# Shares: did single-family fall,
+# or strata rise?
+ggplot(surrey_sales,
+       aes(year, n, fill = act_use_cat)) +
+  geom_col(position = "fill")
+```
+:::
+:::
+::::
+
+## Answer: geom_bar() on counted rows
+
+```{r include=params$answers}
+#| label: surrey-bar
+#| fig-height: 2.4
+# 2. geom_bar() counts the rows of surrey_sales: one per type and year.
+#    Every bar is 2 high, with no error and no warning
+ggplot(surrey_sales, aes(year, fill = act_use_cat)) +
+  geom_bar()
+```
+
+## Answer: 2026 and a check by hand
+
+::: {.small}
+```{r include=params$answers}
+#| label: surrey-2026
+# 3. Sales end on 11 March 2026, so the 2026 bars cover ten weeks
+max(bca$sale_date)
+bca |>
+  filter(juris_label == "City of Surrey", year(sale_date) == 2026) |>
+  count(act_use_cat)
+
+# 4. Single-family sales in Surrey in 2025
+bca |>
+  filter(juris_label == "City of Surrey", year(sale_date) == 2025,
+         act_use_cat == "S/F Res") |>
+  nrow()
+```
+:::

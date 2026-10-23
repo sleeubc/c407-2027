@@ -1,6 +1,6 @@
 ---
 title: "ggplot2 II"
-subtitle: "COMM 407 · Scales, factors, facets, and positions"
+subtitle: "COMM 407 · Scales, factors, and facets"
 author: "Sanghoon Lee"
 date: today
 date-format: "D MMMM YYYY"
@@ -287,7 +287,7 @@ wday(d, label = TRUE, week_start = 1)
 | `guides()` | Legends | `guides(colour = "none")` |
 :::
 
-Inside a geom, `alpha`, `linewidth`, and `position = "dodge"` set that layer's look. Use these names when you ask AI to restyle a chart; to sort bars by value, ask for `fct_reorder()`.
+Inside a geom, `alpha`, `linewidth`, and `position = "dodge"` set that layer's look (deck 06). Use these names when you ask AI to restyle a chart; to sort bars by value, ask for `fct_reorder()`.
 
 ## Sales in four cities
 
@@ -346,84 +346,14 @@ n25 <- \(city) sales25$n[sales25$juris_label == city]
 
 `scales = "free_y"` gives each panel its own y-axis. Shapes are easier to compare; levels are not. Burnaby's line now fills its panel like Surrey's, yet Surrey had `r round(n25("City of Surrey") / n25("City of Burnaby"), 1)` times as many sales in 2025. Read the axis labels before you compare panels.
 
-## Bars stack by default
+## Quick check: did Vancouver have fewer sales?
 
-```{r}
-#| label: stack-data
-van_sales <- bca |>
-  filter(juris_label == "City of Vancouver",
-         between(year(sale_date), 2015, 2025)) |>
-  count(year = year(sale_date), act_use_cat)
-sales_plot <- ggplot(van_sales, aes(year, n, fill = act_use_cat))
-```
+On the last chart, Vancouver's 2025 point sits at the bottom of its panel, and Burnaby's is a third of the way up. Did Vancouver have fewer sales than Burnaby in 2025?
 
-:::: {.columns}
-::: {.column width="49%"}
-::: {.small}
-```{r}
-#| label: stack
-#| fig-width: 5
-#| fig-height: 1.8
-sales_plot +
-  geom_col()
-```
-:::
-:::
-
-::: {.column width="49%"}
-::: {.small}
-```{r}
-#| label: dodge
-#| fig-width: 5
-#| fig-height: 1.8
-sales_plot +
-  geom_col(position = "dodge")
-```
-:::
-:::
-::::
-
-Left: the stack shows totals, but the top segments start at different heights, so single-family sales are hard to compare. Right: `position = "dodge"` starts every bar at zero.
-
-::: {.notes}
-`act_use_cat` is text, so the legend and the stack follow alphabetical order. As a factor, they would follow its levels.
-:::
-
-## position = "fill" turns counts into shares
-
-```{r}
-#| label: fill
-#| fig-height: 2
-sales_plot +
-  geom_col(position = "fill")
-```
-
-Each bar now sums to 1: shares, not counts. The axis still says `n`, and nothing warns you. Label it yourself:
-
-```{r}
-#| label: fill-labels
-#| eval: false
-  scale_y_continuous(labels = scales::label_percent()) +
-  labs(y = "Share of sales")
-```
-
-## Quick check: shares or counts?
-
-```{r}
-#| label: quiz-numbers
-#| include: false
-van_wide <- van_sales |>
-  pivot_wider(names_from = act_use_cat, values_from = n) |>
-  mutate(strata_share = round(100 * `Strata Res` / (`Strata Res` + `S/F Res`)))
-pick <- \(y, col) van_wide[[col]][van_wide$year == y]
-```
-
-On the last chart, strata's share of Vancouver sales rose from `r pick(2016, "strata_share")`% in 2016 to `r pick(2019, "strata_share")`% in 2019. Did the number of strata sales rise?
-
-**A.** Yes  **B.** The chart cannot tell you
+**A.** Yes  **B.** No
 
 ::: {.fragment}
-**B.** A share can rise while the count falls. Strata sales fell from `r scales::comma(pick(2016, "Strata Res"))` to `r scales::comma(pick(2019, "Strata Res"))`, but single-family sales fell faster, from `r scales::comma(pick(2016, "S/F Res"))` to `r scales::comma(pick(2019, "S/F Res"))`. To compare counts, use `position = "dodge"`.
+**B.** Vancouver had `r scales::comma(n25("City of Vancouver"))` sales and Burnaby `r scales::comma(n25("City of Burnaby"))`. With `"free_y"`, each panel's axis runs from that city's own lowest year to its highest, so heights do not compare across panels.
 :::
 
 ## Read a long AI-written chart
@@ -584,7 +514,6 @@ s_share <- \(y) surrey$share[surrey$year == y]
 
 ::: {.small}
 - `facet_wrap(~ group)`: one panel per group
-- `position = "dodge"`, `"fill"`: bars side by side, or stacks scaled to 100%
 - `scale_*()`, `coord_*()`, `labs()`, `theme()`, `guides()`: the name says what changes
 - `label_dollar()`, `label_percent()` in a `scale_*()`: axis labels
 - Factor levels: the order of bars, stacks, and legends
