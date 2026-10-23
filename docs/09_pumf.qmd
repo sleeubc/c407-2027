@@ -71,7 +71,7 @@ sum(pumf$WEIGHT)
 The rows are a sample. `sum(WEIGHT)` estimates the population: about `r round(sum(pumf$WEIGHT) / 1e6, 1)` million people in private households.
 
 ::: {.key-point}
-Count people with `sum(WEIGHT)` or `count(x, wt = WEIGHT)`. Average with `weighted.mean(x, WEIGHT)`, so that each row counts as many times as the people it stands for.
+Count people with `sum(WEIGHT)` or `count(x, wt = WEIGHT)`. Average with `weighted.mean(x, WEIGHT)`, as in deck 05.
 :::
 
 ::: {.notes}
@@ -435,13 +435,21 @@ pumf |>
 ## What to know from this deck
 
 :::: {.columns}
-::: {.column width="66%"}
-**Know:** *read it and predict what it does*
+::: {.column width="30%"}
+**Know**<br>*Write it without help*
 
 ::: {.small}
-- `sum(WEIGHT)`, `count(x, wt = WEIGHT)`: people, not rows
-- `weighted.mean(x, WEIGHT)`, `aes(weight = WEIGHT)` in `geom_bar()`
-- `factor(x, levels = ...)`, `levels()`: set and see the level order
+- `sum(WEIGHT)`, `count(x, wt = WEIGHT)`
+- `weighted.mean(x, WEIGHT)`
+- `aes(weight = WEIGHT)` in `geom_bar()`
+- `factor(x, levels = ...)`, `levels()`
+:::
+:::
+
+::: {.column width="40%"}
+**Recognize**<br>*Say what the line does*
+
+::: {.small}
 - `%in% c(88888888, 99999999)`: missing-value codes
 - `if_else()`, `case_when()`: recode values
 - `as.numeric()` on a factor: level positions, not values
@@ -450,8 +458,8 @@ pumf |>
 :::
 :::
 
-::: {.column width="30%"}
-**Look up:** *when you meet it*
+::: {.column width="26%"}
+**Look up**<br>*When you meet it*
 
 ::: {.small}
 - `map_chr()`
