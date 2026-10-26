@@ -183,7 +183,8 @@ Starts a **fresh** R session, runs every chunk from top to bottom, and makes a d
 
 ## Render your document
 
-- Click **Preview** in Positron, or
+- Click **Preview** in Positron,
+- press `Ctrl/Command + Shift + K`, or
 - run this in the **Terminal**:
 
 ```bash
