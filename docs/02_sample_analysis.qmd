@@ -1,6 +1,6 @@
 ---
 title: "A sample analysis in Quarto"
-subtitle: "COMM 407 · Console, chunks, paths, and rendering"
+subtitle: "COMM 407 · Console, chunks, rendering, and paths"
 author: "Sanghoon Lee"
 date: today
 date-format: "D MMMM YYYY"
@@ -60,7 +60,7 @@ Code, results, and your notes in one `.qmd` file. This is the record of your ana
 ::::
 
 ::: {.key-point}
-Experiment in the Console. Keep everything you want to reproduce in the document.
+Experiment in the Console. Keep everything you want to reproduce in the Quarto document.
 :::
 
 ## Use the Console for quick commands
@@ -74,76 +74,6 @@ mean(mtcars$mpg)
 
 The result appears directly below the command, and it is gone when you restart R.
 
-## A Quarto document mixes text and code
-
-````markdown
----
-title: "Sample analysis"
-format: html
----
-
-```{{r}}
-#| label: setup
-library(tidyverse)
-```
-
-The table below shows the number of sales in each year.
-````
-
-::: {.small}
-- **YAML header** (between the `---` lines): the title and output format.
-- **Code chunk** (starts with ```` ```{r} ````): R code.
-- **Chunk options** (lines starting with `#|`): a `label`, or `echo: false` to hide code.
-- **Markdown**: everything else.
-:::
-
-## Create your first Quarto document
-
-1. In Positron, choose **File → New File… → Quarto Document**.
-2. Save it in the `scripts` folder as `scripts/sample_analysis.qmd`.
-3. Add one setup chunk right after the YAML header, with the packages you need.
-
-To insert a new chunk at the cursor, press:
-
-::: {.shortcut}
-**Windows/Linux:** `Ctrl + Shift + I`\
-**macOS:** `Command + Shift + I`
-:::
-
-::: {.key-point}
-Keep one setup chunk at the top. Every later chunk can use the packages it loads.
-:::
-
-::: {.notes}
-TODO: Confirm the menu path for a new Quarto document in the current Positron release.
-:::
-
-## Run code one statement at a time
-
-Place the cursor inside an R statement and press:
-
-::: {.shortcut}
-**Windows/Linux:** `Ctrl + Enter`\
-**macOS:** `Command + Enter`
-:::
-
-Positron sends the statement to the Console, and the result appears there.
-
-::: {.key-point}
-`Enter` creates a new line. `Ctrl/Command + Enter` runs code.
-:::
-
-## Run a whole chunk
-
-- Click **Run Cell** above the chunk, or
-- place the cursor in the chunk and press `Ctrl/Command + Shift + Enter`.
-
-```{r}
-#| label: chunk
-mpg_mean <- mean(mtcars$mpg)
-mpg_mean
-```
-
 ## Quick check: where does the code go?
 
 **A.** Console  **B.** Quarto document
@@ -156,168 +86,34 @@ mpg_mean
 Answers: 1. A (setup, not analysis). 2. B (it must be reproducible). 3. A (a one-time lookup).
 :::
 
-## The working directory is R's starting point
+# Write and run code
 
-The working directory is the folder R uses when it reads or writes a file.
+## Create your first Quarto document
 
-```{r}
-#| label: getwd
-getwd()
-```
+1. In Positron, choose **File → New File… → Quarto Document**.
+2. Save it in the `scripts` folder as `scripts/sample_analysis.qmd`.
+3. Replace its contents with the document on the next slide.
 
-When you open the **c407** folder in Positron, it becomes the working directory.
+::: {.key-point}
+Keep one setup chunk at the top. Every later chunk can use the packages it loads.
+:::
 
 ::: {.notes}
-- Positron workspaces: https://positron.posit.co/migrate-rstudio-rproj.html
+TODO: Confirm the menu path for a new Quarto document in the current Positron release.
 :::
 
-## Quarto also runs your code from c407
+## Type and run this document
 
-Your `.qmd` files are in `scripts/`, but `_quarto.yml` tells Quarto to run code from the `c407` folder:
-
-```yaml
-project:
-  execute-dir: project
-```
-
-::: {.key-point}
-In every document, paths start from `c407`, whether you run a chunk or render the whole file.
-:::
-
-## R looks in the working directory first
-
-Add this chunk to `sample_analysis.qmd` and run it:
-
-```{r}
-#| label: path-fail
-bca <- read_rds("bca262.rds")
-```
-
-It fails because the file is inside the **data** folder, not directly in `c407`.
-
-## A relative path starts from c407
-
-```{r}
-#| label: path-ok
-bca <- read_rds("data/bca262.rds")
-dim(bca)
-```
-
-::: {.path-line}
-`c407` → `data` → `bca262.rds`
-:::
-
-`bca` has `r format(nrow(bca), big.mark = ",")` sales and `r ncol(bca)` columns.
-
-## Relative paths keep working when the folder moves
-
-- Use `/` between folders: `data/bca262.rds`.
-- Relative paths are shorter than full paths such as `/Users/you/Downloads/c407/data/bca262.rds`.
-- They keep working when the whole `c407` folder moves to another place or computer.
-
-::: {.key-point}
-Never use `setwd()` or full paths in course documents.
-:::
-
-## Exercise: build the relative path
-
-Load the 2021 Census PUMF from the `data` folder and name it `pumf`:
-
-```{r}
-#| label: exercise
-#| eval: false
-pumf <- read_rds(____________________)
-```
-
-## Answer
-
-```{r}
-#| label: answer
-pumf <- read_rds("data/2021_census_pumf_ind.rds")
-dim(pumf)
-```
-
-::: {.path-line}
-`c407` → `data` → `2021_census_pumf_ind.rds`
-:::
-
-## Browse before you analyse
-
-```{r}
-#| label: browse
-bca |>
-  select(sale_date, juris_label, act_use_name, price) |>
-  head()
-```
-
-Which columns might help explain differences in sale price?
-
-::: {.notes}
-In the Console, `View(bca)` opens the full table in Positron's Data Explorer.
-:::
-
-## Calculate annual average prices
-
-```{r}
-#| label: avg-price
-avg_price <- bca |>
-  group_by(sale_year = year(sale_date)) |>
-  summarise(avg_price = mean(price, na.rm = TRUE))
-
-avg_price |> tail(4)
-```
-
-The last year is incomplete: the data end on `r format(max(bca$sale_date), "%d %B %Y")`.
-
-## Plot annual average prices
-
-```{r}
-#| label: plot
-#| fig-height: 3.3
-avg_price_plot <- ggplot(avg_price, aes(sale_year, avg_price)) +
-  geom_line() +
-  geom_point() +
-  scale_y_continuous(labels = scales::label_dollar()) +
-  labs(x = NULL, y = "Average sale price",
-       caption = "2026: January to early March only")
-avg_price_plot
-```
-
-## Save a figure to use outside Quarto
-
-```{r}
-#| label: save
-#| eval: false
-ggsave("temp/avg_price.png", avg_price_plot, width = 8, height = 4.5)
-```
-
-::: {.path-line}
-`c407` → `temp` → `avg_price.png`
-:::
-
-- Run the chunk, then find `avg_price.png` in the Explorer.
-- Insert the PNG into PowerPoint or Google Slides.
-- `width` and `height` are in inches; 8 × 4.5 fits a 16:9 slide.
-
-::: {.key-point}
-Save figures with `ggsave()`, never with a screenshot.
-:::
-
-## Turn your analysis into a report: setup
-
-Edit `sample_analysis.qmd` to match this, and delete the other chunks:
-
-::: {.small}
+:::: {.columns style="font-size: 0.72em"}
+::: {.column width="44%"}
 ````markdown
 ---
 title: "Home prices in Metro Vancouver"
-format: typst
-execute:
-  echo: false
+format: html
 ---
+
 ```{{r}}
 #| label: setup
-#| include: false
 library(tidyverse)
 ```
 
@@ -331,22 +127,115 @@ avg_price <- bca |>
 ````
 :::
 
+::: {.column width="54%"}
+````markdown
+```{{r}}
+#| label: plot
+avg_price_plot <- ggplot(avg_price, aes(sale_year, avg_price)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(labels = scales::label_dollar()) +
+  labs(x = NULL, y = "Average sale price",
+       caption = "2026: January to early March only")
+avg_price_plot
+```
+````
+
+| Action | Keys |
+|---|---|
+| Insert a chunk | `Ctrl/Command + Shift + I` |
+| Type `<-` | `Alt/Option + -` |
+| Run a statement | `Ctrl/Command + Enter` |
+| Run a chunk | `Ctrl/Command + Shift + Enter` |
+:::
+::::
+
+You do not need to understand the code yet. Type it, and run it with the keys in the table.
+
 ::: {.notes}
-The practice chunks go, including `save`: the report shows the chart itself. The next slides explain each part of this file: rendering, Typst, Markdown, and hidden code.
+- Say: `group_by()`, `summarise()`, and `ggplot()` come in decks 04–06. Today, type and run the code, and read the results.
+- Run a statement: `library(tidyverse)`. `Enter` makes a new line; `Ctrl/Command + Enter` sends the statement to the Console. A chunk can also run with **Run Cell** above it.
+- The `data` chunk prints nothing: `<-` stores each result as an object, `bca` and `avg_price`.
+- Check in the Console, not the document: `avg_price |> tail(4)` shows 2026 is partial (data end 11 March 2026). `View(bca)` opens the full table in the Data Explorer.
 :::
 
-## Turn your analysis into a report: text and chart
+# Render a report
 
-Add the heading and text above your chart chunk:
+## Running and rendering are different
 
-::: {.small}
+:::: {.columns}
+::: {.column width="48%"}
+### Running
+
+Uses your **current** R session. Objects you made in the Console are still there.
+:::
+
+::: {.column width="48%"}
+### Rendering
+
+Starts a **fresh** R session, runs every chunk from top to bottom, and makes a document for readers.
+:::
+::::
+
+::: {.warning}
+"It works when I run it but fails when I render" usually means the document uses something you created only in the Console.
+:::
+
+## Render your document
+
+- Click **Preview** in Positron, or
+- run this in the **Terminal**:
+
+```bash
+quarto render scripts/sample_analysis.qmd
+```
+
+The result is `scripts/sample_analysis.html`: your title, code, and chart.
+
+::: {.key-point}
+Render often. A document that renders from scratch is reproducible.
+:::
+
+::: {.notes}
+TODO: Confirm that the `quarto` command is available in Positron's Terminal without a separate installation.
+:::
+
+## A Quarto document mixes text and code
+
+Type the text between your `data` and `plot` chunks, blank lines included, and render again:
+
+:::: {.columns style="font-size: 0.72em"}
+::: {.column width="44%"}
+````markdown
+---
+title: "Home prices in Metro Vancouver"
+format: html
+---
+
+```{{r}}
+#| label: setup
+library(tidyverse)
+```
+
+```{{r}}
+#| label: data
+bca <- read_rds("data/bca262.rds")
+avg_price <- bca |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(avg_price = mean(price, na.rm = TRUE))
+```
+````
+:::
+
+::: {.column width="54%"}
 ````markdown
 ## Average sale prices by year
 
 The chart shows the average sale price in each year,
 from [BC Assessment](https://www.bcassessment.ca) sales data.
 
-- Prices **rose for two decades**, peaked in 2022, and have levelled off since.
+- Prices **rose for two decades**, peaked in 2022,
+  and have levelled off since.
 - Prices are *nominal*: they are not adjusted for inflation.
 
 ```{{r}}
@@ -361,51 +250,84 @@ avg_price_plot
 ```
 ````
 :::
-
-## Running and rendering are different
-
-:::: {.columns}
-::: {.column width="48%"}
-### Running
-
-Uses your **current** R session. Objects you made in the Console are still there.
-:::
-
-::: {.column width="48%"}
-### Rendering
-
-Starts a **fresh** R session and runs every chunk from top to bottom.
-:::
 ::::
 
-::: {.warning}
-"It works when I run it but fails when I render" usually means the document uses something you created only in the Console.
-:::
+## Markdown formats your text
 
-## Render your report
+Your document's text uses Markdown:
 
-- Click **Preview** in Positron, or
-- run this in the **Terminal**:
-
-```bash
-quarto render scripts/sample_analysis.qmd
-```
-
-The result is `scripts/sample_analysis.pdf`: your title, text, and chart, without the code.
+| You type | The report shows |
+|---|---|
+| `## Average sale prices by year` | a section heading |
+| `**rose for two decades**` | **rose for two decades** |
+| `*nominal*` | *nominal* |
+| `- Prices are …` | a bullet point |
+| `[BC Assessment](https://www.bcassessment.ca)` | [BC Assessment](https://www.bcassessment.ca) |
 
 ::: {.key-point}
-Render often. A document that renders from scratch is reproducible.
+Leave a blank line before every heading and list, as in your document. Without it, Quarto prints the `##` or `-` as plain text.
 :::
+
+# The parts of a Quarto document
+
+## A Quarto document has four parts
+
+````markdown
+---
+title: "Home prices in Metro Vancouver"
+format: html
+---
+
+```{{r}}
+#| label: setup
+library(tidyverse)
+```
+
+## Average sale prices by year
+````
+
+::: {.small}
+- **YAML header** (between the `---` lines): the title and output format.
+- **Code chunk** (starts with ```` ```{r} ````): R code.
+- **Chunk options** (lines starting with `#|`): a `label`, or `echo: false` to hide code.
+- **Markdown text**: everything else.
+:::
+
+## Hide code from readers
+
+| Chunk option | Code | Output |
+|---|---|---|
+| (default) | shown | shown |
+| `echo: false` | hidden | shown |
+| `include: false` | hidden | hidden, but the chunk still runs |
+
+To hide the code of every chunk, add this to your YAML header and render again:
+
+```yaml
+execute:
+  echo: false
+```
+
+::: {.key-point}
+Hiding code changes only the output. The code stays in your `.qmd`, which is what you submit and defend.
+:::
+
+## Exercise: hide the startup messages
+
+Your document still starts with the tidyverse startup messages.
+
+1. Which chunk option hides them? Add it to your setup chunk.
+2. Render again.
 
 ::: {.notes}
-TODO: Confirm that the `quarto` command is available in Positron's Terminal without a separate installation.
+Answer: `#| include: false` in the setup chunk. It hides the chunk's code and output, but the chunk still runs, so later chunks can use the tidyverse. `message: false` in the YAML does not hide these messages.
 :::
 
-## Typst turns your report into a PDF
+## Typst turns your document into a PDF
 
-`format: typst` makes a PDF. Typst comes with Quarto, so you do not need LaTeX, which `format: pdf` requires.
+Change `format: html` to `format: typst`, and render again: the result is `scripts/sample_analysis.pdf`. Typst comes with Quarto, so you do not need LaTeX, which `format: pdf` requires.
 
-To make a web page as well, list both formats:
+To make both a PDF and a web page, list both formats:
 
 :::: {.columns}
 ::: {.column width="40%"}
@@ -424,67 +346,118 @@ format:
 ::::
 
 ::: {.key-point}
-A PDF is static: use static maps (`tmap_mode("plot")`) and simple, narrow tables. It already includes your chart, so you need a PNG only for slides made outside Quarto.
+A PDF is static: use static maps (`tmap_mode("plot")`) and simple, narrow tables.
 :::
 
-## Write text around your code
+# Paths
 
-Your report's text uses Markdown:
+## The working directory is R's starting point
 
-| You type | The report shows |
-|---|---|
-| `## Average sale prices by year` | a section heading |
-| `**rose for two decades**` | **rose for two decades** |
-| `*nominal*` | *nominal* |
-| `- Prices are …` | a bullet point |
-| `[BC Assessment](https://www.bcassessment.ca)` | [BC Assessment](https://www.bcassessment.ca) |
-
-::: {.key-point}
-Leave a blank line before every heading and list, as in the report. Without it, Quarto prints the `##` or `-` as plain text.
-:::
-
-## Hide code from readers
-
-| Chunk option | Code | Output |
-|---|---|---|
-| (default) | shown | shown |
-| `echo: false` | hidden | shown |
-| `include: false` | hidden | hidden, but the chunk still runs |
-
-Your report hides the code of every chunk with this YAML:
-
-```yaml
-execute:
-  echo: false
-```
-
-Its setup chunk also has `include: false`, to hide package startup messages.
-
-::: {.key-point}
-Hiding code changes only the output. The code stays in your `.qmd`, which is what you submit and defend.
-:::
-
-## Exercise: show the code
-
-1. Delete the `execute:` and `echo: false` lines from the YAML header, and render again. What changed?
-2. Put the two lines back, and render once more.
-
-::: {.notes}
-Answer: the code of the `data` and `plot` chunks now appears. The setup chunk stays hidden, because `include: false` hides its code and output whatever the YAML header says.
-:::
-
-## Quick check: why did the render fail?
-
-You ran `bca <- read_rds("data/bca262.rds")` in the Console, then wrote this chunk:
+Your `data` chunk reads `"data/bca262.rds"`. R looks for it from the **working directory**, the folder R uses when it reads or writes a file:
 
 ```{r}
-#| label: render-fail
-#| eval: false
-bca |> nrow()
+#| label: getwd
+getwd()
 ```
 
-Running the chunk works, but rendering stops with `object 'bca' not found`. Why?
+When you open the **c407** folder in Positron, it becomes the working directory.
 
 ::: {.notes}
-Answer: rendering starts a fresh R session, and `bca` was created only in the Console. Move the `read_rds()` line into the document.
+- Positron workspaces: https://positron.posit.co/migrate-rstudio-rproj.html
+:::
+
+## R looks only in the working directory
+
+Run this in the **Console**:
+
+```{r}
+#| label: path-fail
+bca <- read_rds("bca262.rds")
+```
+
+It fails because the file is inside the **data** folder, not directly in `c407`.
+
+::: {.notes}
+Experiment in the Console, not in the document: an error in a chunk stops the render.
+:::
+
+## A relative path starts from c407
+
+Your `data` chunk names the folder too:
+
+```{r}
+#| label: path-ok
+#| eval: false
+bca <- read_rds("data/bca262.rds")
+```
+
+::: {.path-line}
+`c407` → `data` → `bca262.rds`
+:::
+
+## Paths start from c407, not from scripts
+
+Your `.qmd` file is in `scripts/`, yet the render found `data/bca262.rds`. `_quarto.yml` tells Quarto to run code from the `c407` folder:
+
+```yaml
+project:
+  execute-dir: project
+```
+
+::: {.key-point}
+In every document, paths start from `c407`, whether you run a chunk or render the whole file.
+:::
+
+## Relative paths keep working when the folder moves
+
+- Use `/` between folders: `data/bca262.rds`.
+- Relative paths are shorter than full paths such as `/Users/you/Downloads/c407/data/bca262.rds`.
+- They keep working when the whole `c407` folder moves to another place or computer.
+
+::: {.key-point}
+Never use `setwd()` or full paths in course documents.
+:::
+
+## Save a figure to use outside Quarto
+
+Your PDF already includes the chart. For PowerPoint or Google Slides, write it to a file with a relative path:
+
+```{r}
+#| label: save
+#| eval: false
+ggsave("temp/avg_price.png", avg_price_plot, width = 8, height = 4.5)
+```
+
+::: {.path-line}
+`c407` → `temp` → `avg_price.png`
+:::
+
+- Add the chunk below your `plot` chunk, run it, and find `avg_price.png` in the Explorer.
+- Every render saves the PNG again, so it always matches your code.
+- `width` and `height` are in inches; 8 × 4.5 fits a 16:9 slide.
+
+::: {.key-point}
+Save figures with `ggsave()`, never with a screenshot.
+:::
+
+## Exercise: build the relative path
+
+In the Console, load the 2021 Census PUMF from the `data` folder and name it `pumf`:
+
+```{r}
+#| label: exercise
+#| eval: false
+pumf <- read_rds(____________________)
+```
+
+## Answer
+
+```{r}
+#| label: answer
+pumf <- read_rds("data/2021_census_pumf_ind.rds")
+dim(pumf)
+```
+
+::: {.path-line}
+`c407` → `data` → `2021_census_pumf_ind.rds`
 :::
