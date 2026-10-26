@@ -440,25 +440,3 @@ ggsave("temp/avg_price.png", avg_price_plot, width = 8, height = 4.5)
 ::: {.key-point}
 Save figures with `ggsave()`, never with a screenshot.
 :::
-
-## Exercise: build the relative path
-
-In the Console, load the 2021 Census PUMF from the `data` folder and name it `pumf`:
-
-```{r}
-#| label: exercise
-#| eval: false
-pumf <- read_rds(____________________)
-```
-
-## Answer
-
-```{r}
-#| label: answer
-pumf <- read_rds("data/2021_census_pumf_ind.rds")
-dim(pumf)
-```
-
-::: {.path-line}
-`c407` → `data` → `2021_census_pumf_ind.rds`
-:::
