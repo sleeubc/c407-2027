@@ -71,7 +71,7 @@ sum(pumf$WEIGHT)
 The rows are a sample. `sum(WEIGHT)` estimates the population: about `r round(sum(pumf$WEIGHT) / 1e6, 1)` million people in private households.
 
 ::: {.key-point}
-Count people with `sum(WEIGHT)` or `count(x, wt = WEIGHT)`. Average with `weighted.mean(x, WEIGHT)`, as in deck 05.
+Count people with `sum(WEIGHT)` or `count(x, wt = WEIGHT)`. Average with `weighted.mean(x, WEIGHT)`, which counts each row `WEIGHT` times.
 :::
 
 ::: {.notes}

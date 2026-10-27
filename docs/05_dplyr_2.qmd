@@ -39,78 +39,119 @@ knitr::opts_chunk$set(comment = NA)
 suppressPackageStartupMessages(library(tidyverse))
 ```
 
-## summarise() turns many rows into one
+## A small tibble to practise on
 
 ```{r}
 #| label: toy
-people <- tibble(
-  WEIGHT = c(1, 2, 3, 4, 5),
-  TotInc = c(14, 13, 12, 8, 10),
-  CMA    = c("x", "x", "y", "y", "y")
+sales <- tibble(
+  act_use_cat = c("S/F Res", "S/F Res", "S/F Res",
+                  "Strata Res", "Strata Res", "Strata Res"),
+  sale_year = c(2024, 2024, 2025, 2024, 2025, 2025),
+  price = c(1500000, 1700000, 1900000, 800000, 600000, 700000)
 )
-
-people |> summarise(avg_income = mean(TotInc), population = sum(WEIGHT))
+sales
 ```
 
-## Weighted and unweighted averages differ
+## summarise() turns many rows into one
 
+:::: {.columns}
+::: {.column width="45%"}
 ```{r}
-#| label: weighted
-people |>
-  summarise(unweighted = mean(TotInc),
-            weighted = weighted.mean(TotInc, w = WEIGHT))
+#| label: summarise-data
+sales
 ```
+:::
 
-Each row represents `WEIGHT` people, so the weighted average describes the population.
+::: {.column width="53%"}
+```{r}
+#| label: summarise
+sales |>
+  summarise(avg_price = mean(price),
+            n_sales = n())
+```
+:::
+::::
 
 Other summary functions: `sum()`, `median()`, `min()`, `max()`, and `n()` (number of rows).
 
 ## group_by() makes summarise() work per group
 
+:::: {.columns}
+::: {.column width="45%"}
+```{r}
+#| label: group-data
+sales
+```
+:::
+
+::: {.column width="53%"}
 ```{r}
 #| label: group
-people |>
-  group_by(CMA) |>
-  summarise(population = sum(WEIGHT),
-            avg_income = weighted.mean(TotInc, w = WEIGHT))
+sales |>
+  group_by(act_use_cat) |>
+  summarise(avg_price = mean(price),
+            n_sales = n())
 ```
+:::
+::::
 
 ## Predict the output
 
+:::: {.columns}
+::: {.column width="45%"}
+```{r}
+#| label: predict-data
+sales
+```
+:::
+
+::: {.column width="53%"}
 ```{r}
 #| label: predict-code
 #| eval: false
-people |>
-  filter(TotInc > 9) |>
-  group_by(CMA) |>
-  summarise(n = n())
+sales |>
+  filter(price > 1000000) |>
+  group_by(act_use_cat) |>
+  summarise(n_sales = n())
 ```
 
 ::: {.fragment}
 ```{r}
 #| label: predict-out
 #| echo: false
-people |>
-  filter(TotInc > 9) |>
-  group_by(CMA) |>
-  summarise(n = n())
+sales |>
+  filter(price > 1000000) |>
+  group_by(act_use_cat) |>
+  summarise(n_sales = n())
 ```
 
-`n()` counts rows, not people. Use `sum(WEIGHT)` for people.
+No strata sale is above $1 million, so `Strata Res` has no row, not a row with 0.
 :::
+:::
+::::
 
 ## summarise() removes one level of grouping
 
+:::: {.columns}
+::: {.column width="45%"}
+```{r}
+#| label: groups-data
+sales
+```
+:::
+
+::: {.column width="53%"}
 ```{r}
 #| label: groups
-two_levels <- people |>
-  mutate(group = c("a", "b", "a", "b", "b")) |>
-  group_by(CMA, group) |>
-  summarise(population = sum(WEIGHT))
-group_vars(two_levels)
+yearly <- sales |>
+  group_by(act_use_cat, sale_year) |>
+  summarise(avg_price = mean(price))
+group_vars(yearly)
 ```
+:::
+::::
 
-The result is still grouped by `CMA`. Later steps then work within each CMA, which may not be what you want.
+The result is still grouped by `act_use_cat`. Later steps then work within each type, which may not be what you want.
 
 ::: {.key-point}
 Add `.groups = "drop"` to `summarise()`, or call `ungroup()`, when you are done with groups.
@@ -118,24 +159,48 @@ Add `.groups = "drop"` to `summarise()`, or call `ungroup()`, when you are done 
 
 ## group_by() + mutate() keeps every row
 
+:::: {.columns}
+::: {.column width="40%"}
+```{r}
+#| label: mutate-data
+sales
+```
+:::
+
+::: {.column width="58%"}
 ```{r}
 #| label: group-mutate
-tb <- tibble(a = c(1, 1, 1, 2, 2, 2), b = c(1, 2, 3, 3, 4, 4))
-tb |>
-  group_by(a) |>
-  mutate(share_of_group = b / sum(b)) |>
+sales |>
+  group_by(act_use_cat) |>
+  mutate(type_avg = mean(price),
+         diff = price - mean(price)) |>
   ungroup()
 ```
+:::
+::::
 
 ## lag() looks at the previous row
 
+:::: {.columns}
+::: {.column width="45%"}
+```{r}
+#| label: lag-data
+yearly
+```
+:::
+
+::: {.column width="53%"}
 ```{r}
 #| label: lag
-tb |>
-  group_by(a) |>
-  mutate(previous = lag(b), change = b - lag(b)) |>
+yearly |>
+  group_by(act_use_cat) |>
+  mutate(previous = lag(avg_price)) |>
   ungroup()
 ```
+:::
+::::
+
+The first year of each type has no previous row, so `lag()` returns `NA`.
 
 ## Application: average prices by year
 
