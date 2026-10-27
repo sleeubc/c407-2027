@@ -63,10 +63,21 @@ tb
 
 ## select() keeps columns
 
+:::: {.columns}
+::: {.column width="35%"}
+```{r}
+#| label: select-data
+tb
+```
+:::
+
+::: {.column width="63%"}
 ```{r}
 #| label: select
 select(tb, a, b)
 ```
+:::
+::::
 
 The first argument is the data; the rest are the columns to keep.
 
@@ -74,19 +85,41 @@ The first argument is the data; the rest are the columns to keep.
 
 `x |> f(y)` is the same as `f(x, y)`.
 
+:::: {.columns}
+::: {.column width="35%"}
+```{r}
+#| label: pipe-data
+tb
+```
+:::
+
+::: {.column width="63%"}
 ```{r}
 #| label: pipe
 tb |> select(a, b)
 ```
+:::
+::::
 
 Insert `|>` with `Ctrl + Shift + M` (Windows) or `Command + Shift + M` (macOS).
 
 ## filter() keeps rows that meet every condition
 
+:::: {.columns}
+::: {.column width="35%"}
+```{r}
+#| label: filter-data
+tb
+```
+:::
+
+::: {.column width="63%"}
 ```{r}
 #| label: filter
 tb |> filter(a >= 2, c == "y")
 ```
+:::
+::::
 
 Commas mean "and": a row must meet both conditions.
 
@@ -107,6 +140,15 @@ tb2 <- tibble(a = c(1, 1, 1, 2, 2, 2), b = c(1, 2, 3, 3, 4, 4))
 
 ## Predict the output
 
+:::: {.columns}
+::: {.column width="35%"}
+```{r}
+#| label: predict-1-data
+tb2
+```
+:::
+
+::: {.column width="63%"}
 ```{r}
 #| label: predict-1-code
 #| eval: false
@@ -122,26 +164,59 @@ How many rows does this return, and which ones?
 tb2 |> filter(a == 1 | b == 3)
 ```
 
-All rows with `a == 1`, plus the row where `b == 3` and `a == 2`.
+All rows with `a == 1`, plus row 4, where `b == 3`.
 :::
+:::
+::::
 
 ## arrange() sorts rows
 
+:::: {.columns}
+::: {.column width="35%"}
+```{r}
+#| label: arrange-data
+tb
+```
+:::
+
+::: {.column width="63%"}
 ```{r}
 #| label: arrange
 tb |> arrange(c, a)
 tb |> arrange(desc(a))
 ```
+:::
+::::
 
 ## mutate() adds columns
 
+:::: {.columns}
+::: {.column width="35%"}
+```{r}
+#| label: mutate-data
+tb
+```
+:::
+
+::: {.column width="63%"}
 ```{r}
 #| label: mutate
 tb |> mutate(d = 3 * a, e = paste0(b, c))
 ```
+:::
+::::
 
 ## Predict the output
 
+:::: {.columns}
+::: {.column width="35%"}
+```{r}
+#| label: predict-2-data
+tb
+```
+:::
+
+::: {.column width="63%"}
 ```{r}
 #| label: predict-2-code
 #| eval: false
@@ -163,6 +238,8 @@ tb |>
 
 Read a pipeline one step at a time, top to bottom.
 :::
+:::
+::::
 
 ## filter() silently drops missing values
 

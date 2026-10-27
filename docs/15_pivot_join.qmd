@@ -68,10 +68,24 @@ Long: one row per place **and** variable. Wide: one row per place.
 
 ## pivot_longer() reverses it
 
+:::: {.columns}
+::: {.column width="35%"}
+```{r}
+#| label: longer-data
+wide
+```
+:::
+
+::: {.column width="63%"}
 ```{r}
 #| label: longer
-wide |> pivot_longer(cols = c(x, y), names_to = "var", values_to = "val")
+wide |>
+  pivot_longer(cols = c(x, y),
+               names_to = "var",
+               values_to = "val")
 ```
+:::
+::::
 
 ## Practice: renter shares from long data
 
@@ -101,7 +115,15 @@ renter_l |>
 
 ## Duplicate keys break pivot_wider()
 
-::: {.small}
+:::: {.columns .small}
+::: {.column width="35%"}
+```{r}
+#| label: dup-pivot-data
+long
+```
+:::
+
+::: {.column width="63%"}
 ```{r}
 #| label: dup-pivot
 #| warning: true
@@ -109,6 +131,7 @@ long_dup <- long |> add_row(geo = "a", var = "x", val = 9)
 long_dup |> pivot_wider(names_from = var, values_from = val)
 ```
 :::
+::::
 
 ::: {.warning}
 Two values for `a`/`x` produce a list column. Check first: `count(geo, var) |> filter(n > 1)`.
