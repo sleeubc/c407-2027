@@ -40,7 +40,7 @@ suppressPackageStartupMessages(library(tidyverse))
 bca <- read_rds("data/bca262.rds")
 ```
 
-## Two tibbles from deck 06
+## Two tibbles to plot
 
 ```{r}
 #| label: data
@@ -53,7 +53,67 @@ van17 <- bca |>
   mutate(price_m = price / 1e6)
 ```
 
+`avg_price` is from deck 06. `van17` holds City of Vancouver sales in 2017, with `price_m` in millions.
+
 In deck 06, `ggplot()`, `aes()`, and `geom_*()` decided what is drawn. This deck covers the functions around them. A few of those change what a chart says, not only how it looks.
+
+## geom_line() joins the points within each group
+
+:::: {.columns}
+::: {.column width="49%"}
+```{r}
+#| label: local
+#| fig-width: 6.4
+#| fig-height: 2.8
+ggplot(avg_price,
+       aes(sale_year, avg_price)) +
+  geom_line()
+```
+:::
+
+::: {.column width="49%"}
+```{r}
+#| label: group
+#| fig-width: 6.4
+#| fig-height: 2.8
+ggplot(avg_price,
+       aes(sale_year, avg_price)) +
+  geom_line(aes(group = act_use_cat))
+```
+:::
+::::
+
+Left: with no groups, the line joins every point in year order. Right: `group` splits the line, as `group_by()` splits rows. In deck 06, `colour = act_use_cat` did the same: a text column in `colour` also sets the group.
+
+::: {.notes}
+- A numeric column in `colour` does not set the group, so it does not split the line.
+- ggplot2 groups by every discrete column mapped in the layer: `colour`, `fill`, `linetype`, `shape`, and `group`.
+:::
+
+## Quick check: how many fitted lines?
+
+```{r}
+#| label: quiz-local
+#| eval: false
+ggplot(van17, aes(floorarea, price_m)) +
+  geom_point(aes(colour = act_use_cat), alpha = 0.2) +
+  geom_smooth(method = "lm")
+```
+
+**A.** One  **B.** Two, one for each property type
+
+::: {.fragment}
+```{r}
+#| label: quiz-local-answer
+#| echo: false
+#| fig-height: 2.6
+ggplot(van17, aes(floorarea, price_m)) +
+  geom_point(aes(colour = act_use_cat), alpha = 0.2) +
+  geom_smooth(method = "lm")
+```
+
+**A.** `colour` is local to `geom_point()`, so `geom_smooth()` has one group and fits one line to all the points. Move `colour` into `ggplot()` to get one line per type.
+:::
 
 ## scale_*() turns values into axes and colours
 
@@ -73,8 +133,6 @@ When you review AI-written code, you can skim most `scale_*()` lines: they chang
 :::
 
 ## Axis limits can remove data
-
-`van17` holds City of Vancouver sales in 2017, with `price_m` in millions.
 
 :::: {.columns}
 ::: {.column width="49%"}

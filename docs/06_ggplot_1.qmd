@@ -46,46 +46,48 @@ bca <- read_rds("data/bca262.rds")
 #| label: template
 #| eval: false
 ggplot() +
-  geom_point(aes(x = column1, y = column2), data = my_tibble)
+  geom_point(mapping = aes(x = column1, y = column2), data = my_tibble)
 ```
 
 - `ggplot()`: an empty chart. `+` adds layers.
 - `geom_*()`: the **geometry** that draws the data: points, lines, bars.
-- `aes()`: **mappings** from columns to visual properties: x, y, colour, size, fill.
-- `data =`: the tibble to plot. Name it: a `geom_*()` takes the mapping first.
+- `mapping = aes()`: **mappings** from columns to visual properties: x, y, colour, size, fill.
+- `data =`: the tibble to plot.
 
-::: {.notes}
-- Swapping the order, `geom_point(by_aa, aes(...))`, fails with "`mapping` must be created by `aes()`. ✖ You've supplied a data frame."
-:::
-
-## Summarise first, then plot
+## A small dataset: Kerrisdale in 2017
 
 ```{r}
-#| label: by-aa
-by_aa <- bca |>
-  filter(!is.na(aa_label)) |>
-  group_by(aa_label) |>
-  summarise(avg_floorarea = mean(floorarea, na.rm = TRUE),
-            avg_price = mean(price, na.rm = TRUE),
-            n = n())
-by_aa |> head(4)
+#| label: kerr17
+kerr17 <- bca |>
+  filter(neigh_label == "Kerrisdale", year(sale_date) == 2017) |>
+  mutate(price_m = price / 1e6)
+kerr17 |> select(floorarea, price_m, act_use_cat, bedrooms) |> head(4)
 ```
 
-## geom_point() shows a relationship
+`kerr17` holds the `r nrow(kerr17)` sales in one Vancouver neighbourhood in one year: few enough to see every point. `price_m` is the price in millions of dollars.
+
+## geom_point() shows a relationship {.nostretch}
 
 ```{r}
 #| label: point
+#| fig-height: 3.3
 ggplot() +
-  geom_point(aes(avg_floorarea, avg_price), data = by_aa)
+  geom_point(aes(floorarea, price_m), data = kerr17)
 ```
+
+R matches unnamed arguments by position. `aes()` takes `x` then `y`, and a `geom_*()` takes `mapping` first, so we drop those names. Keep `data =`: it comes second in a `geom_*()`.
+
+::: {.notes}
+- Swapping the order, `geom_point(kerr17, aes(...))`, fails with "`mapping` must be created by `aes()`. ✖ You've supplied a data frame."
+:::
 
 ## Map more columns to colour and size
 
 ```{r}
 #| label: colour-size
 ggplot() +
-  geom_point(aes(avg_floorarea, avg_price, colour = aa_label, size = n),
-             data = by_aa)
+  geom_point(aes(floorarea, price_m, colour = act_use_cat, size = bedrooms),
+             data = kerr17)
 ```
 
 ## Mapping and setting are different
@@ -95,12 +97,12 @@ ggplot() +
 ```{r}
 #| label: mapped
 #| fig-width: 5
-#| fig-height: 3.2
+#| fig-height: 2.7
 ggplot() +
   geom_point(
-    aes(avg_floorarea, avg_price,
+    aes(floorarea, price_m,
         colour = "blue"),
-    data = by_aa)
+    data = kerr17)
 ```
 :::
 
@@ -108,17 +110,51 @@ ggplot() +
 ```{r}
 #| label: set
 #| fig-width: 5
-#| fig-height: 3.2
+#| fig-height: 2.7
 ggplot() +
   geom_point(
-    aes(avg_floorarea, avg_price),
+    aes(floorarea, price_m),
     colour = "blue",
-    data = by_aa)
+    data = kerr17)
 ```
 :::
 ::::
 
-Inside `aes()`, `"blue"` is treated as data. Outside `aes()`, it sets the colour.
+Inside `aes()`, `"blue"` is a data value, as if every row held `"blue"`: ggplot2 maps it to a colour and adds a legend. Outside `aes()`, it sets the colour.
+
+## alpha is a setting: it makes points see-through
+
+```{r}
+#| label: alpha
+#| fig-height: 3.3
+ggplot() +
+  geom_point(aes(floorarea, price_m, colour = act_use_cat, size = bedrooms),
+             alpha = 0.5, data = kerr17)
+```
+
+The chart from two slides back, with `alpha` set: 0 is invisible, 1 is solid.
+
+## Quick check: what does this draw?
+
+```{r}
+#| label: quiz-setting
+#| eval: false
+ggplot() +
+  geom_point(aes(floorarea, price_m), colour = act_use_cat, data = kerr17)
+```
+
+**A.** Points coloured by property type  **B.** An error
+
+::: {.fragment}
+```{r}
+#| label: quiz-setting-answer
+#| echo: false
+ggplot() +
+  geom_point(aes(floorarea, price_m), colour = act_use_cat, data = kerr17)
+```
+
+**B.** Outside `aes()`, R looks for an object named `act_use_cat`, not a column of `kerr17`. Columns go inside `aes()`.
+:::
 
 ## Layers stack: lines and points
 
@@ -150,77 +186,7 @@ The same chart as the last slide. Data and `aes()` in `ggplot()` are **global**:
 
 ::: {.notes}
 - `ggplot()` takes the data first; a `geom_*()` takes the mapping first. A layer usually reuses the plot's data but needs its own mapping.
-- Data first in `ggplot()` also lets you pipe into it: `van17 |> count(act_use_cat) |> ggplot(aes(n, act_use_cat))`.
-:::
-
-## geom_line() joins the points within each group
-
-:::: {.columns}
-::: {.column width="49%"}
-```{r}
-#| label: local
-#| fig-width: 6.4
-#| fig-height: 2.8
-ggplot(avg_price,
-       aes(sale_year, avg_price)) +
-  geom_line()
-```
-:::
-
-::: {.column width="49%"}
-```{r}
-#| label: group
-#| fig-width: 6.4
-#| fig-height: 2.8
-ggplot(avg_price,
-       aes(sale_year, avg_price)) +
-  geom_line(aes(group = act_use_cat))
-```
-:::
-::::
-
-Left: with no groups, the line joins every point in year order. Right: `group` splits the line, as `group_by()` splits rows. On the last slide, `colour` did the same: a text column in `colour` also sets the group.
-
-::: {.notes}
-- A numeric column in `colour` does not set the group, so it does not split the line.
-- ggplot2 groups by every discrete column mapped in the layer: `colour`, `fill`, `linetype`, `shape`, and `group`.
-:::
-
-## A smaller dataset: Vancouver in 2017
-
-```{r}
-#| label: van17
-van17 <- bca |>
-  filter(juris_label == "City of Vancouver", year(sale_date) == 2017) |>
-  mutate(price_m = price / 1e6)
-nrow(van17)
-```
-
-The next charts use `van17`: one city in one year, so the points do not pile up. `price_m` is the price in millions of dollars.
-
-## Quick check: how many fitted lines?
-
-```{r}
-#| label: quiz-local
-#| eval: false
-ggplot(van17, aes(floorarea, price)) +
-  geom_point(aes(colour = act_use_cat), alpha = 0.2) +
-  geom_smooth(method = "lm")
-```
-
-**A.** One  **B.** Two, one for each property type
-
-::: {.fragment}
-```{r}
-#| label: quiz-local-answer
-#| echo: false
-#| fig-height: 2.6
-ggplot(van17, aes(floorarea, price)) +
-  geom_point(aes(colour = act_use_cat), alpha = 0.2) +
-  geom_smooth(method = "lm")
-```
-
-**A.** `colour` is local to `geom_point()`, so `geom_smooth()` has one group and fits one line to all the points. Move `colour` into `ggplot()` to get one line per type.
+- Data first in `ggplot()` also lets you pipe into it: `kerr17 |> count(act_use_cat) |> ggplot(aes(n, act_use_cat))`.
 :::
 
 ## Choose the geometry for the question
@@ -236,29 +202,39 @@ ggplot(van17, aes(floorarea, price)) +
 
 :::: {.columns}
 ::: {.column width="49%"}
+::: {.small}
 ```{r}
 #| label: bar-count
 #| fig-width: 5
-#| fig-height: 2.4
-ggplot(van17, aes(y = act_use_cat)) +
+#| fig-height: 1.8
+ggplot(kerr17, aes(y = act_use_cat)) +
   geom_bar()
 ```
 :::
 
+The same chart. `geom_bar()` counts the rows itself, so its axis says `count`, a column it computed. `geom_col()` draws the `n` you computed.
+:::
+
 ::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: count-table
+kerr17 |>
+  count(act_use_cat)
+```
+
 ```{r}
 #| label: col-count
 #| fig-width: 5
-#| fig-height: 2.4
-van17 |>
+#| fig-height: 1.8
+kerr17 |>
   count(act_use_cat) |>
   ggplot(aes(n, act_use_cat)) +
   geom_col()
 ```
 :::
+:::
 ::::
-
-The same chart. `geom_bar()` counts the rows itself, so its axis says `count`, a column it computed. `geom_col()` draws the `n` you computed.
 
 ## Some geoms compute what they draw
 
@@ -266,7 +242,7 @@ The same chart. `geom_bar()` counts the rows itself, so its axis says `count`, a
 |---|---|
 | `geom_bar()` | The number of rows in each group |
 | `geom_histogram()` | Bins, then the number of rows in each bin |
-| `geom_smooth()` | A fitted line, as in the quick check |
+| `geom_smooth()` | A fitted line |
 | `geom_boxplot()` | The median and quartiles |
 | `geom_col()`, `geom_point()`, `geom_line()` | Nothing: they draw the values as given |
 
@@ -291,4 +267,4 @@ When a geom computes, ask what it computed. `geom_bar()` counts rows, not people
 
 In Positron, `?geom_histogram` opens the help page, and `example(geom_histogram)` draws its examples.
 
-**Try it:** pick a geom from the cheat sheet that we have not used, read its page, and draw it with `van17`.
+**Try it:** pick a geom from the cheat sheet that we have not used, read its page, and draw it with `kerr17`.
