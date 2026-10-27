@@ -216,48 +216,6 @@ avg_price <- bca |>
 avg_price |> head(3)
 ```
 
-## Check the last date before you compare years
-
-```{r}
-#| label: partial-year
-bca |>
-  filter(year(sale_date) >= 2024) |>
-  group_by(sale_year = year(sale_date)) |>
-  summarise(sales = n(), first_sale = min(sale_date), last_sale = max(sale_date))
-```
-
-::: {.warning}
-The file ends on `r paste(mday(max(bca$sale_date)), format(max(bca$sale_date), "%B %Y"))`. On a chart by year, 2026 looks like a collapse in sales, and its average covers only winter sales. Drop incomplete years, or compare the same months in each year.
-:::
-
-## An average can fall while every type rises
-
-::: {.small}
-```{r}
-#| label: mix-shift
-bca |>
-  filter(year(sale_date) %in% 2016:2017) |>
-  group_by(sale_year = year(sale_date)) |>
-  summarise(all = mean(price, na.rm = TRUE),
-            sf = mean(price[act_use_cat == "S/F Res"], na.rm = TRUE),
-            strata = mean(price[act_use_cat == "Strata Res"], na.rm = TRUE),
-            sf_share = mean(act_use_cat == "S/F Res"))
-```
-:::
-
-```{r}
-#| label: mix-shift-numbers
-#| include: false
-mix <- bca |>
-  filter(year(sale_date) %in% 2016:2017) |>
-  group_by(sale_year = year(sale_date)) |>
-  summarise(sf_share = mean(act_use_cat == "S/F Res"))
-```
-
-::: {.key-point}
-Both types rose in 2017, yet the average fell, because single-family homes dropped from `r round(100 * mix$sf_share[1])`% to `r round(100 * mix$sf_share[2])`% of sales. An average price describes the mix of homes sold. Compare within types, or use a regression (deck 17).
-:::
-
 ## Practice: a price index
 
 Using `avg_price`, compute a price index for each `act_use_cat`: the average price divided by the average price in **2010**.
@@ -309,3 +267,45 @@ avg_price |>
 :::
 
 `lag()` uses row order, so sort by year first.
+
+## Check the last date before you compare years
+
+```{r}
+#| label: partial-year
+bca |>
+  filter(year(sale_date) >= 2024) |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(sales = n(), first_sale = min(sale_date), last_sale = max(sale_date))
+```
+
+::: {.warning}
+The file ends on `r paste(mday(max(bca$sale_date)), format(max(bca$sale_date), "%B %Y"))`. On a chart by year, 2026 looks like a collapse in sales, and its average covers only winter sales. Drop incomplete years, or compare the same months in each year.
+:::
+
+## An average can fall while every type rises
+
+::: {.small}
+```{r}
+#| label: mix-shift
+bca |>
+  filter(year(sale_date) %in% 2016:2017) |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(all = mean(price, na.rm = TRUE),
+            sf = mean(price[act_use_cat == "S/F Res"], na.rm = TRUE),
+            strata = mean(price[act_use_cat == "Strata Res"], na.rm = TRUE),
+            sf_share = mean(act_use_cat == "S/F Res"))
+```
+:::
+
+```{r}
+#| label: mix-shift-numbers
+#| include: false
+mix <- bca |>
+  filter(year(sale_date) %in% 2016:2017) |>
+  group_by(sale_year = year(sale_date)) |>
+  summarise(sf_share = mean(act_use_cat == "S/F Res"))
+```
+
+::: {.key-point}
+Both types rose in 2017, yet the average fell, because single-family homes dropped from `r round(100 * mix$sf_share[1])`% to `r round(100 * mix$sf_share[2])`% of sales. An average price describes the mix of homes sold. Compare within types, or use a regression (deck 17).
+:::
