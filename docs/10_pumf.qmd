@@ -244,7 +244,7 @@ ggplot(by_cma, aes(population, avg_value)) + geom_point()
 pumf |> map_chr(\(col) class(col)[1]) |> table()
 ```
 
-As in deck 08's weekday chart, a **factor** stores categories, and its **levels** set their order.
+As in deck 09's weekday chart, a **factor** stores categories, and its **levels** set their order.
 
 ```{r}
 #| label: tenur-levels
@@ -289,7 +289,7 @@ ggplot(households, aes(y = as.character(BedRm), weight = WEIGHT)) + geom_bar() +
 Why does "No bedroom" move after "5 bedrooms or more" on the right?
 
 ::: {.notes}
-`as.character()` turns the factor into text, which drops the levels. Text sorts alphabetically, and digits come before letters. It is the same as `as.character(day)` in deck 08's weekday chart. Keep categories as factors.
+`as.character()` turns the factor into text, which drops the levels. Text sorts alphabetically, and digits come before letters. It is the same as `as.character(day)` in deck 09's weekday chart. Keep categories as factors.
 :::
 
 ## A factor is not a number
@@ -342,7 +342,7 @@ unit_size >= "medium"
 `>=` compares positions in the level order. `as.ordered(pumf$HDGREE)` makes education levels comparable the same way.
 
 ::: {.notes}
-`wday(label = TRUE)` and `month(label = TRUE)` in deck 08 also return ordered factors: `class()` printed "ordered" "factor".
+`wday(label = TRUE)` and `month(label = TRUE)` in deck 09 also return ordered factors: `class()` printed "ordered" "factor".
 :::
 
 ## Practice: simplify education levels

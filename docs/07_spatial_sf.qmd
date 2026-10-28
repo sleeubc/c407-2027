@@ -1,0 +1,598 @@
+---
+title: "Spatial data with sf"
+subtitle: "COMM 407 · Points, polygons, coordinate systems, and spatial joins"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 4.2)
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(sf)
+  library(tmap)
+  library(VancouvR)
+})
+options(pillar.sigfig = 7)
+bca <- read_rds("data/bca262.rds")
+```
+
+## bca knows where each home is, but not what is near it
+
+```{r}
+#| label: bca-lonlat
+bca |>
+  filter(juris_label == "City of Vancouver") |>
+  select(neigh_label, price, lon, lat) |>
+  head(3)
+```
+
+To R, `lon` and `lat` are just numbers. It cannot yet tell which local area a sale is in, how far it is from SkyTrain, or whether it is in the floodplain.
+
+The **sf** (simple features) package turns coordinates into points that R can measure and match against areas.
+
+::: {.notes}
+- The slides print 7 significant digits (`options(pillar.sigfig = 7)` in the hidden setup chunk). With the default of 3, `lon` prints as `-123.`, which hides that the column holds coordinates.
+:::
+
+## The City of Vancouver publishes spatial data
+
+```{r}
+#| label: local-areas
+local_areas <- get_cov_data("local-area-boundary")
+```
+
+`get_cov_data()` from **VancouvR** downloads a dataset from [City of Vancouver Open Data](https://opendata.vancouver.ca/). The ID is the end of the dataset's web address. No API key is needed.
+
+::: {.small}
+| ID | What it holds |
+|---|---|
+| `local-area-boundary` | The 22 local areas |
+| `rapid-transit-stations`, `rapid-transit-lines` | SkyTrain stations and lines |
+| `zoning-districts-and-labels` | Zoning districts |
+| `designated-floodplain` | Areas at risk of flooding |
+| `issued-building-permits` | Building permits, with project values |
+| `non-market-housing` | Social and co-op housing projects |
+:::
+
+## An sf object is a tibble with a geometry column
+
+```{r}
+#| label: print-sf
+head(local_areas, 3)
+```
+
+Each row is one local area. `geometry` holds its boundary: the corners of a polygon, in degrees (°).
+
+## tm_shape() starts a map
+
+```{r}
+#| label: map-areas
+tm_shape(local_areas) +
+  tm_polygons()
+```
+
+**tmap** draws sf objects. `tm_shape()` names the data; `tm_polygons()` draws it. Deck 13 covers tmap in full.
+
+## Points, lines, and polygons stack as layers
+
+:::: {.columns}
+::: {.column width="52%"}
+::: {.small}
+```{r}
+#| label: layers
+#| eval: false
+stations <-
+  get_cov_data("rapid-transit-stations")
+transit_lines <-
+  get_cov_data("rapid-transit-lines")
+
+tm_shape(local_areas) +
+  tm_polygons(fill = "grey95") +
+  tm_shape(transit_lines) +
+  tm_lines(col = "steelblue", lwd = 2) +
+  tm_shape(stations) +
+  tm_dots(size = 0.4)
+```
+:::
+:::
+
+::: {.column width="46%"}
+```{r}
+#| label: layers-map
+#| echo: false
+#| fig-width: 5
+#| fig-height: 4
+stations <- get_cov_data("rapid-transit-stations")
+transit_lines <- get_cov_data("rapid-transit-lines")
+
+tm_shape(local_areas) + tm_polygons(fill = "grey95") +
+  tm_shape(transit_lines) + tm_lines(col = "steelblue", lwd = 2) +
+  tm_shape(stations) + tm_dots(size = 0.4)
+```
+:::
+::::
+
+Each `tm_shape()` starts a layer, and later layers draw on top, as in ggplot. The first layer sets the map's extent, so the Expo Line stops at the city boundary.
+
+## In tmap, the value decides: mapping or setting
+
+```{r}
+#| label: skytrain-areas
+areas <- local_areas |>
+  mutate(skytrain = name %in% stations$geo_local_area)
+```
+
+:::: {.columns}
+::: {.column width="49%"}
+```{r}
+#| label: fill-setting
+#| fig-width: 5
+#| fig-height: 2.8
+tm_shape(areas) +
+  tm_polygons(fill = "blue")
+```
+:::
+
+::: {.column width="49%"}
+```{r}
+#| label: fill-mapping
+#| fig-width: 5
+#| fig-height: 2.8
+tm_shape(areas) +
+  tm_polygons(fill = "skytrain")
+```
+:::
+::::
+
+tmap has no `aes()`. A column name, such as `"skytrain"`, is mapped and gets a legend. Any other value, such as `"blue"`, is a setting. A misspelled column name stops with an error.
+
+::: {.notes}
+- In ggplot, *where* you write it decides: inside or outside `aes()` (deck 06). In tmap, *what* you write decides. Deck 06's trap, `aes(colour = "blue")` turning a constant into a legend, cannot happen in tmap.
+- If the data had a column named `blue`, `fill = "blue"` would map that column: a column name wins over a colour.
+- The typo error reads: "Visual values used for the variable "fill" are incorrect. Variable should a data variable name or a single color."
+- On the last slide, `fill = "grey95"`, `col = "steelblue"`, `lwd = 2`, and `size = 0.4` are all settings.
+:::
+
+## dplyr verbs keep the geometry
+
+```{r}
+#| label: sticky
+stations |> filter(geo_local_area == "Oakridge") |> select(station)
+```
+
+We kept only `station`, but `geometry` came along: it is **sticky**.
+
+## st_drop_geometry() returns a plain tibble
+
+```{r}
+#| label: drop
+stations |> st_drop_geometry() |> count(geo_local_area, sort = TRUE) |> head(3)
+```
+
+Drop the geometry when you only need a table: counts and summaries run faster, and the output is shorter.
+
+## st_read() reads spatial files
+
+Other portals let you download files instead.
+
+- **GeoJSON**: one file, such as `data/Park_Inventory.geojson`.
+- **Shapefile**: several files with one name (`.shp`, `.shx`, `.dbf`, `.prj`, …). Keep them together and read the `.shp`.
+
+```{r}
+#| label: st-read
+parks <- st_read("data/Park_Inventory.geojson", quiet = TRUE)
+parks_shp <- st_read("data/Park_Inventory/Park_Inventory.shp", quiet = TRUE)
+c(geojson = nrow(parks), shapefile = nrow(parks_shp))
+```
+
+Both hold Burnaby's parks, from [Burnaby Open Data](https://data.burnaby.ca/).
+
+## st_as_sf() turns longitude and latitude into points
+
+```{r}
+#| label: sales
+sales <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) == 2025,
+         !is.na(lon), !is.na(lat)) |>
+  select(folioid, act_use_cat, price, floorarea, lon, lat) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+nrow(sales)
+```
+
+- `coords`: the x column first (longitude), then y (latitude).
+- `crs = 4326`: the numbers are degrees of longitude and latitude.
+- `st_as_sf()` stops at a missing coordinate, so drop those rows first.
+
+## Map new points before you use them
+
+```{r}
+#| label: map-sales
+tm_shape(local_areas) + tm_polygons(fill = "grey95") +
+  tm_shape(sales) + tm_dots(fill = "act_use_cat", size = 0.1)
+```
+
+## Quick check: what does this do?
+
+```{r}
+#| label: quiz-swap
+#| eval: false
+swapped <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) == 2025,
+         !is.na(lon), !is.na(lat)) |>
+  st_as_sf(coords = c("lat", "lon"), crs = 4326)
+```
+
+**A.** Stops with an error  **B.** Puts the points in the wrong place
+
+::: {.fragment}
+```{r}
+#| label: quiz-swap-answer
+#| echo: false
+swapped <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) == 2025,
+         !is.na(lon), !is.na(lat)) |>
+  st_as_sf(coords = c("lat", "lon"), crs = 4326)
+st_bbox(swapped) |> round(1)
+```
+
+**B.** Latitude is now −123, which cannot exist: latitudes run from −90 to 90. R made the points anyway. Map new points before you use them.
+:::
+
+## A coordinate reference system gives the numbers meaning
+
+::: {.small}
+| EPSG code | Name | Units | Use it for |
+|---|---|---|---|
+| 4326 | WGS 84 | degrees | Longitude and latitude: `bca`, City open data, GPS |
+| 26910 | NAD83 / UTM zone 10N | metres | Distances, buffers, and areas in BC |
+| 3347 | Statistics Canada Lambert | metres | Maps of all of Canada |
+:::
+
+```{r}
+#| label: crs
+st_crs(stations)$epsg
+```
+
+The City's data, like `bca`, use EPSG 4326.
+
+## st_transform() changes the numbers, not the places
+
+```{r}
+#| label: transform
+st_bbox(stations) |> round(3)
+stations |> st_transform(26910) |> st_bbox() |> round()
+```
+
+```{r}
+#| label: span
+#| include: false
+bb_m <- st_bbox(st_transform(stations, 26910))
+span_km <- round(c(x = bb_m[["xmax"]] - bb_m[["xmin"]], y = bb_m[["ymax"]] - bb_m[["ymin"]]) / 1000, 1)
+```
+
+`st_bbox()` gives the smallest box around the data. In metres, the stations span `r span_km[["x"]]` km east to west and `r span_km[["y"]]` km north to south.
+
+## Check the coordinates, not only the guide
+
+```{r}
+#| label: crimes
+vpd_file <- file.path("data", "crimedata_csv_AllNeighbourhoods_2026",
+                      "crimedata_csv_AllNeighbourhoods_2026.csv")
+crimes <- read_csv(vpd_file)
+crimes |> select(TYPE, X, Y) |> head(3)
+```
+
+The Vancouver Police Department's guide says the coordinates are in "latitude and longitude" on one page and in "UTM Zone 10" on another. An `X` of 492,734 cannot be a longitude: these are metres.
+
+## Declare the CRS the data use
+
+```{r}
+#| label: crimes-sf
+crimes_sf <- crimes |>
+  filter(X != 0) |>
+  st_as_sf(coords = c("X", "Y"), crs = 26910)
+crimes_sf |> st_transform(4326) |> st_bbox() |> round(3)
+```
+
+With `crs = 4326`, the same code runs without an error, and every crime gets an impossible longitude of about 490,000.
+
+::: {.warning}
+`X` is 0 when VPD withholds the location. In this file, that is every offence against a person and the one homicide: `r sum(crimes$X == 0)` crimes. A map of the remaining points shows no violent crime at all.
+:::
+
+## st_join() attaches the area each point falls in
+
+```{r}
+#| label: join
+sales_area <- st_join(sales, local_areas)
+c(before = nrow(sales), after = nrow(sales_area))
+
+sales_area |> st_drop_geometry() |> count(name, sort = TRUE) |> head(4)
+```
+
+Each sale gets the `name` of its local area. Both layers must use the same CRS.
+
+## Join the other way to map each area
+
+:::: {.columns}
+::: {.column width="52%"}
+::: {.small}
+```{r}
+#| label: by-area
+#| eval: false
+strata <- sales |>
+  filter(act_use_cat == "Strata Res")
+
+strata_by_area <-
+  st_join(local_areas, strata) |>
+  group_by(name) |>
+  summarise(sales = n(),
+            median_price = median(price))
+
+tm_shape(strata_by_area) +
+  tm_polygons(fill = "median_price")
+```
+:::
+:::
+
+::: {.column width="46%"}
+```{r}
+#| label: by-area-map
+#| echo: false
+#| fig-width: 5
+#| fig-height: 4
+strata <- sales |> filter(act_use_cat == "Strata Res")
+
+strata_by_area <- st_join(local_areas, strata) |>
+  group_by(name) |>
+  summarise(sales = n(), median_price = median(price))
+
+tm_shape(strata_by_area) + tm_polygons(fill = "median_price")
+```
+:::
+::::
+
+Each area matches many sales. `summarise()` merges each area's rows back into one polygon.
+
+::: {.notes}
+- `st_join(local_areas, strata)` keeps an area with no strata sale as one row with `NA` columns, so `n()` would report 1 sale there. In 2025 every area has at least `r min(strata_by_area$sales)` strata sales. If that could happen, count `sum(!is.na(price))` instead.
+- Strata only, because the mix of houses and strata differs by area (deck 05).
+:::
+
+## Same name, different boundaries
+
+```{r}
+#| label: kerr-data
+#| include: false
+kerr17 <- bca |>
+  filter(neigh_label == "Kerrisdale", year(sale_date) == 2017, !is.na(lon)) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
+  st_join(local_areas)
+kerr_n <- kerr17 |> st_drop_geometry() |> count(name, sort = TRUE)
+```
+
+:::: {.columns}
+::: {.column width="55%"}
+::: {.small}
+```{r}
+#| label: kerr
+#| eval: false
+kerr17 <- bca |>
+  filter(neigh_label == "Kerrisdale",
+         year(sale_date) == 2017, !is.na(lon)) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
+  st_join(local_areas)
+
+kerr17 |> st_drop_geometry() |> count(name, sort = TRUE)
+```
+
+```{r}
+#| label: kerr-count
+#| echo: false
+kerr_n
+```
+:::
+:::
+
+::: {.column width="43%"}
+```{r}
+#| label: kerr-map
+#| echo: false
+#| fig-width: 4.6
+#| fig-height: 4.6
+tm_shape(local_areas |> filter(name %in% kerr_n$name)) +
+  tm_polygons(fill = "grey95") + tm_text("name", size = 0.7) +
+  tm_shape(kerr17) + tm_dots(fill = "name", size = 0.3, fill.legend = tm_legend_hide())
+```
+:::
+::::
+
+Deck 06's `kerr17` uses BC Assessment's Kerrisdale. Only `r kerr_n$n[kerr_n$name == "Kerrisdale"]` of its `r nrow(kerr17)` sales are in the City's Kerrisdale. Match areas by location, not by name.
+
+## Measure distance in metres
+
+::: {.small}
+```{r}
+#| label: distance
+sales_m <- st_transform(sales, 26910)
+stations_m <- st_transform(stations, 26910)
+
+nearest <- st_nearest_feature(sales_m, stations_m)
+dist <- st_distance(sales_m, stations_m[nearest, ], by_element = TRUE)
+
+sales_m <- sales_m |>
+  mutate(station = stations_m$station[nearest], dist_m = as.numeric(dist))
+sales_m |> st_drop_geometry() |> select(price, station, dist_m) |> head(3)
+```
+:::
+
+`st_nearest_feature()` finds the row of the closest station; `st_distance()` measures the distance to it. In EPSG 26910, the answer is in metres.
+
+::: {.notes}
+- With longitude and latitude, sf also measures in metres on a sphere (the s2 engine), but buffers are approximate: a 500 m buffer came out 1.5% too large in area.
+- AI code often calls `sf_use_s2(FALSE)` to silence a geometry error. Then `st_buffer(x, 500)` on longitude and latitude draws circles 500 degrees wide. Transforming to metres first avoids both problems.
+:::
+
+## Strata prices and distance to SkyTrain
+
+```{r}
+#| label: dist-plot
+#| fig-height: 3.4
+strata_m <- sales_m |> filter(act_use_cat == "Strata Res", !is.na(floorarea))
+
+ggplot() +
+  geom_point(aes(dist_m, price / floorarea), alpha = 0.2, data = strata_m)
+```
+
+```{r}
+#| label: ppsf
+#| include: false
+ppsf <- strata_m |>
+  st_drop_geometry() |>
+  group_by(near = dist_m <= 500) |>
+  summarise(median = median(price / floorarea))
+ppsf_near <- scales::label_dollar(accuracy = 1)(ppsf$median[ppsf$near])
+ppsf_far <- scales::label_dollar(accuracy = 1)(ppsf$median[!ppsf$near])
+```
+
+Median price per square foot: `r ppsf_near` within 500 m of a station, `r ppsf_far` farther away. A vertical stripe is many sales at one distance, such as units in one building.
+
+::: {.notes}
+- Stations cluster Downtown and along a few corridors, so near and far sales differ in more than distance: age, size, views, and neighbourhood. Deck 18 asks why a raw comparison like this can mislead, and deck 17's fixed effects compare like with like.
+:::
+
+## A buffer covers everything within a distance
+
+```{r}
+#| label: buffer
+#| fig-height: 3.8
+buffers <- st_buffer(stations_m, 500)
+
+tm_shape(local_areas) + tm_polygons(fill = "grey95") +
+  tm_shape(buffers) + tm_polygons(fill = "steelblue", fill_alpha = 0.4)
+```
+
+`st_buffer(500)` draws a 500-unit circle around each station. In EPSG 26910, that is 500 metres.
+
+## Overlapping buffers duplicate rows
+
+```{r}
+#| label: dup
+sales_near <- st_join(sales_m, buffers)
+c(before = nrow(sales_m), after = nrow(sales_near))
+```
+
+::: {.warning}
+A sale within 500 m of two stations matches both, so it appears twice. Counts per station are right, but totals and averages across sales count those sales twice.
+:::
+
+::: {.key-point}
+After every spatial join, compare the row counts and map the result.
+:::
+
+## Practice: sales in the floodplain
+
+How many 2025 sales in the City of Vancouver were of homes in the designated floodplain?
+
+1. Download `designated-floodplain` with `get_cov_data()`.
+2. Join `sales` to it, keeping only the sales inside: `st_join(sales, floodplain, left = FALSE)`.
+3. Check the row count. Does each sale appear once?
+4. Map the floodplain and the sales in it.
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: flood
+floodplain <- get_cov_data("designated-floodplain")
+
+in_flood <- st_join(sales, floodplain, left = FALSE)
+nrow(in_flood)
+in_flood |> st_drop_geometry() |> count(name)
+
+nrow(st_filter(sales, floodplain))
+```
+:::
+
+The floodplain layers overlap, so `r nrow(in_flood) - nrow(st_filter(sales, floodplain))` sales matched two of them. `st_filter()` keeps each sale once: `r nrow(st_filter(sales, floodplain))` sales.
+
+## Answer: the map
+
+```{r include=params$answers}
+#| label: flood-map
+#| fig-height: 4.2
+tm_shape(local_areas) + tm_polygons(fill = "grey95") +
+  tm_shape(floodplain) + tm_polygons(fill = "steelblue", fill_alpha = 0.4) +
+  tm_shape(st_filter(sales, floodplain)) + tm_dots(size = 0.15)
+```
+
+## What to know from this deck
+
+:::: {.columns}
+::: {.column width="32%"}
+**Know**<br>*Write it without help*
+
+::: {.small}
+- `st_as_sf(coords = c("lon", "lat"), crs = 4326)`
+- `st_join()`, then compare row counts
+- `st_drop_geometry()`
+- `tm_shape()` + `tm_polygons()`, `tm_dots()`; a column name in `fill =` maps, a colour sets
+:::
+:::
+
+::: {.column width="40%"}
+**Recognize**<br>*Say what the line does*
+
+::: {.small}
+- `get_cov_data("id")`, `st_read()`
+- `st_crs()`, `st_transform(26910)`
+- `st_buffer()`, `st_distance()`, `st_nearest_feature()`
+- `st_filter()`: keep the points inside, once each
+:::
+:::
+
+::: {.column width="24%"}
+**Look up**<br>*When you meet it*
+
+::: {.small}
+- EPSG codes
+- `tm_lines()`, `fill_alpha`
+- `left = FALSE`
+- `by_element = TRUE`
+:::
+:::
+::::
+
+::: {.key-point}
+Check new points on a map, and check the row count after every spatial join.
+:::
