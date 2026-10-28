@@ -1,6 +1,6 @@
 ---
 title: "Spatial data with sf"
-subtitle: "COMM 407 · Points, polygons, coordinate systems, and spatial joins"
+subtitle: "COMM 407 · Points, polygons, and coordinate systems"
 author: "Sanghoon Lee"
 date: today
 date-format: "D MMMM YYYY"
@@ -36,15 +36,24 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 4.2)
-suppressPackageStartupMessages({
-  library(tidyverse)
-  library(sf)
-  library(tmap)
-  library(VancouvR)
-})
 options(pillar.sigfig = 7)
+```
+
+## Packages and data
+
+```{r}
+#| label: packages
+library(tidyverse)
+library(sf)        # points, polygons, coordinate systems, spatial joins
+library(tmap)      # maps
+library(VancouvR)  # City of Vancouver open data
+
 bca <- read_rds("data/bca262.rds")
 ```
+
+::: {.notes}
+- sf, tmap, and VancouvR are in the deck 01 install list. Otherwise run `install.packages(c("sf", "tmap", "VancouvR"))` once in the Console.
+:::
 
 ## bca knows where each home is, but not what is near it
 
@@ -58,11 +67,13 @@ bca |>
 
 To R, `lon` and `lat` are just numbers. It cannot yet tell which local area a sale is in, how far it is from SkyTrain, or whether it is in the floodplain.
 
-The **sf** (simple features) package turns coordinates into points that R can measure and match against areas.
+The **sf** (simple features) package turns coordinates into points that R can map. Deck 13 measures distances and matches points to areas.
 
 ::: {.notes}
 - The slides print 7 significant digits (`options(pillar.sigfig = 7)` in the hidden setup chunk). With the default of 3, `lon` prints as `-123.`, which hides that the column holds coordinates.
 :::
+
+# Get and map spatial data
 
 ## The City of Vancouver publishes spatial data
 
@@ -183,6 +194,58 @@ tmap has no `aes()`. A column name, such as `"skytrain"`, is mapped and gets a l
 - On the last slide, `fill = "grey95"`, `col = "steelblue"`, `lwd = 2`, and `size = 0.4` are all settings.
 :::
 
+## tm_text() labels each area
+
+:::: {.columns}
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: tm-text
+#| fig-width: 4.4
+#| fig-height: 3.2
+tm_shape(local_areas) +
+  tm_polygons(fill = "grey95") +
+  tm_text("name", size = 0.6)
+```
+:::
+:::
+
+::: {.column width="49%"}
+::: {.small}
+```{r}
+#| label: tm-labels
+#| eval: false
+tm_shape(local_areas) +
+  tm_polygons(fill = "grey95") +
+  tm_labels("name", size = 0.6)
+```
+:::
+
+```{r}
+#| label: tm-labels-map
+#| echo: false
+#| fig-width: 4.4
+#| fig-height: 3.2
+set.seed(1)
+tm_shape(local_areas) +
+  tm_polygons(fill = "grey95") +
+  tm_labels("name", size = 0.6)
+```
+:::
+::::
+
+`tm_text()` puts each name at the centre of its area. `tm_labels()` moves labels apart, like `geom_text_repel()`, so a name can land in the next area: use it for points, not areas.
+
+::: {.notes}
+- `"name"` is a column, so tmap maps it: the rule from the last slide.
+- `size = 0.6` shrinks the text. At the default size, more names run into each other.
+- On the right, "Victoria-Fraserview" sits inside Sunset, and "Kensington-Cedar Cottage" runs into Renfrew-Collingwood.
+- `tm_labels()` places labels at random, so each run looks different. The map on the slide uses `set.seed(1)`.
+- A label near the edge is cut off at the frame, as "Hastings-Sunrise" and "Renfrew-Collingwood" are on the right. `tm_layout(inner.margins = c(0.02, 0.02, 0.02, 0.12))` adds room on the right.
+:::
+
+# Work with sf objects
+
 ## dplyr verbs keep the geometry
 
 ```{r}
@@ -268,6 +331,8 @@ st_bbox(swapped) |> round(1)
 **B.** Latitude is now −123, which cannot exist: latitudes run from −90 to 90. R made the points anyway. Map new points before you use them.
 :::
 
+# Coordinate reference systems
+
 ## A coordinate reference system gives the numbers meaning
 
 ::: {.small}
@@ -330,231 +395,6 @@ With `crs = 4326`, the same code runs without an error, and every crime gets an 
 `X` is 0 when VPD withholds the location. In this file, that is every offence against a person and the one homicide: `r sum(crimes$X == 0)` crimes. A map of the remaining points shows no violent crime at all.
 :::
 
-## st_join() attaches the area each point falls in
-
-```{r}
-#| label: join
-sales_area <- st_join(sales, local_areas)
-c(before = nrow(sales), after = nrow(sales_area))
-
-sales_area |> st_drop_geometry() |> count(name, sort = TRUE) |> head(4)
-```
-
-Each sale gets the `name` of its local area. Both layers must use the same CRS.
-
-## Join the other way to map each area
-
-:::: {.columns}
-::: {.column width="52%"}
-::: {.small}
-```{r}
-#| label: by-area
-#| eval: false
-strata <- sales |>
-  filter(act_use_cat == "Strata Res")
-
-strata_by_area <-
-  st_join(local_areas, strata) |>
-  group_by(name) |>
-  summarise(sales = n(),
-            median_price = median(price))
-
-tm_shape(strata_by_area) +
-  tm_polygons(fill = "median_price")
-```
-:::
-:::
-
-::: {.column width="46%"}
-```{r}
-#| label: by-area-map
-#| echo: false
-#| fig-width: 5
-#| fig-height: 4
-strata <- sales |> filter(act_use_cat == "Strata Res")
-
-strata_by_area <- st_join(local_areas, strata) |>
-  group_by(name) |>
-  summarise(sales = n(), median_price = median(price))
-
-tm_shape(strata_by_area) + tm_polygons(fill = "median_price")
-```
-:::
-::::
-
-Each area matches many sales. `summarise()` merges each area's rows back into one polygon.
-
-::: {.notes}
-- `st_join(local_areas, strata)` keeps an area with no strata sale as one row with `NA` columns, so `n()` would report 1 sale there. In 2025 every area has at least `r min(strata_by_area$sales)` strata sales. If that could happen, count `sum(!is.na(price))` instead.
-- Strata only, because the mix of houses and strata differs by area (deck 05).
-:::
-
-## Same name, different boundaries
-
-```{r}
-#| label: kerr-data
-#| include: false
-kerr17 <- bca |>
-  filter(neigh_label == "Kerrisdale", year(sale_date) == 2017, !is.na(lon)) |>
-  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
-  st_join(local_areas)
-kerr_n <- kerr17 |> st_drop_geometry() |> count(name, sort = TRUE)
-```
-
-:::: {.columns}
-::: {.column width="55%"}
-::: {.small}
-```{r}
-#| label: kerr
-#| eval: false
-kerr17 <- bca |>
-  filter(neigh_label == "Kerrisdale",
-         year(sale_date) == 2017, !is.na(lon)) |>
-  st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
-  st_join(local_areas)
-
-kerr17 |> st_drop_geometry() |> count(name, sort = TRUE)
-```
-
-```{r}
-#| label: kerr-count
-#| echo: false
-kerr_n
-```
-:::
-:::
-
-::: {.column width="43%"}
-```{r}
-#| label: kerr-map
-#| echo: false
-#| fig-width: 4.6
-#| fig-height: 4.6
-tm_shape(local_areas |> filter(name %in% kerr_n$name)) +
-  tm_polygons(fill = "grey95") + tm_text("name", size = 0.7) +
-  tm_shape(kerr17) + tm_dots(fill = "name", size = 0.3, fill.legend = tm_legend_hide())
-```
-:::
-::::
-
-Deck 06's `kerr17` uses BC Assessment's Kerrisdale. Only `r kerr_n$n[kerr_n$name == "Kerrisdale"]` of its `r nrow(kerr17)` sales are in the City's Kerrisdale. Match areas by location, not by name.
-
-## Measure distance in metres
-
-::: {.small}
-```{r}
-#| label: distance
-sales_m <- st_transform(sales, 26910)
-stations_m <- st_transform(stations, 26910)
-
-nearest <- st_nearest_feature(sales_m, stations_m)
-dist <- st_distance(sales_m, stations_m[nearest, ], by_element = TRUE)
-
-sales_m <- sales_m |>
-  mutate(station = stations_m$station[nearest], dist_m = as.numeric(dist))
-sales_m |> st_drop_geometry() |> select(price, station, dist_m) |> head(3)
-```
-:::
-
-`st_nearest_feature()` finds the row of the closest station; `st_distance()` measures the distance to it. In EPSG 26910, the answer is in metres.
-
-::: {.notes}
-- With longitude and latitude, sf also measures in metres on a sphere (the s2 engine), but buffers are approximate: a 500 m buffer came out 1.5% too large in area.
-- AI code often calls `sf_use_s2(FALSE)` to silence a geometry error. Then `st_buffer(x, 500)` on longitude and latitude draws circles 500 degrees wide. Transforming to metres first avoids both problems.
-:::
-
-## Strata prices and distance to SkyTrain
-
-```{r}
-#| label: dist-plot
-#| fig-height: 3.4
-strata_m <- sales_m |> filter(act_use_cat == "Strata Res", !is.na(floorarea))
-
-ggplot() +
-  geom_point(aes(dist_m, price / floorarea), alpha = 0.2, data = strata_m)
-```
-
-```{r}
-#| label: ppsf
-#| include: false
-ppsf <- strata_m |>
-  st_drop_geometry() |>
-  group_by(near = dist_m <= 500) |>
-  summarise(median = median(price / floorarea))
-ppsf_near <- scales::label_dollar(accuracy = 1)(ppsf$median[ppsf$near])
-ppsf_far <- scales::label_dollar(accuracy = 1)(ppsf$median[!ppsf$near])
-```
-
-Median price per square foot: `r ppsf_near` within 500 m of a station, `r ppsf_far` farther away. A vertical stripe is many sales at one distance, such as units in one building.
-
-::: {.notes}
-- Stations cluster Downtown and along a few corridors, so near and far sales differ in more than distance: age, size, views, and neighbourhood. Deck 18 asks why a raw comparison like this can mislead, and deck 17's fixed effects compare like with like.
-:::
-
-## A buffer covers everything within a distance
-
-```{r}
-#| label: buffer
-#| fig-height: 3.8
-buffers <- st_buffer(stations_m, 500)
-
-tm_shape(local_areas) + tm_polygons(fill = "grey95") +
-  tm_shape(buffers) + tm_polygons(fill = "steelblue", fill_alpha = 0.4)
-```
-
-`st_buffer(500)` draws a 500-unit circle around each station. In EPSG 26910, that is 500 metres.
-
-## Overlapping buffers duplicate rows
-
-```{r}
-#| label: dup
-sales_near <- st_join(sales_m, buffers)
-c(before = nrow(sales_m), after = nrow(sales_near))
-```
-
-::: {.warning}
-A sale within 500 m of two stations matches both, so it appears twice. Counts per station are right, but totals and averages across sales count those sales twice.
-:::
-
-::: {.key-point}
-After every spatial join, compare the row counts and map the result.
-:::
-
-## Practice: sales in the floodplain
-
-How many 2025 sales in the City of Vancouver were of homes in the designated floodplain?
-
-1. Download `designated-floodplain` with `get_cov_data()`.
-2. Join `sales` to it, keeping only the sales inside: `st_join(sales, floodplain, left = FALSE)`.
-3. Check the row count. Does each sale appear once?
-4. Map the floodplain and the sales in it.
-
-## Answer
-
-::: {.small}
-```{r include=params$answers}
-#| label: flood
-floodplain <- get_cov_data("designated-floodplain")
-
-in_flood <- st_join(sales, floodplain, left = FALSE)
-nrow(in_flood)
-in_flood |> st_drop_geometry() |> count(name)
-
-nrow(st_filter(sales, floodplain))
-```
-:::
-
-The floodplain layers overlap, so `r nrow(in_flood) - nrow(st_filter(sales, floodplain))` sales matched two of them. `st_filter()` keeps each sale once: `r nrow(st_filter(sales, floodplain))` sales.
-
-## Answer: the map
-
-```{r include=params$answers}
-#| label: flood-map
-#| fig-height: 4.2
-tm_shape(local_areas) + tm_polygons(fill = "grey95") +
-  tm_shape(floodplain) + tm_polygons(fill = "steelblue", fill_alpha = 0.4) +
-  tm_shape(st_filter(sales, floodplain)) + tm_dots(size = 0.15)
-```
 
 ## What to know from this deck
 
@@ -564,7 +404,6 @@ tm_shape(local_areas) + tm_polygons(fill = "grey95") +
 
 ::: {.small}
 - `st_as_sf(coords = c("lon", "lat"), crs = 4326)`
-- `st_join()`, then compare row counts
 - `st_drop_geometry()`
 - `tm_shape()` + `tm_polygons()`, `tm_dots()`; a column name in `fill =` maps, a colour sets
 :::
@@ -576,8 +415,6 @@ tm_shape(local_areas) + tm_polygons(fill = "grey95") +
 ::: {.small}
 - `get_cov_data("id")`, `st_read()`
 - `st_crs()`, `st_transform(26910)`
-- `st_buffer()`, `st_distance()`, `st_nearest_feature()`
-- `st_filter()`: keep the points inside, once each
 :::
 :::
 
@@ -587,12 +424,11 @@ tm_shape(local_areas) + tm_polygons(fill = "grey95") +
 ::: {.small}
 - EPSG codes
 - `tm_lines()`, `fill_alpha`
-- `left = FALSE`
-- `by_element = TRUE`
+- `tm_text()`, `tm_labels()`
 :::
 :::
 ::::
 
 ::: {.key-point}
-Check new points on a map, and check the row count after every spatial join.
+Map new points before you use them. Swapped or mislabelled coordinates run without an error.
 :::
