@@ -39,7 +39,7 @@ knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 4.2)
 options(pillar.sigfig = 7)
 ```
 
-## Packages and data
+## Packages
 
 ```{r}
 #| label: packages
@@ -47,42 +47,43 @@ library(tidyverse)
 library(sf)        # points, polygons, coordinate systems, spatial joins
 library(tmap)      # maps
 library(VancouvR)  # City of Vancouver open data
-
-bca <- read_rds("data/bca262.rds")
 ```
 
 ::: {.notes}
 - sf, tmap, and VancouvR are in the deck 01 install list. Otherwise run `install.packages(c("sf", "tmap", "VancouvR"))` once in the Console.
 :::
 
-## bca knows where each home is, but not what is near it
-
-```{r}
-#| label: bca-lonlat
-bca |>
-  filter(juris_label == "City of Vancouver") |>
-  select(neigh_label, price, lon, lat) |>
-  head(3)
-```
-
-To R, `lon` and `lat` are just numbers. It cannot yet tell which local area a sale is in, how far it is from SkyTrain, or whether it is in the floodplain.
-
-The **sf** (simple features) package turns coordinates into points that R can map. Deck 13 measures distances and matches points to areas.
-
-::: {.notes}
-- The slides print 7 significant digits (`options(pillar.sigfig = 7)` in the hidden setup chunk). With the default of 3, `lon` prints as `-123.`, which hides that the column holds coordinates.
-:::
-
-# Get and map spatial data
+# Get spatial data
 
 ## The City of Vancouver publishes spatial data
 
+Open [opendata.vancouver.ca](https://opendata.vancouver.ca/) and find **Rapid transit stations**. How can you tell that the data are spatial?
+
+::: {.fragment}
+- The **Map** tab draws the stations on a map.
+- **Export** offers GeoJSON, Shapefile, and KML as well as CSV and Excel.
+- The **Table** has a `Geom` column, and `geo_point_2d` holds latitude and longitude.
+:::
+
+::: {.fragment}
+Most of the portal is like this: in October 2026, 139 of its 200 datasets had a location.
+:::
+
+::: {.notes}
+- Give students two or three minutes. Fast students can open a second dataset, such as building permits or non-market housing.
+- Point out the web address, `.../explore/dataset/rapid-transit-stations/...`. The next slide uses that ID.
+- `geo_point_2d` writes latitude first: "49.274, -123.122". The quick check later in the deck swaps the two.
+- The counts come from the portal's API (datasets with the `geo` feature) on 28 October 2026. They change as the City adds datasets.
+:::
+
+## get_cov_data() downloads a dataset by its ID
+
 ```{r}
-#| label: local-areas
-local_areas <- get_cov_data("local-area-boundary")
+#| label: stations
+stations <- get_cov_data("rapid-transit-stations")
 ```
 
-`get_cov_data()` from **VancouvR** downloads a dataset from [City of Vancouver Open Data](https://opendata.vancouver.ca/). The ID is the end of the dataset's web address. No API key is needed.
+`get_cov_data()` from **VancouvR** downloads a dataset from the portal. The ID is the part of the web address after `dataset/`, here `rapid-transit-stations`. No API key is needed.
 
 ::: {.small}
 | ID | What it holds |
@@ -97,22 +98,102 @@ local_areas <- get_cov_data("local-area-boundary")
 
 ## An sf object is a tibble with a geometry column
 
+::: {.small}
 ```{r}
 #| label: print-sf
-head(local_areas, 3)
+head(stations, 3)
+```
+:::
+
+It prints as a tibble, with five header lines on top and a `geometry` column at the end. `geom` and `geo_point_2d` are the portal's text copies of the location; sf uses only `geometry`.
+
+## The header describes the geometry
+
+::: {.small}
+| Header line | What it says |
+|---|---|
+| `… with 3 features and 4 fields` | 3 rows (features) and 4 columns besides `geometry` |
+| `Geometry type: POINT` | Each row is one point |
+| `Bounding box` | The smallest box around all the points |
+| `Geodetic CRS: WGS 84` | The coordinate reference system: what the numbers mean |
+:::
+
+`<POINT [°]>` under `geometry` says the same in short: points, in degrees (°).
+
+::: {.notes}
+- `Dimension: XY` means two coordinates per point, with no height.
+- Each row is a "feature" in sf's language, and each other column is a "field".
+:::
+
+## The geometry column is an sfc
+
+```{r}
+#| label: class
+class(stations)
+class(stations$geometry)
 ```
 
-Each row is one local area. `geometry` holds its boundary: the corners of a polygon, in degrees (°).
+- `stations` is an `sf` object, and still a tibble (`tbl_df`), so dplyr verbs work on it.
+- Its `geometry` column is an `sfc` (simple feature column): one shape per row.
+- Each point, such as Yaletown's `(-123.1219 49.27436)`, is x, then y: longitude, then latitude. These are the same kind of numbers as `lon` and `lat` in `bca`.
+
+## A polygon is a ring of corners
+
+::: {.small}
+```{r}
+#| label: local-areas
+local_areas <- get_cov_data("local-area-boundary")
+local_areas |> select(name, geometry) |> head(3)
+```
+:::
+
+Each of the 22 local areas is a `POLYGON`: the corners of its boundary in order, ending at the corner it started from. A `LINESTRING`, such as a SkyTrain line, also lists points but does not close.
+
+::: {.notes}
+- Printing `local_areas$geometry` would show the polygons too, but sf prints them as messages: with `message: false` in a chunk, only the header appears.
+:::
+
+## A CRS says what the numbers mean
+
+```{r}
+#| label: crs-brief
+st_crs(stations)$epsg
+```
+
+`Geodetic CRS: WGS 84` in the header means the numbers are degrees of longitude and latitude. Its code is EPSG 4326. Without a CRS, −123.1 is just a number; with one, it is a place.
+
+The last section of this deck shows other CRSs and why they matter.
+
+## dplyr verbs keep the geometry
+
+```{r}
+#| label: sticky
+stations |> filter(geo_local_area == "Oakridge") |> select(station)
+```
+
+We kept only `station`, but `geometry` came along: it is **sticky**.
+
+## st_drop_geometry() returns a plain tibble
+
+```{r}
+#| label: drop
+stations |> st_drop_geometry() |> count(geo_local_area, sort = TRUE) |> head(3)
+```
+
+Drop the geometry when you only need a table: counts and summaries run faster, and the output is shorter.
+
+# Map spatial data
 
 ## tm_shape() starts a map
 
 ```{r}
-#| label: map-areas
-tm_shape(local_areas) +
-  tm_polygons()
+#| label: map-stations
+#| fig-height: 3.2
+tm_shape(stations) +
+  tm_dots()
 ```
 
-**tmap** draws sf objects. `tm_shape()` names the data; `tm_polygons()` draws it. Deck 13 covers tmap in full.
+To make sense of spatial data, map it. **tmap** draws sf objects: `tm_shape()` names the data, and `tm_dots()` draws the points. Without the city underneath, 22 dots say little.
 
 ## Points, lines, and polygons stack as layers
 
@@ -122,8 +203,6 @@ tm_shape(local_areas) +
 ```{r}
 #| label: layers
 #| eval: false
-stations <-
-  get_cov_data("rapid-transit-stations")
 transit_lines <-
   get_cov_data("rapid-transit-lines")
 
@@ -143,7 +222,6 @@ tm_shape(local_areas) +
 #| echo: false
 #| fig-width: 5
 #| fig-height: 4
-stations <- get_cov_data("rapid-transit-stations")
 transit_lines <- get_cov_data("rapid-transit-lines")
 
 tm_shape(local_areas) + tm_polygons(fill = "grey95") +
@@ -153,7 +231,11 @@ tm_shape(local_areas) + tm_polygons(fill = "grey95") +
 :::
 ::::
 
-Each `tm_shape()` starts a layer, and later layers draw on top, as in ggplot. The first layer sets the map's extent, so the Expo Line stops at the city boundary.
+`tm_polygons()` draws areas, `tm_lines()` lines, and `tm_dots()` points. Each `tm_shape()` starts a layer, and later layers draw on top, as in ggplot. The first layer sets the map's extent, so the Expo Line stops at the city boundary.
+
+::: {.notes}
+- Deck 13 adds legends, basemaps, and interactive maps.
+:::
 
 ## In tmap, the value decides: mapping or setting
 
@@ -244,29 +326,11 @@ tm_shape(local_areas) +
 - A label near the edge is cut off at the frame, as "Hastings-Sunrise" and "Renfrew-Collingwood" are on the right. `tm_layout(inner.margins = c(0.02, 0.02, 0.02, 0.12))` adds room on the right.
 :::
 
-# Work with sf objects
-
-## dplyr verbs keep the geometry
-
-```{r}
-#| label: sticky
-stations |> filter(geo_local_area == "Oakridge") |> select(station)
-```
-
-We kept only `station`, but `geometry` came along: it is **sticky**.
-
-## st_drop_geometry() returns a plain tibble
-
-```{r}
-#| label: drop
-stations |> st_drop_geometry() |> count(geo_local_area, sort = TRUE) |> head(3)
-```
-
-Drop the geometry when you only need a table: counts and summaries run faster, and the output is shorter.
+# Other ways to get an sf object
 
 ## st_read() reads spatial files
 
-Other portals let you download files instead.
+Other portals let you download files instead, in formats like those on the Export tab.
 
 - **GeoJSON**: one file, such as `data/Park_Inventory.geojson`.
 - **Shapefile**: several files with one name (`.shp`, `.shx`, `.dbf`, `.prj`, …). Keep them together and read the `.shp`.
@@ -279,6 +343,24 @@ c(geojson = nrow(parks), shapefile = nrow(parks_shp))
 ```
 
 Both hold Burnaby's parks, from [Burnaby Open Data](https://data.burnaby.ca/).
+
+## bca has lon and lat but no geometry
+
+```{r}
+#| label: bca-lonlat
+bca <- read_rds("data/bca262.rds")
+bca |>
+  filter(juris_label == "City of Vancouver") |>
+  select(neigh_label, price, lon, lat) |>
+  head(3)
+```
+
+A plain tibble: no header, no `geometry` column, no CRS. To R, `lon` and `lat` are just numbers. It cannot map the sales, tell which local area each is in, or measure how far each is from SkyTrain.
+
+::: {.notes}
+- The slides print 7 significant digits (`options(pillar.sigfig = 7)` in the hidden setup chunk). With the default of 3, `lon` prints as `-123.`, which hides that the column holds coordinates.
+- `class(bca)` gives `"tbl_df" "tbl" "data.frame"`: `class(stations)` without `"sf"` at the front.
+:::
 
 ## st_as_sf() turns longitude and latitude into points
 
@@ -293,16 +375,19 @@ nrow(sales)
 ```
 
 - `coords`: the x column first (longitude), then y (latitude).
-- `crs = 4326`: the numbers are degrees of longitude and latitude.
+- `crs = 4326`: the numbers are degrees of longitude and latitude (WGS 84), as in the City's data.
 - `st_as_sf()` stops at a missing coordinate, so drop those rows first.
 
 ## Map new points before you use them
 
 ```{r}
 #| label: map-sales
+#| fig-height: 3.9
 tm_shape(local_areas) + tm_polygons(fill = "grey95") +
   tm_shape(sales) + tm_dots(fill = "act_use_cat", size = 0.1)
 ```
+
+Deck 13 matches these sales to local areas and measures how far each is from SkyTrain.
 
 ## Quick check: what does this do?
 
@@ -333,7 +418,7 @@ st_bbox(swapped) |> round(1)
 
 # Coordinate reference systems
 
-## A coordinate reference system gives the numbers meaning
+## Each CRS has an EPSG code
 
 ::: {.small}
 | EPSG code | Name | Units | Use it for |
@@ -343,12 +428,7 @@ st_bbox(swapped) |> round(1)
 | 3347 | Statistics Canada Lambert | metres | Maps of all of Canada |
 :::
 
-```{r}
-#| label: crs
-st_crs(stations)$epsg
-```
-
-The City's data, like `bca`, use EPSG 4326.
+`stations`, `local_areas`, and `sales` all use 4326. Degrees are fine for maps, but distances and buffers need metres.
 
 ## st_transform() changes the numbers, not the places
 
@@ -393,42 +473,4 @@ With `crs = 4326`, the same code runs without an error, and every crime gets an 
 
 ::: {.warning}
 `X` is 0 when VPD withholds the location. In this file, that is every offence against a person and the one homicide: `r sum(crimes$X == 0)` crimes. A map of the remaining points shows no violent crime at all.
-:::
-
-
-## What to know from this deck
-
-:::: {.columns}
-::: {.column width="32%"}
-**Know**<br>*Write it without help*
-
-::: {.small}
-- `st_as_sf(coords = c("lon", "lat"), crs = 4326)`
-- `st_drop_geometry()`
-- `tm_shape()` + `tm_polygons()`, `tm_dots()`; a column name in `fill =` maps, a colour sets
-:::
-:::
-
-::: {.column width="40%"}
-**Recognize**<br>*Say what the line does*
-
-::: {.small}
-- `get_cov_data("id")`, `st_read()`
-- `st_crs()`, `st_transform(26910)`
-:::
-:::
-
-::: {.column width="24%"}
-**Look up**<br>*When you meet it*
-
-::: {.small}
-- EPSG codes
-- `tm_lines()`, `fill_alpha`
-- `tm_text()`, `tm_labels()`
-:::
-:::
-::::
-
-::: {.key-point}
-Map new points before you use them. Swapped or mislabelled coordinates run without an error.
 :::
