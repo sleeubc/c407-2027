@@ -189,6 +189,93 @@ The same chart as the last slide. Data and `aes()` in `ggplot()` are **global**:
 - Data first in `ggplot()` also lets you pipe into it: `kerr17 |> count(act_use_cat) |> ggplot(aes(n, act_use_cat))`.
 :::
 
+## geom_text() maps a column to text
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+```{r}
+#| label: text
+#| eval: false
+top8 <- kerr17 |>
+  arrange(desc(price_m)) |>
+  head(8) |>
+  mutate(address = paste(str_no, str_name))
+
+ggplot(kerr17, aes(floorarea, price_m)) +
+  geom_point() +
+  geom_text(aes(label = address), data = top8)
+```
+:::
+
+The text layer takes x and y from `ggplot()` but has its own `label` and `data`: `r nrow(kerr17)` rows, 8 labels. Each label sits on its point, so labels of close points run into each other.
+:::
+
+::: {.column width="48%"}
+```{r}
+#| label: text-plot
+#| echo: false
+#| fig-width: 5.2
+#| fig-height: 4.8
+top8 <- kerr17 |>
+  arrange(desc(price_m)) |>
+  head(8) |>
+  mutate(address = paste(str_no, str_name))
+
+ggplot(kerr17, aes(floorarea, price_m)) +
+  geom_point() +
+  geom_text(aes(label = address), data = top8)
+```
+:::
+::::
+
+::: {.notes}
+- `paste()` is `paste0()` with a space between the pieces.
+- `nudge_y = 0.3` moves every label up by the same amount. It does not stop labels running into each other.
+:::
+
+## geom_text_repel() moves labels apart
+
+:::: {.columns}
+::: {.column width="50%"}
+::: {.small}
+```{r}
+#| label: text-repel
+#| eval: false
+library(ggrepel)
+
+ggplot(kerr17, aes(floorarea, price_m)) +
+  geom_point() +
+  geom_text_repel(aes(label = address), data = top8)
+```
+:::
+
+The ggrepel package adds geoms to ggplot2. Swap `geom_text()` for `geom_text_repel()` and keep the arguments: the labels move off each other and off the points they label.
+:::
+
+::: {.column width="48%"}
+```{r}
+#| label: text-repel-plot
+#| echo: false
+#| fig-width: 5.2
+#| fig-height: 4.8
+library(ggrepel)
+
+ggplot(kerr17, aes(floorarea, price_m)) +
+  geom_point() +
+  geom_text_repel(aes(label = address), data = top8)
+```
+:::
+::::
+
+::: {.notes}
+- ggrepel is in the deck 01 install list. Otherwise run `install.packages("ggrepel")` once in the Console.
+- It avoids only the points in its own layer, `top8`. A label can still cover one of the other points.
+- Label a few points, not all. With a label on every sale, ggrepel drops most of them and warns "unlabeled data points (too many overlaps)".
+- If the labels move between runs, `seed = 1` keeps them in one place.
+- `geom_label_repel()` draws each label in a box. A line joins a label to its point when the label moves far; `min.segment.length = 0` draws one for every label.
+:::
+
 ## Choose the geometry for the question
 
 | Question | Geometry |
@@ -197,6 +284,7 @@ The same chart as the last slide. Data and `aes()` in `ggplot()` are **global**:
 | How does a value change over time? | `geom_line()` |
 | How do groups compare? | `geom_col()` for values you computed, `geom_bar()` to count rows |
 | How is one number distributed? | `geom_histogram()` |
+| Which points are which? | `geom_text()`, `geom_text_repel()` |
 
 ## geom_bar() counts for you; geom_col() does not
 
