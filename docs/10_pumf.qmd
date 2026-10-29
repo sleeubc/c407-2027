@@ -36,13 +36,13 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.8)
-suppressPackageStartupMessages(library(tidyverse))
 ```
 
 ## The PUMF describes individuals
 
 ```{r}
 #| label: pumf
+library(tidyverse)
 pumf <- read_rds("data/2021_census_pumf_ind.rds")
 dim(pumf)
 ```
@@ -78,31 +78,35 @@ Count people with `sum(WEIGHT)` or `count(x, wt = WEIGHT)`. Average with `weight
 `WEIGHT` ranges only from `r round(min(pumf$WEIGHT), 2)` to `r round(max(pumf$WEIGHT), 2)`, so weighted and unweighted shares are close. Weights matter most for counts.
 :::
 
-## geom_bar() counts rows, not people
+## Count households using PRIHM
+
+Each household has one **primary maintainer**. Keep that person to estimate household counts.
 
 ```{r}
 #| label: bar
-#| fig-height: 3.2
+#| fig-height: 2.8
 households <- pumf |>
   filter(PRIHM == "Person is primary maintainer", Tenur != "Not available")
 
-ggplot(households, aes(y = Tenur)) + geom_bar()
+ggplot(households, aes(y = Tenur)) + geom_bar() +
+  labs(x = "Household records in the sample", y = NULL)
 ```
 
 ::: {.notes}
-Keeping only primary maintainers leaves one row per household. "Not available" is dropped here; the factor slides explain it.
+PRIHM identifies one designated maintainer per household in the population. Keeping sampled primary maintainers lets us estimate household statistics; the file does not contain every member of every household. "Not available" is dropped here; the factor slides explain it. Source: 2021 Census Individuals PUMF User Guide, Chapter 2, PRIHM, printed page 124.
 :::
 
-## Add weight to count people
+## Add weights to count households
 
 ```{r}
 #| label: bar-weight
 #| fig-height: 3.2
-ggplot(households, aes(y = Tenur, weight = WEIGHT)) + geom_bar()
+ggplot(households, aes(y = Tenur, weight = WEIGHT)) + geom_bar() +
+  labs(x = "Estimated households", y = NULL)
 ```
 
 ::: {.warning}
-The shape is the same, but the axis is now households, not survey records. An unweighted chart reports numbers about 37 times too small.
+The weighted chart estimates households. Without weights, it counts sampled records, about 37 times fewer.
 :::
 
 ## The user guide explains every column
@@ -212,29 +216,80 @@ pumf |>
 ```
 :::
 
+## Quick check: people or dwellings?
+
+Imagine two homes where the owners live:
+
+| Home | People | Dwelling value |
+|---|---|---|
+| A | 1 | $500,000 |
+| B | 3 | $1,500,000 |
+
+What is the average dwelling value? What if you average one record per person?
+
+::: {.fragment}
+- **Per dwelling:** ($500,000 + $1,500,000) / 2 = **$1,000,000**.
+- **Per person:** ($500,000 + 3 × $1,500,000) / 4 = **$1,250,000**.
+
+Including every person gives larger households more weight.
+:::
+
+::: {.notes}
+These are illustrative homes, not estimates from the PUMF. Value is the owner's estimate for the entire dwelling and is repeated on each person's record. It is reported for homes that are owned, occupied by their owners, and not on a farm; high values may be top coded. Source: 2021 Census Individuals PUMF User Guide, Chapter 2, Value, printed pages 130–131. Filtering to primary maintainers changes the unit from people to households.
+:::
+
 ## Practice: housing value and city size
 
-Using the PUMF, plot each CMA's population (x) against its average dwelling value (y).
+Plot each CMA's population (x) against its average dwelling value (y).
 
-- `Value` uses `88888888` and `99999999` for missing values.
-- Use `WEIGHT` for population and `weighted.mean()` for the average.
-- Drop the "Other …" group.
+1. **Population:** sum `WEIGHT` over all person records, including renters.
+2. **Dwelling value:** keep primary maintainers in owner households (`Tenur == "Owner"`), turn the `Value` codes `88888888` and `99999999` into `NA`, then use `weighted.mean()`.
+3. Drop the "Other …" group. Join the two summaries by `CMA` and plot them.
 
-## Answer
+::: {.key-point}
+The dwelling average covers homes where owners live, excluding farms. The population includes everyone in private households.
+:::
+
+## Answer: calculate each summary
 
 ::: {.small}
 ```{r include=params$answers}
 #| label: value-practice
-#| fig-height: 3.3
-by_cma <- pumf |>
+population_by_cma <- pumf |>
+  filter(!str_detect(CMA, "^Other")) |>
+  group_by(CMA) |>
+  summarise(population = sum(WEIGHT))
+
+value_by_cma <- pumf |>
+  filter(PRIHM == "Person is primary maintainer", Tenur == "Owner") |>
   filter(!str_detect(CMA, "^Other")) |>
   mutate(Value = if_else(Value %in% c(88888888, 99999999), NA, Value)) |>
   group_by(CMA) |>
-  summarise(population = sum(WEIGHT),
-            avg_value = weighted.mean(Value, WEIGHT, na.rm = TRUE))
-
-ggplot(by_cma, aes(population, avg_value)) + geom_point()
+  summarise(avg_value = weighted.mean(Value, WEIGHT, na.rm = TRUE))
 ```
+:::
+
+::: {.key-point}
+Keep the summaries separate: filtering to primary maintainers before summing `WEIGHT` would count households instead of people.
+:::
+
+## Answer: join and plot
+
+::: {.small}
+```{r include=params$answers}
+#| label: value-plot
+#| fig-height: 3
+by_cma <- population_by_cma |>
+  left_join(value_by_cma, by = "CMA", relationship = "one-to-one")
+
+ggplot(by_cma, aes(population, avg_value)) + geom_point() +
+  labs(x = "Population in private households",
+       y = "Mean dwelling value ($)")
+```
+:::
+
+::: {.notes}
+Each summary has one row per CMA; relationship = "one-to-one" makes duplicate keys an error. The population includes renters and people with missing dwelling values. The value average uses only primary maintainers in owner households with a valid Value. Compare row counts and check for unmatched CMAs before interpreting a joined result.
 :::
 
 ## Most PUMF columns are factors
@@ -450,11 +505,11 @@ pumf |>
 **Recognize**<br>*Say what the line does*
 
 ::: {.small}
-- `%in% c(88888888, 99999999)`: missing-value codes
+- `88888888`, `99999999`: missing-value codes
 - `if_else()`, `case_when()`: recode values
 - `as.numeric()` on a factor: level positions, not values
-- `as.character()` on a factor: text, sorted alphabetically
-- `str_detect()`: find text, such as `"^Other"`
+- `as.character()`: factor labels as text
+- `str_detect()`: match text
 :::
 :::
 
@@ -471,5 +526,5 @@ pumf |>
 ::::
 
 ::: {.key-point}
-Code without `WEIGHT`, with the codes left in, or with "Not available" kept still runs. Check all three.
+Before summarising, check the unit (people or households), weights, and missing-value codes.
 :::
