@@ -6,9 +6,13 @@ title: "COMM 407: Research project"
 
 ## Task
 
-Answer a research question about real estate, urban economics, or urban public policy, broadly interpreted: housing, transportation, crime, segregation, education, public health, and more. Present your answer as a story built around one thesis statement.
+Develop an **interesting, original research question** about real estate, urban economics, or urban public policy, and answer it with your own analysis in R. The scope is broad: housing, transportation, crime, segregation, education, public health, and more. Present a clear answer supported by **a few key results**.
+
+The question and what we learn from your answer are central to the project. A focused descriptive finding, measurement check, or forecast can make a strong contribution. Choose a method that fits your question and the available data.
 
 You work in pairs. If the class has an odd number of students, the instructor will allow one student to work alone or one group of three. Use any publicly available data, plus any dataset used in class, such as BC Assessment or the Census PUMF.
+
+You choose your tools and workflow. The requirements and evaluation criteria below describe what your deliverables must demonstrate.
 
 ## Key dates
 
@@ -19,87 +23,106 @@ You work in pairs. If the class has an odd number of students, the instructor wi
 | TODO: Thursday, March 25, 2027, 11:59 PM | Slides and code due, for everyone, whatever your presentation date |
 | Tuesday, March 30; Thursday, April 1; Tuesday, April 6; and Thursday, April 8, 2027 | Presentations |
 
-## Your thesis statement
+## Your research question and contribution
 
-Your thesis statement is the one-sentence answer to your research question. It must be a claim that the evidence could have contradicted, not a topic.
+A strong question identifies something worth learning. Explain why its answer matters, why the answer is not obvious, and what comparison or evidence would help resolve it. A broad topic such as “housing affordability” needs a more specific question.
 
-- **A topic:** "Housing affordability in Vancouver."
-- **A claim:** "Vancouver's falling downtown crime rate reflects population growth, not less crime."
+Build on earlier work and explain **what your project adds**. A meaningful extension might test a finding in a setting where there is reason to expect a different answer, distinguish competing explanations, check whether a pattern survives a measurement problem, or evaluate a forecast against a useful benchmark. A new place, period, or dataset should serve the question; the change alone does not establish a contribution.
 
-Put the thesis statement on your first slide after the title, and say it in your first 30 seconds. Every later slide should support it, qualify it, or test it.
+**All analyses you present as your findings must be original work conducted on the data for your project.** Generate every analytical figure, table, and map with your submitted R code, along with every numerical result you report as your own finding. You may use existing data, established methods, example code, and AI assistance. Credit the ideas, methods, and sources you build on, and make your own contribution clear. Reproducing a paper or course example alone is insufficient. Cite published findings used as background and distinguish them from your own results.
 
-## What a strong project shows
+For **question registration**, submit one paragraph stating your question, why it is interesting, the contribution you intend to make, and a feasible data source and comparison. Identify the population or unit of observation and the relevant place and period. You are proposing a question, so you do not need to know the answer yet. Refine it as you learn what the data can support.
 
-- **A question that matters.** Say why students, professors, or policymakers should care. The best findings are surprising at first but make sense once explained.
-- **What is known, and what you add.** In one sentence each, say what earlier work found and what your project adds. You don't need to be the first to study your topic, but your project should add at least one of these:
-  - **A new place:** a known result tested in Vancouver or BC.
-  - **A new period:** for example, after the pandemic or a policy change.
-  - **New data:** a dataset earlier work did not use.
-  - **A new test:** a common claim checked against its strongest alternative explanation.
-  - **A contradiction:** local data that disagree with a published finding or a media claim.
-- **Your own evidence.** Every figure, table, and map comes from your own analysis in R.
-- **The strongest alternative explanation, tested.** Name the most likely other explanation for your finding and show what the data say about it.
-- **Honest limits.** Say what the data cannot tell you.
+## Your answer and key results
+
+Your thesis statement is the one-sentence answer to your research question. Let the evidence determine that answer.
+
+- **Topic:** “Storefront vacancy in Vancouver.”
+- **Question:** “Does vacancy still fall when we compare the same storefronts over time?”
+- **Possible thesis, if supported:** “Vacancy fell among the same surveyed storefronts, so changing survey coverage does not explain the decline.”
+
+Put your answer on the first slide after the title and state it in your first 30 seconds. Every later slide should support it, test it, or explain its limits.
+
+Select the few results needed to make your case. One or two main results, supported by a well-chosen check, can be enough for a strong presentation. There is no required number of figures, regressions, or maps. Additional results earn their place by changing how the audience understands or evaluates your answer.
+
+Address the most consequential challenge to your conclusion with a relevant check. Depending on the question, this could be an alternative explanation, a change in sample coverage, a different measurement choice, or a forecasting benchmark. Explain what the check resolves and what remains uncertain. A regression is not required, and a descriptive comparison does not need to establish causation.
+
+## AI assistance
+
+**AI assistance is allowed throughout the project, including before the midterm.** You may use AI to brainstorm questions, ask for feedback on whether a question is interesting and feasible, find candidate sources, write or debug code, challenge an interpretation, and improve the presentation.
+
+You decide which suggestions to use. Verify data and references, check the analysis, and understand the code you submit. AI assistance is compatible with original work; you remain responsible for the question you pursue, the analytical choices, and every claim you present. We evaluate the quality of your deliverables and your ability to explain them.
+
+Disclose your AI use on the backup slide described below. The exams remain AI-free under the course's exam rules.
 
 ## Working as a pair
 
-- **Both members present**, splitting the talk between them.
-- **Each member reviews the code the other wrote** before you submit. A second reader is the best check for silent errors such as a join that duplicates rows or a year with missing values.
-- **Either member can be asked about any part** of the project, including the part their partner wrote.
+- **Both members present**, sharing the talk.
+- **Both members are responsible for the whole submission**, including code written with AI assistance.
+- **Either member can be asked about any part** of the question, analysis, or interpretation. Choose how to divide and review the work so both members can explain it.
 
 ## The presentation
 
 - 10 minutes, followed by 5 minutes of questions.
+- Explain the question, your contribution, the key evidence, and the limits of your answer.
+- Choose the display that makes each result easiest to assess. A compact regression table can be more useful than a chart of one coefficient. Label the outcome and variables, show uncertainty where appropriate, and make the sample and model specification clear. Explain the key estimate in terms the audience can understand.
+- Use readable figures and tables generated from your analysis. Category order, scales, units, and labels should make the relevant comparison clear.
 - Do not read from a script or a screen. One or two cue cards are fine.
-- Presentations, including the questions, are video-recorded for grading only. Recordings are not shared. <!-- TODO: State how long recordings are kept and when they are deleted. -->
-- Expect a question on how your project differs from the sources on your backup slide.
-- At least one question will be about your code. We will name the member who answers, may point to a line in your `.qmd`, and may ask what it does or what would change without it. Each member should be ready to explain every line and every analytical choice.
+- Presentations, including questions, are video-recorded for grading only. Recordings are not shared. <!-- TODO: State how long recordings are kept and when they are deleted. -->
+- Expect questions about what your project adds, the choices behind your results, and what could change your conclusion.
+- At least one question will concern your code. The instructor will name the member who answers and may ask what a line does or what would change without it. Each member should be ready to explain every line and every analytical choice.
 
 ## What to submit
 
+In addition to the question-registration paragraph, submit:
+
 - **Slides, as a PDF.** Make them with any tool: PowerPoint, Google Slides, or Quarto. You may also submit an HTML version of Quarto slides, but the PDF is what we grade and present.
-- **Code, as a Quarto document (`.qmd`).** It must render without errors from your `c407` folder and produce every figure, table, and map in your slides.
-- **Three backup slides at the end**, not presented:
-  - **Sources.** Two or three studies or reports on your question that you have opened and read.
-  - **Decision log.** Three to five points where you changed direction or rejected an AI result, and why. Add one line per member on who did what.
-  - **AI use.** Which tools you used, what for, and what you checked.
+- **Code, as a Quarto document (`.qmd`).** It must render without errors from your `c407` folder and reproduce every analytical figure, table, map, and numerical finding from your project that appears in your slides. Identify the data sources and any additional files or downloads needed to run it. Include checks appropriate to the analysis and enough explanation to follow the important choices.
+- **Three backup slides at the end**, for questions rather than the main talk:
+  - **Sources.** Two or three relevant studies or reports you have opened and read, plus your data sources. Credit any ideas, methods, or code you adapted and explain what your project adds.
+  - **Research decisions and contributions.** Three to five consequential choices, the alternatives you considered, and why you chose your approach. Include one line per member on who did what. Record genuine decisions; these need not involve rejecting an AI answer or changing direction.
+  - **AI use.** Which tools you used, what you used them for, and what you checked. If you did not use AI, say so.
 
 ## How you will be evaluated
 
-Story and evidence are graded for the pair. Defence and delivery are graded for each member.
+**Story and evidence are graded for the pair. Defence and delivery are graded for each member.** The criteria apply to the deliverables and explanations below; you choose how to produce them.
 
-### Story
+### Story and evidence: pair assessment
 
-- **Thesis:** is it a clear, testable claim?
-- **Motivation:** is the question worth answering? Is it clear what the project adds to what is known?
-- **Structure:** does every slide serve the thesis? Do you end with clear takeaways?
+| Criterion | Where you show it | What strong work demonstrates |
+|--------------------|----------------|--------------------------------------------|
+| **Interesting, original question and contribution** | Question paragraph, slides, and sources | A specific question whose answer matters. You explain what is already known and what your own analysis adds. The contribution goes beyond repeating an example or relabelling a topic. |
+| **Clear answer and focus** | Main slides | A thesis supported by a few key results. Each result has a clear role, and the audience can follow how the evidence answers the question. |
+| **Credible analysis** | Code and results | The data, measures, sample, and method fit the question. Calculations are correct, and relevant checks address problems such as missing values, weights, duplicate rows, units, denominators, or geographic definitions. |
+| **A meaningful challenge to the conclusion** | Slides, code, and research decisions | You identify an important reason your answer might be misleading and use evidence to assess it. The check addresses a real concern rather than adding another result for its own sake. |
+| **Sound interpretation** | Slides and questions | Claims match the design and evidence. You explain magnitudes and uncertainty, distinguish association from causation when relevant, and state the limits that matter for the answer. |
+| **Clear presentation of evidence** | Figures and tables | Displays are readable, accurately labelled, and suited to the comparison. You explain the key result rather than expecting the audience to decipher raw output. |
+| **Reproducibility and attribution** | Quarto code and backup slides | The document runs and generates the presented results. Data and borrowed ideas or methods are traceable. Research decisions, member contributions, and AI assistance are described accurately. |
 
-### Evidence
+An interesting question supported by careful, simple analysis can make a stronger project than a complex model with an unclear purpose. A small, null, or inconclusive result can support a strong project when the analysis is credible and the conclusion reflects the uncertainty. The number of results, complexity of the method, and statistical significance do not earn credit on their own.
 
-- **Correct analysis:** code that renders and checks its own work: row counts after joins, missing values, units, denominators, and coordinate systems.
-- **Alternative explanation:** is the strongest one tested, not just mentioned?
-- **Visualization quality:** figures that deliver a key point and look good.
+### Defence and delivery: individual assessment
 
-### Defence
-
-- Can you explain your code and your decisions when asked, including your partner's part?
-
-### Delivery
-
-- Eye contact, volume, and pace.
+| Criterion | What strong work demonstrates |
+|------------------------|--------------------------------------------------------|
+| **Understanding and defence** | You explain the question, data, code, and analytical decisions, including your partner's work and AI-assisted code. You can connect a result to the steps that produced it, discuss alternatives, and recognize the limits of the evidence. |
+| **Delivery** | You speak clearly, engage the audience, share the presentation, keep to the time limit, and answer questions directly. |
 
 ## Common pitfalls
 
-- **A topic instead of a thesis.** If no result could prove your thesis wrong, it is not a claim.
-- **AI answered a different question.** AI may substitute a variable that exists for the one you asked about, such as weeks worked for hours worked, and mention it only in passing. Check that your figures measure what your thesis says.
-- **Correlation presented as cause.** For example, a simple correlation between distance to a SkyTrain station and housing prices does not show that the station raised prices.
-- **Too many figures.** Five clear figures that build one story beat ten loosely related ones.
-- **Blurry images.** Never paste screenshots. For slides made outside Quarto, save figures with `ggsave()` or `tmap_save()`.
-- **Unchecked sources.** AI invents plausible references, and it also cites real studies for findings they do not contain. Open every source you cite and confirm that it says what your slide claims.
+- **A broad topic without a research question.** Specify what you want to learn and why the answer matters.
+- **A cosmetic contribution.** A different title, chart style, or year does not by itself create a meaningful research contribution.
+- **Choosing the answer in advance.** Revise your thesis when the evidence challenges it. Keep checks that materially qualify your conclusion.
+- **Too many results.** A catalogue of charts or regressions can obscure the answer. Use the main talk for the evidence that matters most.
+- **AI answered a different question.** AI may substitute an available variable for the one you intended, such as weeks worked for hours worked. Check that your measures address your question.
+- **Correlation presented as cause.** A correlation between distance to a SkyTrain station and housing prices does not establish that the station raised prices.
+- **Unexplained regression output.** Label the dependent variable and controls, report appropriate uncertainty, and interpret the focal coefficient, especially when the outcome is in logs.
+- **Blurry images.** Export figures and tables directly from R or Quarto. For slides made outside Quarto, use tools such as `ggsave()` or `tmap_save()` for figures.
+- **Unchecked sources.** Open every source you cite and confirm that it supports the claim you attribute to it. AI can invent references or misdescribe real ones.
 
 ## Where to find data
 
-You register your data source on February 26. Before you do, download the data once and check that it covers your place and period. AI tools know a lot about which data exist, but check every source yourself.
+At question registration, identify a data source you have checked for access and coverage. Confirm that it contains the variables, observations, place, and period needed for your question. AI can suggest sources; you must verify their suitability.
 
 | Source | What it has | In R |
 |---|---|---|
@@ -116,16 +139,16 @@ If you compare two census years, check deck 12 first: vector codes, tract bounda
 
 ## Example presentations
 
-The examples are designed for a 10-minute talk, with a thesis, focused evidence and backup slides for questions. They show different ways to make a contribution: a descriptive finding, a measurement check, a forecast, or a comparison of competing explanations. The quality of the question and the evidence matters more than the complexity of the method. Open the speaker notes (press S) for timing and interpretation. Click the small **Code** link in a slide's top-right corner to see the analysis behind that result.
+The examples illustrate different kinds of questions and contributions: a descriptive finding, a measurement check, a forecast, or a comparison of competing explanations. Use them to judge how a focused question connects to evidence and interpretation. They do not prescribe a method or a required number of results. Open the speaker notes (press S) for timing and interpretation. Click the small **Code** link in a slide's top-right corner to see the analysis behind that result.
 
 - [Did the Canada Line raise house prices?](example_skytrain.html) Analysis of course data, with the full set of backup slides, including AI use. The `.qmd` that produces it shows how code and slides fit together.
-- [The Value of W](example_west_side.html) A Vancouver paper that began as an in-class presentation by four UBC Sauder undergraduates.
+- [The Value of W](example_west_side.html) The question originated in a class presentation by **Andre Linaksita, Vivian Pan, Harrison Dann, and Emily Tan**. This teaching example calculates its own results from the course data and focuses on the local price premium and a comparison with other streets. It also shows a compact regression table and the limits of a prestige interpretation.
 - [Big cities do not pay top healthcare workers more](example_ability_sorting.html) A published finding from 2000 data, retested with 2024 U.S. data. Its design compares two explanations that predict different things.
 - [Where did theft rise?](example_vancouver_crime.html) A citywide increase decomposed by location. Shows how a focused descriptive question can produce a useful contribution, while leaving the cause unresolved.
 - [Is storefront recovery real?](example_storefronts.html) Tests whether falling vacancy survives changes in survey coverage and the vacancy definition. Shows why comparable observations and clear denominators matter.
 - [What will the pipeline deliver?](example_condo_completions.html) Tests whether construction data improve completion forecasts over a simple benchmark, then considers newer evidence. Shows how to evaluate prediction without claiming causation.
 
-The last three examples include [fixed data snapshots and rendering instructions](example_data/README.md). Their code renders without access to another project folder. These are examples of analytical judgment, not a required research workflow. Reproducing one is useful practice; a project using it as a starting point should explain its own question and contribution.
+The last three examples include [fixed data snapshots and rendering instructions](example_data/README.md). Their code renders without access to another project folder. Reproducing an example is useful practice. A submitted project that builds on one must develop its own question and meaningful contribution, carry out its own analysis, and credit the example.
 
 ## Resources
 

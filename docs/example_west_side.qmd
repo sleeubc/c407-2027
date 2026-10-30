@@ -1,7 +1,7 @@
 ---
 title: "The Value of W"
 subtitle: "Pricing neighbourhood prestige at Vancouver's Ontario Street"
-author: "COMM 407 example presentation · after Larsen, Lee and Lee (2026)"
+author: "COMM 407 example presentation"
 format:
   revealjs:
     theme: [simple, c407_revealjs.scss]
@@ -32,6 +32,7 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(sf)
   library(fixest)
+  library(modelsummary)
   library(tmap)
   library(VancouvR)
   library(cancensus)
@@ -63,23 +64,19 @@ signed_distance <- function(points, line) {
 ontario <- street_line("ONTARIO ST")
 ontario_box <- st_bbox(ontario)
 
-# 2021 Census tracts, and dissemination areas with median household income
+# 2021 Census tracts for comparisons within small geographic areas
 tracts <- get_census("CA21", regions = list(CSD = "5915022"), level = "CT",
                      geo_format = "sf", quiet = TRUE) |>
   select(tract = GeoUID) |>
   st_transform(26910)
-das <- get_census("CA21", regions = list(CSD = "5915022"), level = "DA",
-                  vectors = c(income = "v_CA21_906"),
-                  geo_format = "sf", quiet = TRUE) |>
-  select(income) |>
-  st_transform(26910)
 
 # Single-family sales, 2001-2025, level with Ontario Street (north to south).
-# Sales without lot size or floor area drop out; lot sizes under 1,000 sq ft
-# are recording errors.
+# Require usable coordinates and positive sizes. Exclude lots under 1,000
+# sq ft, which are implausibly small for this single-family comparison.
 sales_sf <- read_rds("data/bca262.rds") |>
   filter(juris_label == "City of Vancouver", act_use_cat == "S/F Res",
-         !is.na(lon), price > 100000, between(year(sale_date), 2001, 2025),
+         !is.na(lon), !is.na(lat), price > 100000,
+         between(year(sale_date), 2001, 2025),
          lotsize >= 1000, floorarea > 0) |>
   st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
   st_transform(26910) |>
@@ -90,9 +87,8 @@ sales_sf <- read_rds("data/bca262.rds") |>
 n_sales <- nrow(sales_sf)
 sales_sf <- sales_sf |>
   st_join(tracts) |>
-  st_join(das) |>
-  # BC Assessment stopped recording the E/W prefix in 2015, so the side comes
-  # from the map. East-west streets are the numbered avenues and King Edward,
+  # Address formats change in the course file, so the side comes from the
+  # map. East-west streets are the numbered avenues and King Edward,
   # written "41ST AVE W" in early years and "41ST" later.
   mutate(west = dist < 0,
          ew_street = str_detect(str_name,
@@ -101,32 +97,29 @@ sales_sf <- sales_sf |>
          age = year - year_built)
 stopifnot(nrow(sales_sf) == n_sales)  # a sale on a boundary would appear twice
 
+# Make the estimation sample explicit before counting sales or drawing maps.
+sales_sf <- filter(sales_sf, !is.na(tract), !is.na(age), age >= 0)
 sales <- st_drop_geometry(sales_sf)
 ```
 
 ```{r}
 #| label: models
 #| include: false
-# West-side premium: log price on west, with size and age, comparing sales in
-# the same census tract and quarter. Standard errors clustered by tract.
-premium <- function(data, controls = "") {
-  f <- as.formula(paste("log(price) ~ west + log(lotsize) + log(floorarea) + age",
-                        controls, "| quarter + tract"))
-  m <- feols(f, data = data, cluster = ~tract)
-  tibble(b = coef(m)[["westTRUE"]], se = se(m)[["westTRUE"]], n = nobs(m))
+# Re-estimate from the course transactions. No estimates or figures are
+# imported from the paper. Hold lot size, floor area, age, tract and quarter
+# fixed; cluster standard errors by census tract.
+premium <- function(data) {
+  m <- feols(log(price) ~ west + log(lotsize) + log(floorarea) + age |
+               quarter + tract, data = data, cluster = ~tract)
+  ci <- confint(m, parm = "westTRUE", level = 0.95)
+  used <- obs(m)  # fixest removes singleton fixed-effect groups
+  tibble(b = coef(m)[["westTRUE"]], lo = ci[1, 1], hi = ci[1, 2],
+         n = nobs(m), clusters = n_distinct(data$tract[used]), rows = list(used),
+         model = list(m))
 }
-near_ontario <- function(bandwidth) filter(sales, abs(dist) < bandwidth, ew_street)
-
-main <- premium(near_ontario(150))
-with_income <- premium(filter(near_ontario(150), !is.na(income)), "+ log(income)")
-
-# Citywide: all sales on each side of the line, without the tract comparison
-citywide_model <- feols(log(price) ~ west + log(lotsize) + log(floorarea) + age |
-                          quarter, data = sales, cluster = ~tract)
-citywide <- tibble(b = coef(citywide_model)[["westTRUE"]],
-                   se = se(citywide_model)[["westTRUE"]],
-                   n = nobs(citywide_model))
-
+near_ontario <- filter(sales, abs(dist) < 150, ew_street)
+main <- premium(near_ontario)
+stopifnot(n_distinct(near_ontario$west[main$rows[[1]]]) == 2)
 pct <- function(b) 100 * (exp(b) - 1)
 ```
 
@@ -136,19 +129,33 @@ pct <- function(b) 100 * (exp(b) - 1)
 ```
 
 ::: {.key-point}
-A house just west of Vancouver's Ontario Street sells for about `r round(pct(main$b))`% more than a similar house just east of it. Buyers pay for the "W" in the address.
+Single-family homes just west of Ontario Street sell for about **`r round(pct(main$b))`% more**, after accounting for measured housing differences and sale timing.
 :::
 
-- **Evidence:** BC Assessment sales, 2001–2025: `r scales::comma(main$n)` single-family sales within 150 m of Ontario Street.
-- **Comparison:** west side against east side, in the same census tract and quarter, with lot size, floor area and age held fixed.
+**Question:** How much do buyers pay for neighbourhood prestige?
+
+**Why care?** A price gap across a quiet street could reveal something that housing size and nearby amenities cannot explain.
 
 ::: {.notes}
-Speaker 1 presents slides 2–5; Speaker 2 presents slides 6–10. About 30 seconds. Prestige is usually impossible to price: prestigious neighbourhoods also have better schools, safety and jobs. Ontario Street separates the label from the amenities.
+Speaker 1 presents through the main estimate. About 45 seconds. State the finding first, then the question it addresses. This is a local price premium. Interpreting all of it as prestige requires stronger assumptions, which we discuss later. Every displayed estimate comes from this document's R code and the course data.
 :::
 
-## Only the address changes at Ontario Street
+## The students behind the question
 
-```{r code-map, ref.label=c("setup", "data", "map"), eval=FALSE}
+The paper grew out of an in-class presentation by four UBC Sauder undergraduates:
+
+**Andre Linaksita, Vivian Pan, Harrison Dann, and Emily Tan**
+
+- **The puzzle:** expensive neighbourhoods have both prestige and desirable amenities. How can we separate their values?
+- **The idea:** compare nearby homes across the boundary between Vancouver's East Side and West Side.
+
+::: {.notes}
+About 1 minute. Larsen, Lee and Lee (2026), page 1, explicitly credit these four students with the original idea. The later working paper develops it further. This teaching example conducts its own analysis of the course transactions, including 2025, using the paper's question and comparison. The estimates shown here are not the students' original presentation results or copied paper estimates. An interesting question and an informative comparison are the central contributions to learn from.
+:::
+
+## Ontario Street separates E and W addresses
+
+```{r code-map, ref.label=c("setup", "data", "models", "map"), eval=FALSE}
 ```
 
 :::: {.columns}
@@ -158,10 +165,12 @@ Speaker 1 presents slides 2–5; Speaker 2 presents slides 6–10. About 30 seco
 #| echo: false
 #| fig-width: 5
 #| fig-height: 5
-# A 1.2 km square in the middle of the sample, along Ontario Street
+# Draw the map from street geometry and the actual estimation sample.
 band <- sales_sf |>
   filter(abs(dist) < 150, ew_street) |>
+  slice(main$rows[[1]]) |>
   mutate(side = if_else(west, "West side", "East side"))
+stopifnot(nrow(band) == main$n)
 centre <- st_coordinates(st_centroid(st_union(band)))
 window <- st_bbox(c(xmin = centre[1] - 600, xmax = centre[1] + 600,
                     ymin = centre[2] - 600, ymax = centre[2] + 600),
@@ -181,104 +190,66 @@ tm_shape(st_crop(streets, window), bbox = window) +
 ```
 :::
 ::: {.column width="52%"}
-- A quiet residential street (red) with no physical barrier.
-- Not a zoning or census tract boundary.
-- On east–west streets, crossing it switches the address from "W" to "E".
-- Each dot is a sale within 150 m on an east–west street.
+- Ontario Street (red) is a quiet residential street.
+- Crossing it changes E to W in addresses on east–west streets.
+- Compare single-family sales within **150 m on either side**.
+- The map shows one stretch. The analysis uses `r scales::comma(main$n)` sales in **2001–2025** along the street.
 :::
 ::::
 
-::: footer
-BC Assessment sales; City of Vancouver public streets
-:::
-
 ::: {.notes}
-About 1 minute. The map shows one stretch of the street; the analysis uses its whole length.
+About 1.5 minutes. Data: BC Assessment course file bca262.rds and City of Vancouver public-streets geometry. The paper describes the address boundary and its history. Dots are sales in the estimation sample, with repeated sales at the same address overlapping. Proximity makes the comparison more informative than comparing distant neighbourhoods, but it does not guarantee identical homes, schools or amenities. We locate the side geometrically because address formats change across years in the course file.
 :::
 
-## Prices fall gradually from west to east, then drop at Ontario
+## A local West Side price premium
 
-```{r code-gradient, ref.label=c("setup", "data", "gradient"), eval=FALSE}
+```{r code-main, ref.label=c("setup", "data", "models", "regression-table"), eval=FALSE}
 ```
 
+:::: {.columns}
+::: {.column width="62%"}
+::: {.small}
 ```{r}
-#| label: gradient
+#| label: regression-table
 #| echo: false
-#| fig-width: 11
-#| fig-height: 4.4
-# Split the city into 250 m north-south strips. Price in each strip relative
-# to the strip just west of Ontario Street, holding size, age and quarter fixed.
-strips <- sales |>
-  filter(abs(dist) < 6000) |>
-  mutate(strip = floor(dist / 250) * 250 + 125)
-strip_model <- feols(log(price) ~ i(strip, ref = -125) + log(lotsize) +
-                       log(floorarea) + age | quarter, data = strips)
-
-broom::tidy(strip_model) |>
-  filter(str_starts(term, "strip::")) |>
-  transmute(km = as.numeric(str_extract(term, "-?\\d+$")) / 1000, estimate) |>
-  bind_rows(tibble(km = -0.125, estimate = 0)) |>
-  mutate(side = if_else(km < 0, "West", "East")) |>
-  ggplot(aes(km, estimate)) +
-  geom_vline(xintercept = 0, linetype = "dashed") +
-  geom_smooth(aes(group = side), method = "lm", formula = y ~ x,
-              colour = "#2a78d6", fill = "#c9dcf3") +
-  geom_point(colour = "grey25") +
-  labs(x = "Distance from Ontario Street (km; west is negative)",
-       y = "Log price vs strip just west") +
-  theme_minimal(base_size = 16)
+#| results: asis
+# Report the fitted model used for the headline estimate and the map.
+modelsummary(
+  list("Log sale price" = main$model[[1]]),
+  coef_map = c("westTRUE" = "West side", "log(lotsize)" = "Log lot size",
+               "log(floorarea)" = "Log floor area", "age" = "Age (years)"),
+  estimate = "{estimate} ({std.error})", statistic = NULL,
+  fmt = 4, stars = FALSE,
+  gof_map = data.frame(raw = c("nobs", "r.squared"),
+                       clean = c("Sales", "R-squared"), fmt = c(0, 3)),
+  add_rows = data.frame(term = c("Census tract FE", "Sale quarter FE"),
+                        "Log sale price" = c("Yes", "Yes"), check.names = FALSE),
+  output = "kableExtra"
+) |>
+  kableExtra::row_spec(1, bold = TRUE)
 ```
 
-Each dot is a 250 m strip of the city. The only break is at Ontario Street.
-
-::: footer
-Log price on strip, lot size, floor area, age and sale-quarter fixed effects; all single-family sales within 6 km
+Standard errors in parentheses, clustered by census tract (`r main$clusters` clusters). FE = fixed effects.
 :::
+:::
+::: {.column width="38%"}
+**West-side premium: `r round(pct(main$b), 1)`%**
+
+Convert the log coefficient:
+
+`100 * (exp(b) - 1)`
+
+**95% interval:** `r round(pct(main$lo), 1)`% to `r round(pct(main$hi), 1)`%.
+
+**Sample:** single-family sales within 150 m of Ontario Street, 2001–2025.
+:::
+::::
 
 ::: {.notes}
-About 1 minute. A sceptic's first question: maybe prices just fall from west to east. They do, gradually, on both sides. At Ontario Street they drop all at once.
+About 1.5 minutes. This is our own regression on the course data. The outcome is log price and the controls include log lot size and log floor area. Convert the west coefficient to a percentage using 100 * (exp(b) - 1). Fixed effects account separately for census tract and sale quarter. The interval uses fixest's clustered t inference, not a fixed 1.96 multiplier. With only `r main$clusters` tracts, precision remains uncertain. The model controls for measured characteristics rather than matching identical houses. The paper uses a different sample and additional restrictions, so our estimate need not equal its reported estimate.
 :::
 
-## Part of the West Side gap is the label itself
-
-```{r code-main, ref.label=c("setup", "data", "models", "main-estimate"), eval=FALSE}
-```
-
-```{r}
-#| label: main-estimate
-#| echo: false
-#| fig-width: 11
-#| fig-height: 3.2
-bind_rows(Citywide = citywide, `Within 150 m` = main, .id = "comparison") |>
-  mutate(comparison = fct_rev(comparison)) |>
-  ggplot(aes(pct(b), comparison, colour = comparison)) +
-  geom_pointrange(aes(xmin = pct(b - 1.96 * se), xmax = pct(b + 1.96 * se)),
-                  linewidth = 1.2, size = 1) +
-  geom_text(aes(label = paste0(round(pct(b)), "%")), nudge_y = 0.3, size = 6) +
-  scale_colour_manual(values = c(Citywide = "grey50", `Within 150 m` = "#2a78d6"),
-                      guide = "none") +
-  scale_x_continuous(limits = c(0, NA), labels = \(x) paste0(x, "%")) +
-  labs(x = "West-side price premium, similar houses (95% interval)", y = NULL) +
-  theme_minimal(base_size = 18)
-
-east_price <- near_ontario(150) |>
-  filter(!west, year >= 2023) |>
-  summarise(median(price)) |>
-  pull()
-```
-
-- **Citywide**, similar west-side houses sell for `r round(pct(citywide$b))`% more. That gap includes better schools, parks and views.
-- **Within 150 m**, where those are shared, the label alone is worth `r round(pct(main$b))`%: about `r scales::dollar(east_price * (exp(main$b) - 1), accuracy = 10000)` on the median east-side house sold in 2023–2025.
-
-::: footer
-Within 150 m: east–west streets, census tract and sale-quarter fixed effects. Citywide: all sales, sale-quarter fixed effects.
-:::
-
-::: {.notes}
-About 1 minute.
-:::
-
-## Alternative 1: any street would show a jump?
+## Other streets show smaller price gaps
 
 ```{r code-placebo, ref.label=c("setup", "data", "models", "placebo"), eval=FALSE}
 ```
@@ -287,14 +258,19 @@ About 1 minute.
 #| label: placebo
 #| echo: false
 #| fig-width: 11
-#| fig-height: 4.2
-# The same comparison at the residential north-south streets used in the paper.
-# Sales within 150 m of Ontario Street are left out so its jump cannot leak in.
+#| fig-height: 4.1
+# Borrow the paper's list of comparison streets, then estimate every result
+# from the course transactions. Exclude Ontario's band from these samples.
 placebo_streets <- c("TRIMBLE ST", "CARNARVON ST", "MACKENZIE ST", "MACDONALD ST",
                      "TRAFALGAR ST", "YEW ST", "ARBUTUS ST", "MAPLE ST", "CYPRESS ST",
                      "PINE ST", "ALDER ST", "SPRUCE ST", "LAUREL ST", "HEATHER ST",
                      "COLUMBIA ST", "MANITOBA ST", "PRINCE EDWARD ST",
                      "ST. GEORGE ST", "GLADSTONE ST", "CASSIAR ST", "SKEENA ST")
+
+# Use the length-weighted centre of each street only to determine west-east
+# ordering. An ordered factor gives the streets equal spacing on the chart.
+street_x <- function(line) unname(st_coordinates(st_centroid(line))[1, "X"])
+ontario_x <- street_x(ontario)
 
 placebo <- function(name) {
   line <- street_line(name)
@@ -306,133 +282,86 @@ placebo <- function(name) {
     mutate(dist = signed_distance(geometry, line), west = dist < 0) |>
     st_drop_geometry() |>
     filter(abs(dist) < 150)
-  if (nrow(data) < 100) return(NULL)  # too few sales to estimate
-  premium(data)
+  if (nrow(data) < 100) return(NULL)
+  premium(data) |>
+    mutate(easting = street_x(line))
 }
 
 placebo_results <- map(set_names(placebo_streets), placebo) |>
   compact() |>
   bind_rows(.id = "street") |>
-  bind_rows(mutate(main, street = "ONTARIO ST")) |>
-  mutate(street = str_to_title(str_remove(street, " ST$")))
+  bind_rows(mutate(main, street = "ONTARIO ST", easting = ontario_x)) |>
+  mutate(street = str_to_title(str_remove(street, " ST$"))) |>
+  arrange(easting) |>
+  mutate(street = ordered(street, levels = street))
 
 placebo_results |>
-  ggplot(aes(reorder(street, b), pct(b), colour = street == "Ontario")) +
+  ggplot(aes(street, pct(b), colour = street == "Ontario")) +
   geom_hline(yintercept = 0, colour = "grey50") +
-  geom_pointrange(aes(ymin = pct(b - 1.96 * se), ymax = pct(b + 1.96 * se))) +
+  geom_pointrange(aes(ymin = pct(lo), ymax = pct(hi))) +
   scale_colour_manual(values = c(`TRUE` = "#c0392b", `FALSE` = "grey40"),
                       guide = "none") +
   scale_y_continuous(labels = \(x) paste0(x, "%")) +
-  labs(x = NULL, y = "West-side premium (95% interval)") +
-  theme_minimal(base_size = 15) +
+  labs(x = "Streets ordered west to east", y = "West Side premium",
+       subtitle = "Estimates and 95% confidence intervals") +
+  theme_minimal(base_size = 16) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-If prices jumped at every north–south street, other streets would show similar premiums. None comes close to Ontario Street.
-
-::: footer
-`r nrow(placebo_results) - 1` other residential streets with at least 100 sales within 150 m; same regression as the main estimate
-:::
+Ontario's estimated gap is the largest among these `r nrow(placebo_results)` streets.
 
 ::: {.notes}
-Speaker 2 takes over here. About 1 minute. This is a placebo test: repeat the analysis where nothing should happen. The largest other premium is `r round(pct(max(placebo_results$b[placebo_results$street != "Ontario"])))`%, at `r placebo_results$street[placebo_results$street != "Ontario"][which.max(placebo_results$b[placebo_results$street != "Ontario"])]` Street.
+Speaker 2 takes over. About 2 minutes. Repeat the same regression within 150 m of other residential north–south streets, keeping streets with at least 100 usable sales. All points and intervals are re-estimated here. The x-axis is an ordered factor running west to east, using each street's length-weighted mean easting from the City street geometry (EPSG:26910) to set the order. Streets are evenly spaced, so the axis shows geographic order rather than distance. The list comes from Larsen, Lee and Lee (2026), which selected streets without nearby school catchment changes. We have not independently reconstructed historical catchments for the extended sample. This check weakens the explanation that any street would show a similar gap. It does not rule out unmeasured differences specific to Ontario Street. Intervals are pointwise, not adjusted for multiple comparisons.
 :::
 
-## Alternative 2: richer neighbours, not the label?
+## What would make this a prestige effect?
 
-```{r code-income, ref.label=c("setup", "data", "models"), eval=FALSE}
-```
+The interpretation requires other features that buyers value to vary smoothly across Ontario Street.
 
-1. **The alternative:** richer households live on the west side, and buyers pay for rich neighbours, not for the "W".
-2. **If it were true:** holding local income fixed would shrink the premium.
-3. **What we see:** with each dissemination area's 2021 median household income held fixed, the premium is `r round(pct(with_income$b), 1)`%, against `r round(pct(main$b), 1)`% without it.
+- **Remaining concern:** unmeasured renovation quality, school access or other amenities could differ across the boundary.
+- **Precision:** the main sample covers only `r main$clusters` census tracts. Clustered intervals are still approximate with so few clusters.
+- **Scope:** the result concerns nearby single-family homes. It does not establish the premium elsewhere or for condos.
+
+::: {.notes}
+About 1.5 minutes. The estimated local price gap is the result. Prestige is an explanation that fits the address boundary and the comparison-street evidence, but we cannot isolate it completely with this analysis. We have not repeated the paper's full set of sample restrictions or robustness checks. Explaining this distinction is more useful than presenting many loosely motivated estimates.
+:::
+
+## Takeaway
 
 ::: {.key-point}
-The premium is not explained by who lives there now.
+A substantial price premium appears at the E/W address boundary, consistent with buyers valuing neighbourhood prestige.
 :::
+
+The local comparison identifies the gap. The other-street comparison shows why Ontario Street deserves attention.
+
+The unresolved question is how much of that gap reflects prestige rather than unmeasured housing or neighbourhood differences.
 
 ::: {.notes}
-About 1 minute. Dissemination areas are the smallest census areas, about 400 to 700 people.
-:::
-
-## The premium holds under other choices
-
-```{r code-robust, ref.label=c("setup", "data", "models", "robustness"), eval=FALSE}
-```
-
-```{r}
-#| label: robustness
-#| echo: false
-#| fig-width: 11
-#| fig-height: 4.8
-robustness <- bind_rows(
-  `50 m band` = premium(near_ontario(50)),
-  `100 m band` = premium(near_ontario(100)),
-  `150 m band (baseline)` = main,
-  `200 m band` = premium(near_ontario(200)),
-  `Standard lots (3,500–4,400 sq ft)` =
-    premium(filter(near_ontario(150), between(lotsize, 3500, 4400))),
-  `Sales 2001–2008` = premium(filter(near_ontario(150), year <= 2008)),
-  `Sales 2009–2016` = premium(filter(near_ontario(150), between(year, 2009, 2016))),
-  `Sales 2017–2025` = premium(filter(near_ontario(150), year >= 2017)),
-  `With local income` = with_income,
-  .id = "check"
-)
-
-robustness |>
-  mutate(check = fct_rev(fct_inorder(check))) |>
-  ggplot(aes(pct(b), check)) +
-  geom_vline(xintercept = 0, colour = "grey50") +
-  geom_pointrange(aes(xmin = pct(b - 1.96 * se), xmax = pct(b + 1.96 * se)),
-                  colour = "#2a78d6") +
-  scale_x_continuous(labels = \(x) paste0(x, "%")) +
-  labs(x = "West-side premium (95% interval)", y = NULL) +
-  theme_minimal(base_size = 16)
-```
-
-::: footer
-Each row repeats the main regression with one choice changed.
-:::
-
-::: {.notes}
-About 1 minute. The estimate stays between `r round(min(pct(robustness$b)))`% and `r round(max(pct(robustness$b)))`%. The 50 m band is the least precise because it has only `r robustness$n[1]` sales.
-:::
-
-## What this analysis cannot tell us
-
-```{r code-limits, ref.label=c("setup", "data", "models"), eval=FALSE}
-```
-
-- **Few clusters.** Sales within 150 m fall in only `r n_distinct(near_ontario(150)$tract)` census tracts, so the intervals are approximate.
-- **Single-family homes only.** Condo buyers may value the label differently.
-- **A local estimate.** It measures the label's value near Ontario Street; elsewhere it may be worth more or less.
-- **Unseen differences.** Amenities look the same on both sides, but differences that buyers see and the data do not cannot be fully ruled out.
-
-::: {.notes}
-About 1 minute.
-:::
-
-## Takeaways
-
-- A neighbourhood's reputation is priced: the "W" is worth about `r round(pct(main$b))`% of a house's price.
-- The premium was `r round(pct(robustness$b[6]))`% in 2001–2008 and `r round(pct(robustness$b[8]))`% in 2017–2025, more than a century after the east–west divide began.
-- Improving amenities on the east side may not close the gap; reputation persists on its own.
-
-::: {.notes}
-About 30 seconds. The paper this example follows began as an in-class presentation by four UBC Sauder undergraduates.
+About 45 seconds. Close on the answer and its limit. For your project, all analyses must be original work conducted on the data. Credit the ideas and methods you build on and explain your own contribution. AI help is allowed, but you must check and understand the analysis. A few key results that answer an interesting question are enough; a longer list of results does not make a stronger presentation.
 :::
 
 ## Backup: Sources
 
-- Larsen, D., S. Lee, and S. H. Lee (2026). "The Value of W: Pricing Neighbourhood Prestige." Working paper, SSRN.
-- Heblich, S., A. Trew, and Y. Zylberberg (2021). "East-Side Story: Historical Pollution and Persistent Neighborhood Sorting." *Journal of Political Economy* 129(5): 1508–1552.
-- Keele, L. J., and R. Titiunik (2015). "Geographic Boundaries as Regression Discontinuities." *Political Analysis* 23(1): 127–155.
-- Data: BC Assessment sales (course file `bca262.rds`); City of Vancouver public streets; Statistics Canada 2021 Census via `cancensus`.
+- **Question and research design:** Daryl Larsen, Sanghoon Lee, and Seung Hoon Lee (2026), *The Value of W: Pricing Neighbourhood Prestige*, May 18 working paper, SSRN 6787843. Page 1 credits the four students.
+- **Sales:** BC Assessment, course file `data/bca262.rds`. This analysis uses 2001–2025 single-family transactions.
+- **Geography:** City of Vancouver `public-streets` and Statistics Canada 2021 census tracts via `cancensus`.
+
+All estimates, charts and the map are generated by this document's R code from the data. The question and comparison build on the credited work.
 
 ## Backup: Decision log
 
-1. **Side from the map, not the address.** Street names carry the W or E only in 2005–2014; filtering on them silently dropped every other year.
-2. **Two street-name formats.** East–west streets appear as "41ST AVE W" in 2005–2014 and "41ST" in other years; matching one format lost the other years.
-3. **Range-labelled street segments.** Some City segments are labelled "4600-4800 ONTARIO ST"; matching single blocks only left gaps in the southern half of the street.
-4. **Placebo samples leave out Ontario Street's band,** so its jump cannot leak into neighbouring streets.
-5. **Sales without a size are left out.** Floor area is often blank in 2005–2012, so those years have fewer sales.
+1. **Focus:** keep the local premium and one comparison-street test. Remove the citywide gap, income controls and broad robustness catalogue.
+2. **Address coding:** use geometry for E/W and allow both street-name formats in the course file.
+3. **Usable records:** require positive sizes, usable age and a census tract. Check that the spatial join does not duplicate sales.
+4. **Comparison streets:** exclude Ontario's 150 m band and require at least 100 usable sales per street.
+5. **Interpretation:** describe a local premium and state the assumptions needed to attribute it to prestige.
+
+## Backup: AI use
+
+- **Tool:** OpenAI Codex helped revise the teaching slides and R code using the supplied paper and course files.
+- **Checks:** reran the analysis, checked sample counts and spatial joins, and inspected the rendered slides against the computed results.
+- **Responsibility:** presenters must explain the code, credit the original idea and defend the interpretation.
+
+::: {.notes}
+This records assistance with the teaching example. It does not describe the four students' original presentation or the paper authors' workflow. Students should report their own tools, contributions and checks rather than copy this disclosure.
+:::
