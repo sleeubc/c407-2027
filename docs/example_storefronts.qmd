@@ -1,0 +1,307 @@
+---
+title: "Is Storefront Recovery Real?"
+subtitle: "Vacancy and changing survey coverage in Vancouver"
+author: "COMM 407 example presentation"
+resources:
+  - example_data/
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    footer: "City of Vancouver Storefronts Inventory · 2020–2026 snapshot"
+    code-fold: true
+    code-summary: "Code"
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+theme_set(theme_minimal(base_size = 19) +
+            theme(legend.position = "top", legend.title = element_blank(),
+                  panel.grid.minor = element_blank()))
+sample_colours <- c("All surveyed records" = "#6f7b83", "Same storefronts" = "#0b6b8a")
+```
+
+```{r}
+#| label: data
+#| include: false
+storefronts <- read_csv("docs/example_data/vancouver_storefronts_2020_2026.csv.gz",
+                       show_col_types = FALSE) |>
+  mutate(year = as.integer(year_recorded),
+         status = if_else(general_business_category %in% c("Vacant", "Vacant UC"),
+                          general_business_category, "Occupied"))
+stopifnot(!anyNA(storefronts$store_id), !anyNA(storefronts$status),
+          setequal(unique(storefronts$year), 2020:2026))
+# Some IDs identify two records in a year. Do not silently pick one or treat
+# both as the same physical unit. Exclude those IDs from longitudinal work.
+duplicate_ids <- storefronts |>
+  count(store_id, year) |>
+  filter(n > 1) |>
+  distinct(store_id) |>
+  pull(store_id)
+unique_stores <- filter(storefronts, !store_id %in% duplicate_ids)
+panel <- unique_stores |>
+  filter(n_distinct(year) == 7, .by = store_id)
+stopifnot(!anyDuplicated(select(panel, store_id, year)),
+          all((count(panel, store_id))$n == 7))
+samples <- bind_rows(`All surveyed records` = storefronts,
+                     `Same storefronts` = panel, .id = "sample")
+```
+
+```{r}
+#| label: summary
+#| include: false
+annual <- samples |>
+  summarize(records = n(), occupied = sum(status == "Occupied"),
+            vacancy = mean(status == "Vacant"),
+            vacancy_including_uc = mean(status %in% c("Vacant", "Vacant UC")),
+            .by = c(sample, year))
+panel_annual <- filter(annual, sample == "Same storefronts")
+all_annual <- filter(annual, sample == "All surveyed records")
+panel_n <- n_distinct(panel$store_id)
+transitions <- panel |>
+  arrange(store_id, year) |>
+  mutate(prev_year = lag(year), prev_status = lag(status), .by = store_id) |>
+  filter(!is.na(prev_year))
+stopifnot(all(transitions$year == transitions$prev_year + 1),
+          all((count(transitions, year))$n == panel_n))
+flows <- transitions |>
+  summarize(
+    became_vacant = mean(prev_status == "Occupied" & status == "Vacant"),
+    filled = mean(prev_status == "Vacant" & status == "Occupied"),
+    repeated_vacancy = mean(prev_status == "Vacant" & status == "Vacant"),
+    # Include movements to/from Vacant UC when checking the stock identity.
+    uc_net = mean(prev_status == "Vacant UC" & status == "Vacant") -
+      mean(prev_status == "Vacant" & status == "Vacant UC"),
+    vacancy_change = mean(status == "Vacant") - mean(prev_status == "Vacant"),
+    .by = year
+  )
+stopifnot(isTRUE(all.equal(flows$vacancy_change,
+                          flows$became_vacant - flows$filled + flows$uc_net)))
+# Check that the longitudinal result is not sensitive to ambiguous IDs.
+unique_rates <- unique_stores |>
+  summarize(vacancy = mean(status == "Vacant"), .by = year) |>
+  left_join(select(all_annual, year, all_vacancy = vacancy),
+            by = "year", relationship = "one-to-one")
+max_id_effect_pp <- 100 * max(abs(unique_rates$vacancy - unique_rates$all_vacancy))
+panel_start <- filter(panel_annual, year == 2021)$vacancy
+panel_end <- filter(panel_annual, year == 2026)$vacancy
+all_start <- filter(all_annual, year == 2021)$vacancy
+all_end <- filter(all_annual, year == 2026)$vacancy
+```
+
+## Thesis
+
+```{r code-thesis, ref.label=c("setup", "data", "summary"), eval=FALSE}
+```
+
+::: {.key-point}
+Vancouver's vacancy decline survives a comparison of the same storefronts: from `r scales::percent(panel_start, accuracy = 0.1)` in 2021 to `r scales::percent(panel_end, accuracy = 0.1)` in 2026.
+:::
+
+**Question:** Does falling vacancy reflect improving occupancy or a changing survey?
+
+**Contribution:** track the same units, then examine how vacancies form and fill.
+
+::: notes
+About 45 seconds. Say “recovery in occupancy” rather than implying recovery in profits or sales. The result could have gone the other way: a stable panel might have shown no improvement even while the full inventory's vacancy rate fell. Speaker 1 can present through the same-storefront comparison; Speaker 2 can present the definition check, flows and conclusion.
+:::
+
+## Why compare the same storefronts?
+
+- **What is known:** the City's 2023 report found falling vacancy, with persistent problems in some retail districts.
+- **The problem:** the inventory adds storefronts over time. A changing sample can change the measured vacancy rate.
+- **Our test:** compare all records with `r scales::comma(panel_n)` identifiable storefronts surveyed in every year, 2020–2026.
+- **Meaning of recovery:** a smaller share coded **Vacant**, with **Vacant UC** checked separately.
+
+::: notes
+About 1 minute. The June 2023 City memo reports declining vacancy and uneven recovery across retail districts. The December 2023 update, recirculated in April 2024, distinguishes recent and persistent vacancy. Sources: https://vancouver.ca/files/cov/memo-to-council-2023-storefronts-report-june-2023.pdf and https://vancouver.ca/files/cov/2024-04-22-storefront-retail-vacancy-rates.pdf. Our contribution is to assess coverage and transitions in this snapshot through 2026. We do not claim to be the first to use a panel. Vacant UC remains in the denominator throughout.
+:::
+
+## Survey coverage grew substantially
+
+```{r code-counts, ref.label=c("setup", "data", "summary", "plot-counts"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-counts
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.8
+annual |>
+  select(sample, year, `Survey records` = records, `Occupied records` = occupied) |>
+  pivot_longer(-c(sample, year), names_to = "measure") |>
+  ggplot(aes(year, value, colour = sample)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2.5) +
+  facet_wrap(vars(measure)) +
+  scale_colour_manual(values = sample_colours) +
+  scale_y_continuous(labels = scales::label_comma(), limits = c(0, NA)) +
+  scale_x_continuous(breaks = c(2020, 2022, 2024, 2026)) +
+  labs(x = NULL, y = "Number of records")
+```
+
+::: notes
+About 1 minute. The full inventory rises from `r scales::comma(filter(all_annual, year == 2020)$records)` to `r scales::comma(filter(all_annual, year == 2026)$records)` records. Newly appearing records can reflect new units or expanded coverage. A count of occupied storefronts alone therefore does not measure recovery among existing units. The balanced panel excludes all `r length(duplicate_ids)` IDs that are duplicated in any year, giving exactly one observation per unit per year.
+:::
+
+## Vacancy falls in the same storefronts too
+
+```{r code-vacancy, ref.label=c("setup", "data", "summary", "plot-vacancy"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-vacancy
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.7
+ggplot(annual, aes(year, vacancy, colour = sample)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 3) +
+  scale_colour_manual(values = sample_colours) +
+  scale_y_continuous(labels = scales::label_percent(), limits = c(0, 0.14)) +
+  scale_x_continuous(breaks = 2020:2026) +
+  labs(x = NULL, y = "Share coded Vacant")
+```
+
+From 2021 to 2026: **`r round(100 * (all_start - all_end), 1)` percentage points lower** in all records, **`r round(100 * (panel_start - panel_end), 1)` points lower** in the same storefronts.
+
+::: notes
+About 1.5 minutes. This is the main test of the alternative explanation. The full sample changes, but the decline also appears within a fixed set of units. That weighs against the claim that the apparent recovery is only a coverage artifact. It does not establish a causal effect of any policy. The panel excludes units that enter or leave the inventory, so it is not representative of every storefront that existed at any time.
+:::
+
+## The result survives a broader vacancy definition
+
+```{r code-definition, ref.label=c("setup", "data", "summary", "plot-definition"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-definition
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.8
+panel_annual |>
+  select(year, `Vacant only` = vacancy, `Vacant plus Vacant UC` = vacancy_including_uc) |>
+  pivot_longer(-year, names_to = "definition") |>
+  ggplot(aes(year, value, colour = definition)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 3) +
+  scale_colour_manual(values = c("Vacant only" = "#0b6b8a", "Vacant plus Vacant UC" = "#c9283e")) +
+  scale_y_continuous(labels = scales::label_percent(), limits = c(0, 0.14)) +
+  scale_x_continuous(breaks = 2020:2026) +
+  labs(x = NULL, y = "Share of the same storefronts")
+```
+
+::: notes
+About 1 minute. The inventory has a separate Vacant UC category. To see whether moving units between the two vacancy codes could explain the result, combine them. The broader measure still declines after 2021. This is a sensitivity check using the same panel, not an additional independent source. A unit coded Vacant UC is not assumed to be an operating business.
+:::
+
+## Vacant units refill as new vacancies form
+
+```{r code-flows, ref.label=c("setup", "data", "summary", "plot-flows"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-flows
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.8
+flows |>
+  select(year, `Occupied to vacant` = became_vacant, `Vacant to occupied` = filled) |>
+  pivot_longer(-year, names_to = "transition") |>
+  ggplot(aes(year, value, colour = transition)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 3) +
+  scale_colour_manual(values = c("Occupied to vacant" = "#c9283e", "Vacant to occupied" = "#0b6b8a")) +
+  scale_y_continuous(labels = scales::label_percent(), limits = c(0, NA)) +
+  scale_x_continuous(breaks = 2021:2026) +
+  labs(x = "Survey year, compared with the preceding spring", y = "Share of the same storefronts")
+```
+
+::: notes
+About 1 minute. Both flows use all `r scales::comma(panel_n)` panel units as the denominator, so they can be compared directly. These are not the probability that a vacant unit fills or that an occupied unit closes. Filling exceeds new vacancies in `r sum(flows$filled > flows$became_vacant)` of six transitions. Movements involving Vacant UC also affect the vacancy stock and are included in the code's accounting check. Annual snapshots miss openings and closures between surveys.
+:::
+
+## Some vacancy appears in consecutive surveys
+
+```{r code-persistence, ref.label=c("setup", "data", "summary", "plot-persistence"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-persistence
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.6
+ggplot(flows, aes(year, repeated_vacancy)) +
+  geom_col(fill = "#0b6b8a", width = 0.65) +
+  geom_text(aes(label = scales::percent(repeated_vacancy, accuracy = 0.1)),
+            vjust = -0.4, size = 5) +
+  scale_y_continuous(labels = scales::label_percent(), limits = c(0, 0.10)) +
+  scale_x_continuous(breaks = 2021:2026) +
+  labs(x = "Survey year", y = "Share vacant in both this\nand the previous survey")
+```
+
+In 2026, **`r scales::percent(filter(flows, year == 2026)$repeated_vacancy, accuracy = 0.1)`** of panel units were vacant in two consecutive surveys.
+
+::: notes
+About 1 minute. Recovery is incomplete. But two vacant observations do not prove continuous vacancy between surveys. Call this repeated vacancy rather than a measured year-long vacancy spell. The denominator remains all panel units, not only currently vacant units.
+:::
+
+## What occupancy cannot establish
+
+- A balanced panel describes units that remain in the survey. Demolitions, new construction and coverage changes can affect the rest of the city differently.
+- Annual spring observations miss short spells and seasonal changes.
+- Occupancy does not reveal revenue, rents, profitability or why a unit became vacant.
+
+::: {.key-point}
+The evidence supports recovery in occupancy among continuing storefronts. It does not establish a recovery in business profitability.
+:::
+
+::: notes
+About 45 seconds. The first caveat is the tradeoff in our main test: comparability improves, while coverage narrows. The conclusion should be scoped to what the panel and the full-sample comparison jointly establish.
+:::
+
+## Takeaways
+
+- The vacancy decline remains when we follow the same units and broaden the vacancy definition.
+- Comparing openings and new vacancies helps explain the change in the stock of vacant units.
+- Substantial repeated vacancy remains. “Retail health” needs a more precise definition than a rising count of occupied records.
+
+::: notes
+About 30 seconds. Answer the original question directly: the improvement in occupancy is not explained away by the survey's growing coverage. The analysis does not identify what caused the improvement.
+:::
+
+## Backup: Sources {.smaller}
+
+- City of Vancouver, [2023 Storefronts Inventory memo](https://vancouver.ca/files/cov/memo-to-council-2023-storefronts-report-june-2023.pdf), June 13, 2023: reported vacancy trends and the inventory's purpose.
+- City of Vancouver, [Storefront retail vacancy rates](https://vancouver.ca/files/cov/2024-04-22-storefront-retail-vacancy-rates.pdf), April 22, 2024: the December 2023 update distinguishing recent and persistent vacancy.
+- [Storefronts Inventory open data](https://opendata.vancouver.ca/explore/dataset/storefronts-inventory/), snapshot October 4, 2026. [Supplied data and extraction](example_data/README.md).
+
+## Backup: Analytical decisions
+
+- **Comparable units:** exclude `r length(duplicate_ids)` ambiguous IDs, then retain units recorded in all seven years.
+- **No arbitrary deduplication:** all records remain in the full-sample series. Excluding ambiguous IDs changes its vacancy rate by at most `r round(max_id_effect_pp, 3)` percentage points.
+- **Definition check:** show vacancy with and without Vacant UC, keeping the denominator fixed.
+- **Flow check:** reconcile the change in vacancy with all transitions, including movements to and from Vacant UC.
+
+## Backup: AI use
+
+- **Starting material:** the instructor's existing storefront analysis and slides.
+- **Assistance:** Codex helped focus the question, adapt the R code and draft the explanation.
+- **Accountability:** presenters must explain ambiguous IDs, panel selection, denominators and the difference between occupancy and profitability.
+- **Individual understanding:** either presenter should be able to explain why annual observations cannot establish continuous vacancy.

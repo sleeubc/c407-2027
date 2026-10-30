@@ -1,0 +1,326 @@
+---
+title: "What Will the Pipeline Deliver?"
+subtitle: "Forecasting condo completions in Metro Vancouver"
+author: "COMM 407 example presentation"
+resources:
+  - example_data/
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    footer: "CMHC Starts and Completions Survey · Vancouver CMA · Through August 2026"
+    code-fold: true
+    code-summary: "Code"
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(fixest)
+theme_set(theme_minimal(base_size = 19) +
+            theme(legend.position = "top", legend.title = element_blank(),
+                  panel.grid.minor = element_blank()))
+series_colours <- c("Starts" = "grey55", "Completions" = "#c9283e",
+                    "Under construction" = "#0b6b8a")
+```
+
+```{r}
+#| label: data
+#| include: false
+# Keep the October 2026 vintage fixed. This is a dated forecasting example,
+# not a live forecast that refreshes automatically as CMHC revises its data.
+monthly <- read_csv("docs/example_data/vancouver_cmhc_through_2026_08.csv.gz",
+                    show_col_types = FALSE) |>
+  filter(`Intended Market` == "Condo") |>
+  transmute(date = Date, series = Series, units = Value)
+stopifnot(!anyNA(monthly$units), !anyDuplicated(select(monthly, date, series)),
+          setequal(unique(monthly$series), c("Starts", "Completions", "Under Construction")),
+          year(max(monthly$date)) == 2026, month(max(monthly$date)) == 8)
+monthly_wide <- monthly |>
+  pivot_wider(names_from = series, values_from = units) |>
+  arrange(date) |>
+  mutate(year = year(date))
+stopifnot(!anyNA(monthly_wide),
+          identical(monthly_wide$date, seq(min(monthly$date), max(monthly$date), by = "month")))
+# Annual flows are summed. Units under construction is the December stock.
+# Incomplete 2026 stays outside model fitting and is used as a later check.
+annual <- monthly_wide |>
+  filter(n() == 12, .by = year) |>
+  summarize(starts = sum(Starts), completions = sum(Completions),
+            under_construction = last(`Under Construction`, order_by = date),
+            .by = year) |>
+  arrange(year)
+stopifnot(setequal(annual$year, 1990:2025))
+```
+
+```{r}
+#| label: models
+#| include: false
+horizons <- 1:3
+pipeline_data <- function(h) {
+  annual |>
+    mutate(uc_origin = lag(under_construction, h),
+           starts_origin = lag(starts, h),
+           starts_origin_1 = lag(starts, h + 1),
+           completions_origin = lag(completions, h))
+}
+pipeline_formula <- completions ~ uc_origin + starts_origin + starts_origin_1
+models <- map(horizons, \(h) {
+  feols(pipeline_formula, pipeline_data(h), vcov = NW(h) ~ year, notes = FALSE)
+})
+# Target-year outcomes never enter the training sample. Historical values
+# still come from the October 2026 vintage, not from archived releases.
+backtest <- expand_grid(h = horizons, target = 2011:2025) |>
+  pmap(\(h, target) {
+    d <- pipeline_data(h)
+    train <- filter(d, year <= target - h)
+    test <- filter(d, year == target)
+    stopifnot(max(train$year) <= target - h, nrow(test) == 1)
+    tibble(h, target, actual = test$completions,
+           `Pipeline model` = as.numeric(predict(
+             feols(pipeline_formula, train, notes = FALSE), newdata = test)),
+           `No change` = test$completions_origin)
+  }) |>
+  list_rbind()
+errors <- backtest |>
+  pivot_longer(-c(h, target, actual), names_to = "model", values_to = "forecast") |>
+  mutate(error = forecast / actual - 1) |>
+  summarize(mape = mean(abs(error)), bias = mean(error), .by = c(model, h))
+origin <- max(annual$year)
+origin_values <- annual |>
+  filter(year == origin) |>
+  transmute(uc_origin = under_construction, starts_origin = starts,
+            starts_origin_1 = annual$starts[annual$year == origin - 1])
+# Conventional regression prediction intervals are conditional on the fitted
+# specification. They do not include model selection or structural change.
+forecast <- map(horizons, \(h) {
+  predict(models[[h]], newdata = origin_values, interval = "prediction", level = 0.8) |>
+    mutate(year = origin + h)
+}) |>
+  list_rbind() |>
+  select(year, forecast = fit, low = ci_low, high = ci_high)
+stopifnot(all(is.finite(forecast$forecast)), all(forecast$low < forecast$high))
+turnover <- annual |>
+  mutate(ratio = lag(under_construction) / completions) |>
+  filter(!is.na(ratio))
+ytd_end <- max(monthly$date)
+ytd <- sum(monthly$units[monthly$series == "Completions" & year(monthly$date) == 2026])
+past_ytd_share <- monthly |>
+  filter(series == "Completions", year(date) %in% 2011:2025) |>
+  mutate(year = year(date)) |>
+  summarize(share = sum(units[month(date) <= month(ytd_end)]) / sum(units),
+            .by = year)
+ytd_range <- tibble(low = ytd / max(past_ytd_share$share),
+                    mid = ytd / median(past_ytd_share$share),
+                    high = ytd / min(past_ytd_share$share))
+forecast_2026 <- filter(forecast, year == 2026)$forecast
+required_final_share <- 1 - ytd / forecast_2026
+number <- scales::label_comma(accuracy = 100)
+```
+
+## Thesis
+
+```{r code-thesis, ref.label=c("setup", "data", "models"), eval=FALSE}
+```
+
+::: {.key-point}
+The construction pipeline improves one- and two-year completion forecasts over a no-change benchmark. Its advantage is small three years ahead.
+:::
+
+**Question:** How much does today's pipeline tell us about the condos arriving in the next three years?
+
+**Why care?** Units under construction are future supply, but their delivery dates matter for housing-market decisions.
+
+::: notes
+About 45 seconds. State the predictive question rather than promising to identify why construction takes longer. This is a Metro Vancouver condo example, not a forecast for all housing or just the City of Vancouver. The results and projections are tied to data through August 2026. Speaker 1 can present the puzzle, measurement and forecast design; Speaker 2 can present the comparison, forecasts, later evidence and limits.
+:::
+
+## Pipeline growth outpaced completions
+
+```{r code-pipeline, ref.label=c("setup", "data", "plot-pipeline"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-pipeline
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.5
+annual |>
+  rename(Starts = starts, Completions = completions, `Under construction` = under_construction) |>
+  pivot_longer(-year, names_to = "series", values_to = "units") |>
+  ggplot(aes(year, units / 1000, colour = series)) +
+  geom_line(linewidth = 1.1) +
+  scale_colour_manual(values = series_colours) +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = NULL, y = "Condo units (thousands)")
+```
+
+Since 2010: under construction **×`r round(annual$under_construction[annual$year == 2025] / annual$under_construction[annual$year == 2010], 1)`**, annual completions **×`r round(annual$completions[annual$year == 2025] / annual$completions[annual$year == 2010], 1)`**.
+
+::: notes
+About 1 minute. CMHC's April 2023 Housing Supply Report, Vancouver section, attributes growth in the region's construction stock to both new starts and longer construction times. That finding covers residential construction generally. Our contribution is a condo-specific test of how much the pipeline improves forecasts at different horizons. Starts and completions are annual flows; under construction is the December stock. Condo is an intended-market category and includes strata townhouses as well as apartments. The data exclude pre-construction proposals. Source: https://assets.cmhc-schl.gc.ca/sites/cmhc/professional/housing-markets-data-and-research/market-reports/housing-supply-report/housing-supply-report-2023-04-en.pdf, pp. 15–16.
+:::
+
+## More pipeline per annual completion
+
+```{r code-turnover, ref.label=c("setup", "data", "models", "plot-turnover"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-turnover
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.5
+ggplot(turnover, aes(year, ratio)) +
+  geom_line(linewidth = 1.1, colour = "#0b6b8a") +
+  geom_point(data = filter(turnover, between(year, 2020, 2022)),
+             size = 3, colour = "#c9283e") +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = NULL, y = "Start-of-year pipeline\n÷ annual completions")
+```
+
+This ratio is a **turnover proxy**, not a direct observation of construction time.
+
+::: notes
+About 1 minute. The alternative is that a high ratio merely reflects rapid growth in starts and the stock. In 2020–2022, when the year-end stock was relatively flat, the ratio still ranged from `r round(min(filter(turnover, between(year, 2020, 2022))$ratio), 1)` to `r round(max(filter(turnover, between(year, 2020, 2022))$ratio), 1)`. That weakens a purely temporary buildup account. It still does not identify the duration of individual projects, their height or why the pipeline changed. The ratio can also reflect changing project mix and flows between intended markets.
+:::
+
+## Can a model beat “same as last year”?
+
+| Choice | Design |
+|---|---|
+| Predictors | Under construction and the last two annual starts totals, measured at the forecast origin |
+| Model | A separate regression for each horizon, one to three years |
+| Benchmark | Carry forward completions observed at the origin |
+| Historical comparison | Predict 2011–2025, refitting with only earlier outcomes |
+
+**Contribution:** measure the improvement over a simple forecast, at each horizon.
+
+::: notes
+About 1 minute. For a three-year forecast of 2025, the origin is 2022 and training outcomes end in 2022. Its predictors are the 2022 under-construction stock and 2022 and 2021 starts. This is a retrospective rolling-origin comparison: historical values come from the October 2026 vintage and could contain later revisions. The original analysis compared candidate specifications using these years, so these scores are not an untouched validation sample. No future target outcome enters an individual regression fit.
+:::
+
+## Most of the gain is one or two years ahead
+
+```{r code-errors, ref.label=c("setup", "data", "models", "plot-errors"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-errors
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.8
+errors |>
+  mutate(horizon = factor(h, labels = c("1 year", "2 years", "3 years"))) |>
+  ggplot(aes(horizon, mape, fill = model)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  geom_text(aes(label = scales::percent(mape, accuracy = 1)),
+            position = position_dodge(width = 0.8), vjust = -0.4, size = 5.5) +
+  scale_fill_manual(values = c("Pipeline model" = "#0b6b8a", "No change" = "grey65")) +
+  scale_y_continuous(labels = scales::label_percent(), expand = expansion(mult = c(0, 0.15))) +
+  labs(x = "Forecast horizon", y = "Mean absolute percentage error\n2011–2025 target years")
+```
+
+::: notes
+About 1 minute. The score is the average absolute error divided by actual completions, not an error in units. At three years, the model's average signed error is `r scales::percent(filter(errors, model == "Pipeline model", h == 3)$bias, accuracy = 1)`, meaning it tends to over-predict. Small gains at that horizon give little basis for strong confidence. Lower in-sample error or a high R-squared would not have answered this comparison.
+:::
+
+## Model projections through 2028
+
+```{r code-forecast, ref.label=c("setup", "data", "models", "plot-forecast"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-forecast
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.6
+ggplot(filter(annual, year >= 2010), aes(year, completions / 1000)) +
+  geom_line(colour = "grey45", linewidth = 1.1) +
+  geom_pointrange(data = forecast,
+                  aes(year, forecast / 1000, ymin = low / 1000, ymax = high / 1000),
+                  colour = "#0b6b8a", linewidth = 0.9, inherit.aes = FALSE) +
+  geom_text(data = forecast, aes(year, high / 1000, label = number(forecast)),
+            vjust = -0.7, size = 5, inherit.aes = FALSE) +
+  scale_x_continuous(breaks = c(2010, 2015, 2020, 2026, 2028)) +
+  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.12))) +
+  labs(x = NULL, y = "Annual condo completions\n(thousands)")
+```
+
+Blue: end-2025 model projections with **conditional 80% prediction intervals**.
+
+::: notes
+About 1 minute. The point projections are `r paste(number(forecast$forecast), collapse = ", ")` for 2026, 2027 and 2028. The intervals are conventional regression intervals, conditional on the selected specification and its error assumptions. They do not incorporate model-selection uncertainty, data revisions or structural breaks, and should not be presented as calibrated real-time 80% coverage. Coefficients can change when construction technology, project mix, cancellations or financing change.
+:::
+
+## Newer evidence points below the 2026 forecast
+
+```{r code-ytd, ref.label=c("setup", "data", "models", "plot-ytd"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-ytd
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.4
+tibble(estimate = c("End-2025 model", "Jan–Aug 2026 pace"),
+       value = c(forecast_2026, ytd_range$mid)) |>
+  ggplot(aes(value / 1000, estimate)) +
+  geom_segment(aes(x = 0, xend = value / 1000, yend = estimate), colour = "grey75") +
+  geom_point(size = 4, colour = "#0b6b8a") +
+  geom_text(aes(label = number(value)), hjust = -0.3, size = 5.5) +
+  scale_x_continuous(limits = c(0, max(forecast_2026, ytd_range$mid) / 1000 * 1.2)) +
+  labs(x = "2026 completions (thousands)", y = NULL)
+```
+
+`r scales::comma(ytd)` completions through August imply about **`r number(ytd_range$mid)`** for 2026 using the historical median seasonal share.
+
+::: notes
+About 1 minute. Scale the actual January–August count by the median January–August share of full-year completions over 2011–2025. This is an update using partial-year information, not another estimate of the same end-2025 information set. The historical minimum and maximum shares imply a range of `r number(ytd_range$low)`–`r number(ytd_range$high)`, not a confidence interval. Matching the model requires `r scales::percent(required_final_share, accuracy = 1)` of the year's completions in September–December. That late-year share occurred in `r sum(1 - past_ytd_share$share >= required_final_share)` of 15 historical years. The forecast can still be right, but the newer evidence gives a reason to revise expectations.
+:::
+
+## Takeaways
+
+- A larger construction pipeline is informative about future supply, but its size alone does not specify delivery dates.
+- The pipeline model improves the historical benchmark most at one- and two-year horizons.
+- Later evidence and the three-year overprediction pattern qualify the projections. A useful forecast should be open to revision.
+
+::: notes
+About 45 seconds. Answer the predictive question and distinguish it from the unresolved causal question. These regressions do not identify how a policy that raises starts would change completions. The concrete contribution is a benchmarked forecast, its horizon dependence and a transparent update when new observations arrive.
+:::
+
+## Backup: Sources {.smaller}
+
+- CMHC, [Housing Supply Report, April 2023](https://assets.cmhc-schl.gc.ca/sites/cmhc/professional/housing-markets-data-and-research/market-reports/housing-supply-report/housing-supply-report-2023-04-en.pdf), Vancouver section, pp. 15–16: new starts and longer construction times both contributed to the growing pipeline.
+- CMHC, [Starts and Completions Survey methodology](https://www.cmhc-schl.gc.ca/professionals/housing-markets-data-and-research/housing-research/surveys/methods/methodologies-starts-completions-market-absorption-survey): definitions of starts, completions, intended market and adjustments.
+- CMHC, [Housing Market Information Portal](https://www03.cmhc-schl.gc.ca/hmip-pimh/en): Vancouver CMA (`59933`), monthly Starts and Completions Survey by intended market. Accessed through the `cmhc` R package on October 15, 2026.
+- [Supplied snapshot and extraction](example_data/README.md): January 1990–August 2026. All analysis uses this fixed vintage.
+
+## Backup: Analytical decisions
+
+- **Stock versus flow:** use December under construction and summed annual starts and completions.
+- **No incomplete training year:** 2026 informs the update, while model fitting stops in 2025.
+- **Historical test:** target outcomes are excluded from fitting. Revised historical data and specification selection limit its independence.
+- **Uncertainty:** report conditional intervals, the benchmark comparison and the direction of historical errors.
+
+## Backup: AI use
+
+- **Starting material:** the instructor's existing condo-completions analysis, specification and slides.
+- **Assistance:** Codex helped focus the predictive question, adapt the R code and qualify the interpretation.
+- **Accountability:** presenters must explain forecast origins, lagged predictors, the benchmark and the limits of prediction intervals.
+- **Individual understanding:** either presenter should be able to identify which years enter a three-year forecast of 2025.

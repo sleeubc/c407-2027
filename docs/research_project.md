@@ -116,11 +116,16 @@ If you compare two census years, check deck 12 first: vector codes, tract bounda
 
 ## Example presentations
 
-Each example fits the 10-minute limit: a thesis, seven or eight slides of evidence, and backup slides for questions. Open the speaker notes (press S) for timing, what to say, and where the two speakers hand over. Click the small **Code** link in a slide's top-right corner to see all the code behind that slide, from the raw data to the chart, with line numbers for questions.
+The examples are designed for a 10-minute talk, with a thesis, focused evidence and backup slides for questions. They show different ways to make a contribution: a descriptive finding, a measurement check, a forecast, or a comparison of competing explanations. The quality of the question and the evidence matters more than the complexity of the method. Open the speaker notes (press S) for timing and interpretation. Click the small **Code** link in a slide's top-right corner to see the analysis behind that result.
 
 - [Did the Canada Line raise house prices?](example_skytrain.html) Analysis of course data, with the full set of backup slides, including AI use. The `.qmd` that produces it shows how code and slides fit together.
 - [The Value of W](example_west_side.html) A Vancouver paper that began as an in-class presentation by four UBC Sauder undergraduates.
 - [Big cities do not pay top healthcare workers more](example_ability_sorting.html) A published finding from 2000 data, retested with 2024 U.S. data. Its design compares two explanations that predict different things.
+- [Where did theft rise?](example_vancouver_crime.html) A citywide increase decomposed by location. Shows how a focused descriptive question can produce a useful contribution, while leaving the cause unresolved.
+- [Is storefront recovery real?](example_storefronts.html) Tests whether falling vacancy survives changes in survey coverage and the vacancy definition. Shows why comparable observations and clear denominators matter.
+- [What will the pipeline deliver?](example_condo_completions.html) Tests whether construction data improve completion forecasts over a simple benchmark, then considers newer evidence. Shows how to evaluate prediction without claiming causation.
+
+The last three examples include [fixed data snapshots and rendering instructions](example_data/README.md). Their code renders without access to another project folder. These are examples of analytical judgment, not a required research workflow. Reproducing one is useful practice; a project using it as a starting point should explain its own question and contribution.
 
 ## Resources
 

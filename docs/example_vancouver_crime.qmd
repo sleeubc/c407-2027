@@ -1,0 +1,292 @@
+---
+title: "Where Did Theft Rise?"
+subtitle: "A few blocks and Vancouver's citywide trend"
+author: "COMM 407 example presentation"
+resources:
+  - example_data/
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    footer: "VPD GeoDASH · October 2026 snapshot · Reports, not all offences"
+    code-fold: true
+    code-summary: "Code"
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+library(tidyverse)
+library(ggrepel)
+theme_set(theme_minimal(base_size = 19) +
+            theme(legend.position = "top", legend.title = element_blank(),
+                  panel.grid.minor = element_blank()))
+```
+
+```{r}
+#| label: data
+#| include: false
+# Public incident records, with unused fields removed. Provenance and the
+# extraction code are in docs/example_data/README.md and prepare_snapshots.R.
+crime <- read_csv("docs/example_data/vancouver_crime_2003_2025.csv.gz",
+                  show_col_types = FALSE) |>
+  rename_with(str_to_lower) |>
+  filter(!str_starts(type, "Vehicle Collision")) |>
+  mutate(
+    block = if_else(is.na(hundred_block) | str_trim(hundred_block) == "",
+                    "Unlocated", str_squish(hundred_block)),
+    area = replace_na(neighbourhood, "Unknown"),
+    area = if_else(area == "Central Business District", "Downtown", area)
+  )
+stopifnot(setequal(unique(crime$year), 2003:2025), !anyNA(crime$type))
+theft <- filter(crime, type == "Other Theft")
+before_years <- 2017:2019
+after_years <- 2023:2025
+```
+
+```{r}
+#| label: summary
+#| include: false
+# Compare equal three-year periods. Their totals have the same percentage
+# change as their annual averages, without treating 2020 as a normal baseline.
+block_change <- theft |>
+  filter(year %in% c(before_years, after_years)) |>
+  mutate(period = if_else(year %in% before_years, "before", "after")) |>
+  count(area, block, period) |>
+  pivot_wider(names_from = period, values_from = n, values_fill = 0) |>
+  mutate(change = after - before)
+city_change <- summarize(block_change, before = sum(before),
+                         after = sum(after), change = sum(change))
+# Choose the largest observed increases. This is an accounting exercise,
+# not a prediction or an estimate of what would happen if these sites closed.
+top_two <- block_change |>
+  filter(block != "Unlocated") |>
+  arrange(desc(change), area, block) |>
+  slice_head(n = 2)
+top_share <- sum(top_two$change) / city_change$change
+theft <- theft |>
+  left_join(mutate(select(top_two, area, block), top_two = TRUE),
+            by = c("area", "block"), relationship = "many-to-one") |>
+  mutate(top_two = replace_na(top_two, FALSE))
+stopifnot(nrow(theft) == sum(crime$type == "Other Theft"))
+rest_change <- block_change |>
+  anti_join(top_two, by = c("area", "block")) |>
+  summarize(change = sum(after) / sum(before) - 1)
+annual <- bind_rows(
+  theft |> count(year, name = "incidents") |> mutate(sample = "Whole city"),
+  theft |> filter(!top_two) |> count(year, name = "incidents") |>
+    mutate(sample = "All other blocks")
+) |>
+  mutate(index = incidents / mean(incidents[year %in% before_years]) * 100,
+         .by = sample)
+# Unknown addresses stay in the denominator, but cannot be a hotspot.
+# The ten leading blocks can differ from year to year.
+concentration <- theft |>
+  count(year, area, block) |>
+  summarize(
+    share = sum(head(sort(n[block != "Unlocated"], decreasing = TRUE), 10)) / sum(n),
+    unlocated = sum(n[block == "Unlocated"]), .by = year
+  )
+period_sensitivity <- tibble(start = c(2017L, 2018L, 2019L), end = 2025L) |>
+  rowwise() |>
+  mutate(
+    total_change = sum(theft$year == end) - sum(theft$year == start),
+    top_change = sum(theft$year == end & theft$top_two) -
+      sum(theft$year == start & theft$top_two),
+    share = top_change / total_change
+  ) |>
+  ungroup()
+```
+
+## Thesis
+
+```{r code-thesis, ref.label=c("setup", "data", "summary"), eval=FALSE}
+```
+
+::: {.key-point}
+Two hundred-block locations account for `r scales::percent(top_share, accuracy = 1)` of the net increase in Vancouver's reported **Other Theft** between 2017–19 and 2023–25.
+:::
+
+**Question:** Is the increase spread across the city or concentrated at a few locations?
+
+**Why care?** A citywide total can suggest a very different response from a rise concentrated at particular sites.
+
+::: notes
+About 45 seconds. State the answer first. “Hundred block” means a location such as 31XX Grandview Highway, not an individual store. The percentage is a share of the net citywide increase, not a share of all theft and not a causal effect. Speaker 1 can present through the block comparison; Speaker 2 can present the checks and conclusion.
+:::
+
+## What this project adds
+
+- **What is known:** VPD reports rising theft counts alongside falling vehicle-related theft in 2021–25.
+- **Contribution:** identify which blocks account for the change, then check whether concentration also rises year by year.
+- **Data:** VPD GeoDASH, 2003–2025. The main comparison uses three-year periods before and after the pandemic disruption.
+- **Scope:** one recorded category, **Other Theft**. It does not cover all theft or all crime.
+
+::: notes
+About 1 minute. VPD's Crime Incident and Crime Rate Statistics, 2021–2025, show higher Theft counts and lower motor-vehicle and theft-from-auto counts over that period: https://vpd.ca/wp-content/uploads/2026/01/crime-rate-2021-2025.pdf. That report's categories and January 2026 extraction differ from our October 2026 GeoDASH snapshot, so we use it for context and calculate all results from one consistent extract. This is an original analysis of a specific question, not a claim that nobody has studied crime concentration. The source all-years snapshot omitted 2022; the supplied extract adds that year exactly once from VPD's single-year file. We exclude partial 2026. GeoDASH definitions: https://geodash.vpd.ca/opendata/.
+:::
+
+## Theft categories tell different stories
+
+```{r code-types, ref.label=c("setup", "data", "plot-types"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-types
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.8
+crime |>
+  filter(type %in% c("Other Theft", "Theft from Vehicle", "Theft of Vehicle")) |>
+  count(year, type) |>
+  ggplot(aes(year, n, colour = type)) +
+  geom_line(linewidth = 1.1) +
+  scale_colour_manual(values = c("#c9283e", "#0b6b8a", "#6f7b83")) +
+  scale_y_continuous(labels = scales::label_comma(), limits = c(0, NA)) +
+  labs(x = NULL, y = "Reported incidents per year")
+```
+
+::: notes
+About 1 minute. Other Theft has a different recent trajectory from vehicle-related theft. This motivates looking within the rising category rather than treating “crime” as one outcome. These are incident counts, not resident risk rates. No population denominator is needed to ask where a change in counts occurred. The chart shows the full historical window so the comparison periods are visible in context.
+:::
+
+## Two blocks account for most of the increase
+
+```{r code-blocks, ref.label=c("setup", "data", "summary", "plot-blocks"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-blocks
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.8
+block_change |>
+  arrange(desc(change), area, block) |>
+  slice_head(n = 6) |>
+  mutate(label = str_c(block, "\n", area), label = fct_reorder(label, change),
+         highlight = block %in% top_two$block) |>
+  ggplot(aes(change, label, fill = highlight)) +
+  geom_col(width = 0.65) +
+  geom_text(aes(label = scales::comma(change)), hjust = -0.15, size = 5) +
+  scale_fill_manual(values = c(`TRUE` = "#0b6b8a", `FALSE` = "grey70"), guide = "none") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.18))) +
+  labs(x = "Additional reports: 2023–25 total minus 2017–19 total", y = NULL) +
+  theme(panel.grid.major.y = element_blank(), axis.text.y = element_text(size = 14))
+```
+
+::: notes
+About 1.5 minutes. The six largest positive changes are shown, selected by a stated rule. The first two contribute `r scales::comma(sum(top_two$change))` of the net `r scales::comma(city_change$change)` additional reports. Some other blocks decline, so this is a decomposition of the net change. The underlying source called these retail locations, but the analysis does not identify an individual store or verify which business reported each incident. That distinction matters for the interpretation.
+:::
+
+## The rest of the city rose much less
+
+```{r code-rest, ref.label=c("setup", "data", "summary", "plot-rest"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-rest
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.6
+annual |>
+  filter(year >= 2010) |>
+  ggplot(aes(year, index, colour = sample)) +
+  geom_hline(yintercept = 100, colour = "grey75") +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2) +
+  scale_colour_manual(values = c("All other blocks" = "#0b6b8a", "Whole city" = "#c9283e")) +
+  labs(x = NULL, y = "Reported Other Theft\n2017–19 annual average = 100")
+```
+
+The three-year total rose **`r scales::percent(city_change$after / city_change$before - 1, accuracy = 0.1)` citywide**, versus **`r scales::percent(rest_change$change, accuracy = 0.1)` outside the two blocks**.
+
+::: notes
+About 1 minute. This checks the alternative that a citywide increase simply reflects similarly rising reports everywhere. It does not: removing two locations substantially changes the trend. There is still an increase elsewhere, and individual locations can differ greatly from this remainder. Both lines use their own 2017–19 mean. Removing reports is an accounting comparison, not a policy simulation. The two blocks were selected using the full comparison period.
+:::
+
+## Concentration rises across several years
+
+```{r code-concentration, ref.label=c("setup", "data", "summary", "plot-concentration"), eval=FALSE}
+```
+
+```{r}
+#| label: plot-concentration
+#| echo: false
+#| fig-width: 11
+#| fig-height: 4.8
+ggplot(concentration, aes(year, share)) +
+  geom_line(linewidth = 1.1, colour = "#0b6b8a") +
+  geom_point(size = 2.5, colour = "#0b6b8a") +
+  scale_y_continuous(labels = scales::label_percent(), limits = c(0, NA)) +
+  labs(x = NULL, y = "Share of all Other Theft reports\nin each year's ten leading blocks")
+```
+
+::: notes
+About 1 minute. This uses all years and reselects the ten leading blocks each year, rather than relying on just two endpoints. Their share is `r scales::percent(min(concentration$share[concentration$year >= 2022]), accuracy = 1)`–`r scales::percent(max(concentration$share[concentration$year >= 2022]), accuracy = 1)` in 2022–2025. It confirms a concentration pattern but is not an independent dataset. Unlocated records remain in the denominator and never count as a hotspot. There are `r sum(concentration$unlocated)` such records in the full series.
+:::
+
+## Concentrated reports have several explanations
+
+| Explanation | What this analysis establishes |
+|---|---|
+| Similar growth throughout the city | The large contribution of two blocks weighs against this account |
+| More theft at particular locations | Compatible with the pattern |
+| Changes in detection or reporting | Also compatible with the pattern |
+
+Separating the last two requires additional evidence, such as retailer reporting practices or independent measures of losses.
+
+::: notes
+About 1 minute. A descriptive question can have a strong answer even when the mechanism remains unresolved. The data establish where recorded reports increased. They cannot establish how much underlying offending changed, identify individual stores, or measure a visitor's probability of victimization.
+:::
+
+## Takeaways
+
+::: {.key-point}
+A citywide increase can be driven largely by a few locations.
+:::
+
+- Two blocks account for `r scales::percent(top_share, accuracy = 1)` of the net increase in reported Other Theft.
+- A separate annual concentration measure shows the same broad pattern.
+- The finding directs attention to particular locations and reporting practices. It does not establish why theft reports rose.
+
+::: notes
+About 30 seconds. Return to the research question and stop. The contribution is the spatial accounting and its implication for interpreting the aggregate, not a claim that all crime is falling or that one policy will solve theft.
+:::
+
+## Backup: Sources {.smaller}
+
+- VPD, [Crime Incident and Crime Rate Statistics, 2021–2025](https://vpd.ca/wp-content/uploads/2026/01/crime-rate-2021-2025.pdf): contrasting trends in theft and vehicle-related offences. [Reporting cautions](https://vpd.ca/crime-statistics/).
+- [VPD GeoDASH Open Data](https://geodash.vpd.ca/opendata/): incident records, category definitions and privacy restrictions. Source downloads: October 6, 2026.
+- [Data provenance and extraction](example_data/README.md): the supplied snapshot contains the fields used here and complete years 2003–2025, with 2022 added once.
+
+## Backup: Analytical decisions
+
+- **Outcome:** Other Theft throughout. Vehicle-related theft is a separate category.
+- **Comparison:** 2017–19 versus 2023–25, with all intervening years shown.
+- **Locations:** select the two largest increases and report their share of the net total. Unknown locations stay in citywide totals.
+- **Sensitivity:** using 2017, 2018 or 2019 individually as the baseline and 2025 as the endpoint gives shares of `r paste(scales::percent(period_sensitivity$share, accuracy = 1), collapse = ", ")` for those same two blocks.
+
+::: notes
+This is a retrospective concentration analysis. The sensitivity percentages can exceed 100% if other blocks decline, and unstable percentages are possible when the net citywide change is small. Period sensitivity is not a causal or independent validation test.
+:::
+
+## Backup: AI use
+
+- **Starting material:** the instructor's existing Vancouver crime analysis and slides.
+- **Assistance:** Codex helped focus the question, adapt the R code and draft the explanation.
+- **Accountability:** presenters must be able to explain the period choice, block selection, net-change denominator and limits of police reports.
+- **Individual understanding:** either presenter should be able to reproduce the `r scales::percent(top_share, accuracy = 1)` calculation from the block totals.
