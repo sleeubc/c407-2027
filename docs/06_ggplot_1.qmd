@@ -54,6 +54,7 @@ ggplot() +
 
 ## A small dataset: Kerrisdale in 2017
 
+::: {.small}
 ```{r}
 #| label: kerr17
 library(tidyverse)
@@ -64,6 +65,7 @@ kerr17 <- bca |>
   mutate(price_m = price / 1e6)
 kerr17 |> select(floorarea, price_m, act_use_cat, bedrooms) |> head(4)
 ```
+:::
 
 `kerr17` holds the `r nrow(kerr17)` sales in one Vancouver neighbourhood in one year: few enough to see every point. `price_m` is the price in millions of dollars.
 
@@ -247,7 +249,8 @@ library(ggrepel)
 
 ggplot(kerr17, aes(floorarea, price_m)) +
   geom_point() +
-  geom_text_repel(aes(label = address), data = top8)
+  geom_text_repel(aes(label = address),
+                  data = top8)
 ```
 :::
 

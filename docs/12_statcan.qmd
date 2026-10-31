@@ -199,7 +199,7 @@ A price in 2025 dollars is the price × (CPI in 2025 ÷ CPI in the year of sale)
 
 ```{r}
 #| label: real-plot
-#| fig-height: 3.4
+#| fig-height: 3
 #| code-fold: true
 #| code-summary: "Chart code"
 ggplot(prices, aes(sale_year)) +
@@ -227,7 +227,7 @@ Using Table **34-10-0145-01**:
 ::: {.small}
 ```{r include=params$answers}
 #| label: mortgage
-#| fig-height: 3.2
+#| fig-height: 2.4
 mortgage <- get_cansim("34-10-0145-01")
 mortgage |> count(Date) |> distinct(n)
 

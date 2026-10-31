@@ -40,6 +40,7 @@ knitr::opts_chunk$set(comment = NA)
 
 ## A small tibble to practise on
 
+::: {.small}
 ```{r}
 #| label: toy
 library(tidyverse)
@@ -52,6 +53,7 @@ sales <- tibble(
 )
 sales
 ```
+:::
 
 ## summarise() turns many rows into one
 
@@ -133,7 +135,7 @@ No strata sale is above $1 million, so `Strata Res` has no row, not a row with 0
 
 ## summarise() removes one level of grouping
 
-:::: {.columns}
+:::: {.columns .small}
 ::: {.column width="45%"}
 ```{r}
 #| label: groups-data
@@ -160,7 +162,7 @@ Add `.groups = "drop"` to `summarise()`, or call `ungroup()`, when you are done 
 
 ## group_by() + mutate() keeps every row
 
-:::: {.columns}
+:::: {.columns .small}
 ::: {.column width="40%"}
 ```{r}
 #| label: mutate-data
@@ -182,7 +184,7 @@ sales |>
 
 ## lag() looks at the previous row
 
-:::: {.columns}
+:::: {.columns .small}
 ::: {.column width="45%"}
 ```{r}
 #| label: lag-data

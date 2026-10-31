@@ -103,16 +103,20 @@ Never paste a key into your code, a submission, or an AI chat. Anyone with the k
 ## get_census() needs four choices
 
 ```{r}
-#| label: anatomy
-#| eval: !expr 1:2  # load the packages; don't call get_census()
+#| label: packages
 library(tidyverse)
 library(cancensus)
+```
 
+```{r}
+#| label: anatomy
+#| eval: false
 get_census(
-  dataset = "CA21",               # which census
-  regions = list(CMA = "59933"),  # which area to cover
-  level   = "CSD",                # which units to return
-  vectors = c(total = "v_CA21_4872", chinese = "v_CA21_4881")  # which variables
+  dataset = "CA21",                     # which census
+  regions = list(CMA = "59933"),        # which area to cover
+  level   = "CSD",                      # which units to return
+  vectors = c(total = "v_CA21_4872",    # which variables
+              chinese = "v_CA21_4881")
 )
 ```
 

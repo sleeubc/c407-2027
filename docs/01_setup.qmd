@@ -131,7 +131,7 @@ In the extracted **c407** folder, open the **data** folder.
 :::
 
 ::: {.notes}
-Answer: **E. 5.** `2016_census_pumf_ind.rds`, `2021_census_pumf_ind.rds`, `bca262.rds`, `pindex_w.rds`, and `renter_l.rds`.
+Answer: **C. 3.** `2016_census_pumf_ind.rds`, `2021_census_pumf_ind.rds`, and `bca262.rds`.
 :::
 
 ## Open the c407 folder as a workspace

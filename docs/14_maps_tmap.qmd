@@ -365,7 +365,9 @@ kerr17 <- bca |>
   st_as_sf(coords = c("lon", "lat"), crs = 4326) |>
   st_join(local_areas)
 
-kerr17 |> st_drop_geometry() |> count(name, sort = TRUE)
+kerr17 |>
+  st_drop_geometry() |>
+  count(name, sort = TRUE)
 ```
 
 ```{r}

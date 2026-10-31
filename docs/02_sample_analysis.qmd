@@ -104,8 +104,8 @@ TODO: Confirm the menu path for a new Quarto document in the current Positron re
 
 ## Type and run this document
 
-:::: {.columns style="font-size: 0.72em"}
-::: {.column width="44%"}
+:::: {.columns style="font-size: 0.7em"}
+::: {.column width="48%"}
 ````markdown
 ---
 title: "Home prices in Metro Vancouver"
@@ -127,11 +127,12 @@ avg_price <- bca |>
 ````
 :::
 
-::: {.column width="54%"}
+::: {.column width="50%"}
 ````markdown
 ```{{r}}
 #| label: plot
-avg_price_plot <- ggplot(avg_price, aes(sale_year, avg_price)) +
+avg_price_plot <- ggplot(avg_price,
+                         aes(sale_year, avg_price)) +
   geom_line() +
   geom_point() +
   scale_y_continuous(labels = scales::label_dollar()) +
@@ -205,8 +206,8 @@ TODO: Confirm that the `quarto` command is available in Positron's Terminal with
 
 Type the text between your `data` and `plot` chunks, blank lines included, and render again:
 
-:::: {.columns style="font-size: 0.72em"}
-::: {.column width="44%"}
+:::: {.columns style="font-size: 0.7em"}
+::: {.column width="48%"}
 ````markdown
 ---
 title: "Home prices in Metro Vancouver"
@@ -228,20 +229,23 @@ avg_price <- bca |>
 ````
 :::
 
-::: {.column width="54%"}
+::: {.column width="50%"}
 ````markdown
 ## Average sale prices by year
 
 The chart shows the average sale price in each year,
-from [BC Assessment](https://www.bcassessment.ca) sales data.
+from [BC Assessment](https://www.bcassessment.ca)
+sales data.
 
 - Prices **rose for two decades**, peaked in 2022,
   and have levelled off since.
-- Prices are *nominal*: they are not adjusted for inflation.
+- Prices are *nominal*: they are not adjusted for
+  inflation.
 
 ```{{r}}
 #| label: plot
-avg_price_plot <- ggplot(avg_price, aes(sale_year, avg_price)) +
+avg_price_plot <- ggplot(avg_price,
+                         aes(sale_year, avg_price)) +
   geom_line() +
   geom_point() +
   scale_y_continuous(labels = scales::label_dollar()) +
