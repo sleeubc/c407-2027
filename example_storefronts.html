@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="example_storefronts_files/libs/clipboard/clipboard.min.js"></script>
+<script src="example_storefronts_files/libs/quarto-html/tabby.min.js"></script>
+<script src="example_storefronts_files/libs/quarto-html/popper.min.js"></script>
+<script src="example_storefronts_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="example_storefronts_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="example_storefronts_files/libs/quarto-html/light-border.css" rel="stylesheet">
+<link href="example_storefronts_files/libs/quarto-html/quarto-syntax-highlighting-24c9ef9b3e4aaf5b3b48f1aadffe6ad3.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.7.29">
+
+  <meta name="author" content="COMM 407 example presentation">
+  <title>Is Storefront Recovery Real?</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+  <link rel="stylesheet" href="example_storefronts_files/libs/revealjs/dist/reset.css">
+  <link rel="stylesheet" href="example_storefronts_files/libs/revealjs/dist/reveal.css">
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+      vertical-align: middle;
+    }
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; font-weight: bold; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="example_storefronts_files/libs/revealjs/dist/theme/quarto-01b1f857ec29dee07ad2b9acb6d5523f.css">
+  <link href="example_storefronts_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
+  <link href="example_storefronts_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
+  <link href="example_storefronts_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="example_storefronts_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
+  <style type="text/css">
+    .reveal div.sourceCode {
+      margin: 0;
+      overflow: auto;
+    }
+    .reveal div.hanging-indent {
+      margin-left: 1em;
+      text-indent: -1em;
+    }
+    .reveal .slide:not(.center) {
+      height: 100%;
+    }
+    .reveal .slide.scrollable {
+      overflow-y: auto;
+    }
+    .reveal .footnotes {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .reveal .slide .absolute {
+      position: absolute;
+      display: block;
+    }
+    .reveal .footnotes ol {
+      counter-reset: ol;
+      list-style-type: none; 
+      margin-left: 0;
+    }
+    .reveal .footnotes ol li:before {
+      counter-increment: ol;
+      content: counter(ol) ". "; 
+    }
+    .reveal .footnotes ol li > p:first-child {
+      display: inline-block;
+    }
+    .reveal .slide ul,
+    .reveal .slide ol {
+      margin-bottom: 0.5em;
+    }
+    .reveal .slide ul li,
+    .reveal .slide ol li {
+      margin-top: 0.4em;
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide ul[role="tablist"] li {
+      margin-bottom: 0;
+    }
+    .reveal .slide ul li > *:first-child,
+    .reveal .slide ol li > *:first-child {
+      margin-block-start: 0;
+    }
+    .reveal .slide ul li > *:last-child,
+    .reveal .slide ol li > *:last-child {
+      margin-block-end: 0;
+    }
+    .reveal .slide .columns:nth-child(3) {
+      margin-block-start: 0.8em;
+    }
+    .reveal blockquote {
+      box-shadow: none;
+    }
+    .reveal .tippy-content>* {
+      margin-top: 0.2em;
+      margin-bottom: 0.7em;
+    }
+    .reveal .tippy-content>*:last-child {
+      margin-bottom: 0.2em;
+    }
+    .reveal .slide > img.stretch.quarto-figure-center,
+    .reveal .slide > img.r-stretch.quarto-figure-center {
+      display: block;
+      margin-left: auto;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-left,
+    .reveal .slide > img.r-stretch.quarto-figure-left  {
+      display: block;
+      margin-left: 0;
+      margin-right: auto; 
+    }
+    .reveal .slide > img.stretch.quarto-figure-right,
+    .reveal .slide > img.r-stretch.quarto-figure-right  {
+      display: block;
+      margin-left: auto;
+      margin-right: 0; 
+    }
+  </style>
+</head>
+<body class="quarto-light">
+  <div class="reveal">
+    <div class="slides">
+
+<section id="title-slide" class="quarto-title-block center">
+  <h1 class="title">Is Storefront Recovery Real?</h1>
+  <p class="subtitle">Vacancy and changing survey coverage in Vancouver</p>
+
+<div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+COMM 407 example presentation 
+</div>
+</div>
+</div>
+
+</section>
+<section id="thesis" class="slide level2">
+<h2>Thesis</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-2"><a href=""></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">19</span>) <span class="sc">+</span></span>
+<span id="cb1-3"><a href=""></a>            <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>, <span class="at">legend.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb1-4"><a href=""></a>                  <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>()))</span>
+<span id="cb1-5"><a href=""></a>sample_colours <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"All surveyed records"</span> <span class="ot">=</span> <span class="st">"#6f7b83"</span>, <span class="st">"Same storefronts"</span> <span class="ot">=</span> <span class="st">"#0b6b8a"</span>)</span>
+<span id="cb1-6"><a href=""></a>storefronts <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"docs/example_data/vancouver_storefronts_2020_2026.csv.gz"</span>,</span>
+<span id="cb1-7"><a href=""></a>                       <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-8"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.integer</span>(year_recorded),</span>
+<span id="cb1-9"><a href=""></a>         <span class="at">status =</span> <span class="fu">if_else</span>(general_business_category <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>),</span>
+<span id="cb1-10"><a href=""></a>                          general_business_category, <span class="st">"Occupied"</span>))</span>
+<span id="cb1-11"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>store_id), <span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>status),</span>
+<span id="cb1-12"><a href=""></a>          <span class="fu">setequal</span>(<span class="fu">unique</span>(storefronts<span class="sc">$</span>year), <span class="dv">2020</span><span class="sc">:</span><span class="dv">2026</span>))</span>
+<span id="cb1-13"><a href=""></a><span class="co"># Some IDs identify two records in a year. Do not silently pick one or treat</span></span>
+<span id="cb1-14"><a href=""></a><span class="co"># both as the same physical unit. Exclude those IDs from longitudinal work.</span></span>
+<span id="cb1-15"><a href=""></a>duplicate_ids <span class="ot">&lt;-</span> storefronts <span class="sc">|&gt;</span></span>
+<span id="cb1-16"><a href=""></a>  <span class="fu">count</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb1-17"><a href=""></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb1-18"><a href=""></a>  <span class="fu">distinct</span>(store_id) <span class="sc">|&gt;</span></span>
+<span id="cb1-19"><a href=""></a>  <span class="fu">pull</span>(store_id)</span>
+<span id="cb1-20"><a href=""></a>unique_stores <span class="ot">&lt;-</span> <span class="fu">filter</span>(storefronts, <span class="sc">!</span>store_id <span class="sc">%in%</span> duplicate_ids)</span>
+<span id="cb1-21"><a href=""></a>panel <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb1-22"><a href=""></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(year) <span class="sc">==</span> <span class="dv">7</span>, <span class="at">.by =</span> store_id)</span>
+<span id="cb1-23"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyDuplicated</span>(<span class="fu">select</span>(panel, store_id, year)),</span>
+<span id="cb1-24"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(panel, store_id))<span class="sc">$</span>n <span class="sc">==</span> <span class="dv">7</span>))</span>
+<span id="cb1-25"><a href=""></a>samples <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="st">`</span><span class="at">All surveyed records</span><span class="st">`</span> <span class="ot">=</span> storefronts,</span>
+<span id="cb1-26"><a href=""></a>                     <span class="st">`</span><span class="at">Same storefronts</span><span class="st">`</span> <span class="ot">=</span> panel, <span class="at">.id =</span> <span class="st">"sample"</span>)</span>
+<span id="cb1-27"><a href=""></a>annual <span class="ot">&lt;-</span> samples <span class="sc">|&gt;</span></span>
+<span id="cb1-28"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">records =</span> <span class="fu">n</span>(), <span class="at">occupied =</span> <span class="fu">sum</span>(status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb1-29"><a href=""></a>            <span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb1-30"><a href=""></a>            <span class="at">vacancy_including_uc =</span> <span class="fu">mean</span>(status <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>)),</span>
+<span id="cb1-31"><a href=""></a>            <span class="at">.by =</span> <span class="fu">c</span>(sample, year))</span>
+<span id="cb1-32"><a href=""></a>panel_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"Same storefronts"</span>)</span>
+<span id="cb1-33"><a href=""></a>all_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"All surveyed records"</span>)</span>
+<span id="cb1-34"><a href=""></a>panel_n <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(panel<span class="sc">$</span>store_id)</span>
+<span id="cb1-35"><a href=""></a>transitions <span class="ot">&lt;-</span> panel <span class="sc">|&gt;</span></span>
+<span id="cb1-36"><a href=""></a>  <span class="fu">arrange</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb1-37"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">prev_year =</span> <span class="fu">lag</span>(year), <span class="at">prev_status =</span> <span class="fu">lag</span>(status), <span class="at">.by =</span> store_id) <span class="sc">|&gt;</span></span>
+<span id="cb1-38"><a href=""></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(prev_year))</span>
+<span id="cb1-39"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(transitions<span class="sc">$</span>year <span class="sc">==</span> transitions<span class="sc">$</span>prev_year <span class="sc">+</span> <span class="dv">1</span>),</span>
+<span id="cb1-40"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(transitions, year))<span class="sc">$</span>n <span class="sc">==</span> panel_n))</span>
+<span id="cb1-41"><a href=""></a>flows <span class="ot">&lt;-</span> transitions <span class="sc">|&gt;</span></span>
+<span id="cb1-42"><a href=""></a>  <span class="fu">summarize</span>(</span>
+<span id="cb1-43"><a href=""></a>    <span class="at">became_vacant =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Occupied"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb1-44"><a href=""></a>    <span class="at">filled =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb1-45"><a href=""></a>    <span class="at">repeated_vacancy =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb1-46"><a href=""></a>    <span class="co"># Include movements to/from Vacant UC when checking the stock identity.</span></span>
+<span id="cb1-47"><a href=""></a>    <span class="at">uc_net =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant UC"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span></span>
+<span id="cb1-48"><a href=""></a>      <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant UC"</span>),</span>
+<span id="cb1-49"><a href=""></a>    <span class="at">vacancy_change =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb1-50"><a href=""></a>    <span class="at">.by =</span> year</span>
+<span id="cb1-51"><a href=""></a>  )</span>
+<span id="cb1-52"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(flows<span class="sc">$</span>vacancy_change,</span>
+<span id="cb1-53"><a href=""></a>                          flows<span class="sc">$</span>became_vacant <span class="sc">-</span> flows<span class="sc">$</span>filled <span class="sc">+</span> flows<span class="sc">$</span>uc_net)))</span>
+<span id="cb1-54"><a href=""></a><span class="co"># Check that the longitudinal result is not sensitive to ambiguous IDs.</span></span>
+<span id="cb1-55"><a href=""></a>unique_rates <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb1-56"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>), <span class="at">.by =</span> year) <span class="sc">|&gt;</span></span>
+<span id="cb1-57"><a href=""></a>  <span class="fu">left_join</span>(<span class="fu">select</span>(all_annual, year, <span class="at">all_vacancy =</span> vacancy),</span>
+<span id="cb1-58"><a href=""></a>            <span class="at">by =</span> <span class="st">"year"</span>, <span class="at">relationship =</span> <span class="st">"one-to-one"</span>)</span>
+<span id="cb1-59"><a href=""></a>max_id_effect_pp <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">max</span>(<span class="fu">abs</span>(unique_rates<span class="sc">$</span>vacancy <span class="sc">-</span> unique_rates<span class="sc">$</span>all_vacancy))</span>
+<span id="cb1-60"><a href=""></a>panel_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb1-61"><a href=""></a>panel_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb1-62"><a href=""></a>all_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb1-63"><a href=""></a>all_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="key-point">
+<p>Vancouver’s vacancy decline survives a comparison of the same storefronts: from 10.9% in 2021 to 8.1% in 2026.</p>
+</div>
+<p><strong>Question:</strong> Does falling vacancy reflect improving occupancy or a changing survey?</p>
+<p><strong>Contribution:</strong> track the same units, then examine how vacancies form and fill.</p>
+<aside class="notes">
+<p>About 45 seconds. Say “recovery in occupancy” rather than implying recovery in profits or sales. The result could have gone the other way: a stable panel might have shown no improvement even while the full inventory’s vacancy rate fell. Speaker 1 can present through the same-storefront comparison; Speaker 2 can present the definition check, flows and conclusion.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="why-compare-the-same-storefronts" class="slide level2">
+<h2>Why compare the same storefronts?</h2>
+<ul>
+<li><strong>What is known:</strong> the City’s 2023 report found falling vacancy, with persistent problems in some retail districts.</li>
+<li><strong>The problem:</strong> the inventory adds storefronts over time. A changing sample can change the measured vacancy rate.</li>
+<li><strong>Our test:</strong> compare all records with 7,776 identifiable storefronts surveyed in every year, 2020–2026.</li>
+<li><strong>Meaning of recovery:</strong> a smaller share coded <strong>Vacant</strong>, with <strong>Vacant UC</strong> checked separately.</li>
+</ul>
+<aside class="notes">
+<p>About 1 minute. The June 2023 City memo reports declining vacancy and uneven recovery across retail districts. The December 2023 update, recirculated in April 2024, distinguishes recent and persistent vacancy. Sources: https://vancouver.ca/files/cov/memo-to-council-2023-storefronts-report-june-2023.pdf and https://vancouver.ca/files/cov/2024-04-22-storefront-retail-vacancy-rates.pdf. Our contribution is to assess coverage and transitions in this snapshot through 2026. We do not claim to be the first to use a panel. Vacant UC remains in the denominator throughout.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="survey-coverage-grew-substantially" class="slide level2">
+<h2>Survey coverage grew substantially</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href=""></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb2-2"><a href=""></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">19</span>) <span class="sc">+</span></span>
+<span id="cb2-3"><a href=""></a>            <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>, <span class="at">legend.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb2-4"><a href=""></a>                  <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>()))</span>
+<span id="cb2-5"><a href=""></a>sample_colours <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"All surveyed records"</span> <span class="ot">=</span> <span class="st">"#6f7b83"</span>, <span class="st">"Same storefronts"</span> <span class="ot">=</span> <span class="st">"#0b6b8a"</span>)</span>
+<span id="cb2-6"><a href=""></a>storefronts <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"docs/example_data/vancouver_storefronts_2020_2026.csv.gz"</span>,</span>
+<span id="cb2-7"><a href=""></a>                       <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-8"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.integer</span>(year_recorded),</span>
+<span id="cb2-9"><a href=""></a>         <span class="at">status =</span> <span class="fu">if_else</span>(general_business_category <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>),</span>
+<span id="cb2-10"><a href=""></a>                          general_business_category, <span class="st">"Occupied"</span>))</span>
+<span id="cb2-11"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>store_id), <span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>status),</span>
+<span id="cb2-12"><a href=""></a>          <span class="fu">setequal</span>(<span class="fu">unique</span>(storefronts<span class="sc">$</span>year), <span class="dv">2020</span><span class="sc">:</span><span class="dv">2026</span>))</span>
+<span id="cb2-13"><a href=""></a><span class="co"># Some IDs identify two records in a year. Do not silently pick one or treat</span></span>
+<span id="cb2-14"><a href=""></a><span class="co"># both as the same physical unit. Exclude those IDs from longitudinal work.</span></span>
+<span id="cb2-15"><a href=""></a>duplicate_ids <span class="ot">&lt;-</span> storefronts <span class="sc">|&gt;</span></span>
+<span id="cb2-16"><a href=""></a>  <span class="fu">count</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb2-17"><a href=""></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-18"><a href=""></a>  <span class="fu">distinct</span>(store_id) <span class="sc">|&gt;</span></span>
+<span id="cb2-19"><a href=""></a>  <span class="fu">pull</span>(store_id)</span>
+<span id="cb2-20"><a href=""></a>unique_stores <span class="ot">&lt;-</span> <span class="fu">filter</span>(storefronts, <span class="sc">!</span>store_id <span class="sc">%in%</span> duplicate_ids)</span>
+<span id="cb2-21"><a href=""></a>panel <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb2-22"><a href=""></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(year) <span class="sc">==</span> <span class="dv">7</span>, <span class="at">.by =</span> store_id)</span>
+<span id="cb2-23"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyDuplicated</span>(<span class="fu">select</span>(panel, store_id, year)),</span>
+<span id="cb2-24"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(panel, store_id))<span class="sc">$</span>n <span class="sc">==</span> <span class="dv">7</span>))</span>
+<span id="cb2-25"><a href=""></a>samples <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="st">`</span><span class="at">All surveyed records</span><span class="st">`</span> <span class="ot">=</span> storefronts,</span>
+<span id="cb2-26"><a href=""></a>                     <span class="st">`</span><span class="at">Same storefronts</span><span class="st">`</span> <span class="ot">=</span> panel, <span class="at">.id =</span> <span class="st">"sample"</span>)</span>
+<span id="cb2-27"><a href=""></a>annual <span class="ot">&lt;-</span> samples <span class="sc">|&gt;</span></span>
+<span id="cb2-28"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">records =</span> <span class="fu">n</span>(), <span class="at">occupied =</span> <span class="fu">sum</span>(status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb2-29"><a href=""></a>            <span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb2-30"><a href=""></a>            <span class="at">vacancy_including_uc =</span> <span class="fu">mean</span>(status <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>)),</span>
+<span id="cb2-31"><a href=""></a>            <span class="at">.by =</span> <span class="fu">c</span>(sample, year))</span>
+<span id="cb2-32"><a href=""></a>panel_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"Same storefronts"</span>)</span>
+<span id="cb2-33"><a href=""></a>all_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"All surveyed records"</span>)</span>
+<span id="cb2-34"><a href=""></a>panel_n <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(panel<span class="sc">$</span>store_id)</span>
+<span id="cb2-35"><a href=""></a>transitions <span class="ot">&lt;-</span> panel <span class="sc">|&gt;</span></span>
+<span id="cb2-36"><a href=""></a>  <span class="fu">arrange</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb2-37"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">prev_year =</span> <span class="fu">lag</span>(year), <span class="at">prev_status =</span> <span class="fu">lag</span>(status), <span class="at">.by =</span> store_id) <span class="sc">|&gt;</span></span>
+<span id="cb2-38"><a href=""></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(prev_year))</span>
+<span id="cb2-39"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(transitions<span class="sc">$</span>year <span class="sc">==</span> transitions<span class="sc">$</span>prev_year <span class="sc">+</span> <span class="dv">1</span>),</span>
+<span id="cb2-40"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(transitions, year))<span class="sc">$</span>n <span class="sc">==</span> panel_n))</span>
+<span id="cb2-41"><a href=""></a>flows <span class="ot">&lt;-</span> transitions <span class="sc">|&gt;</span></span>
+<span id="cb2-42"><a href=""></a>  <span class="fu">summarize</span>(</span>
+<span id="cb2-43"><a href=""></a>    <span class="at">became_vacant =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Occupied"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb2-44"><a href=""></a>    <span class="at">filled =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb2-45"><a href=""></a>    <span class="at">repeated_vacancy =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb2-46"><a href=""></a>    <span class="co"># Include movements to/from Vacant UC when checking the stock identity.</span></span>
+<span id="cb2-47"><a href=""></a>    <span class="at">uc_net =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant UC"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span></span>
+<span id="cb2-48"><a href=""></a>      <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant UC"</span>),</span>
+<span id="cb2-49"><a href=""></a>    <span class="at">vacancy_change =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb2-50"><a href=""></a>    <span class="at">.by =</span> year</span>
+<span id="cb2-51"><a href=""></a>  )</span>
+<span id="cb2-52"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(flows<span class="sc">$</span>vacancy_change,</span>
+<span id="cb2-53"><a href=""></a>                          flows<span class="sc">$</span>became_vacant <span class="sc">-</span> flows<span class="sc">$</span>filled <span class="sc">+</span> flows<span class="sc">$</span>uc_net)))</span>
+<span id="cb2-54"><a href=""></a><span class="co"># Check that the longitudinal result is not sensitive to ambiguous IDs.</span></span>
+<span id="cb2-55"><a href=""></a>unique_rates <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb2-56"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>), <span class="at">.by =</span> year) <span class="sc">|&gt;</span></span>
+<span id="cb2-57"><a href=""></a>  <span class="fu">left_join</span>(<span class="fu">select</span>(all_annual, year, <span class="at">all_vacancy =</span> vacancy),</span>
+<span id="cb2-58"><a href=""></a>            <span class="at">by =</span> <span class="st">"year"</span>, <span class="at">relationship =</span> <span class="st">"one-to-one"</span>)</span>
+<span id="cb2-59"><a href=""></a>max_id_effect_pp <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">max</span>(<span class="fu">abs</span>(unique_rates<span class="sc">$</span>vacancy <span class="sc">-</span> unique_rates<span class="sc">$</span>all_vacancy))</span>
+<span id="cb2-60"><a href=""></a>panel_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb2-61"><a href=""></a>panel_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb2-62"><a href=""></a>all_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb2-63"><a href=""></a>all_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb2-64"><a href=""></a>annual <span class="sc">|&gt;</span></span>
+<span id="cb2-65"><a href=""></a>  <span class="fu">select</span>(sample, year, <span class="st">`</span><span class="at">Survey records</span><span class="st">`</span> <span class="ot">=</span> records, <span class="st">`</span><span class="at">Occupied records</span><span class="st">`</span> <span class="ot">=</span> occupied) <span class="sc">|&gt;</span></span>
+<span id="cb2-66"><a href=""></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span><span class="fu">c</span>(sample, year), <span class="at">names_to =</span> <span class="st">"measure"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-67"><a href=""></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(year, value, <span class="at">colour =</span> sample)) <span class="sc">+</span></span>
+<span id="cb2-68"><a href=""></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.1</span>) <span class="sc">+</span></span>
+<span id="cb2-69"><a href=""></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">2.5</span>) <span class="sc">+</span></span>
+<span id="cb2-70"><a href=""></a>  <span class="fu">facet_wrap</span>(<span class="fu">vars</span>(measure)) <span class="sc">+</span></span>
+<span id="cb2-71"><a href=""></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> sample_colours) <span class="sc">+</span></span>
+<span id="cb2-72"><a href=""></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_comma</span>(), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="cn">NA</span>)) <span class="sc">+</span></span>
+<span id="cb2-73"><a href=""></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">2020</span>, <span class="dv">2022</span>, <span class="dv">2024</span>, <span class="dv">2026</span>)) <span class="sc">+</span></span>
+<span id="cb2-74"><a href=""></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Number of records"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+
+<img data-src="example_storefronts_files/figure-revealjs/plot-counts-1.png" width="1056" class="r-stretch"><aside class="notes">
+<p>About 1 minute. The full inventory rises from 8,205 to 9,610 records. Newly appearing records can reflect new units or expanded coverage. A count of occupied storefronts alone therefore does not measure recovery among existing units. The balanced panel excludes all 7 IDs that are duplicated in any year, giving exactly one observation per unit per year.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="vacancy-falls-in-the-same-storefronts-too" class="slide level2">
+<h2>Vacancy falls in the same storefronts too</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb3-2"><a href=""></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">19</span>) <span class="sc">+</span></span>
+<span id="cb3-3"><a href=""></a>            <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>, <span class="at">legend.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb3-4"><a href=""></a>                  <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>()))</span>
+<span id="cb3-5"><a href=""></a>sample_colours <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"All surveyed records"</span> <span class="ot">=</span> <span class="st">"#6f7b83"</span>, <span class="st">"Same storefronts"</span> <span class="ot">=</span> <span class="st">"#0b6b8a"</span>)</span>
+<span id="cb3-6"><a href=""></a>storefronts <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"docs/example_data/vancouver_storefronts_2020_2026.csv.gz"</span>,</span>
+<span id="cb3-7"><a href=""></a>                       <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb3-8"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.integer</span>(year_recorded),</span>
+<span id="cb3-9"><a href=""></a>         <span class="at">status =</span> <span class="fu">if_else</span>(general_business_category <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>),</span>
+<span id="cb3-10"><a href=""></a>                          general_business_category, <span class="st">"Occupied"</span>))</span>
+<span id="cb3-11"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>store_id), <span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>status),</span>
+<span id="cb3-12"><a href=""></a>          <span class="fu">setequal</span>(<span class="fu">unique</span>(storefronts<span class="sc">$</span>year), <span class="dv">2020</span><span class="sc">:</span><span class="dv">2026</span>))</span>
+<span id="cb3-13"><a href=""></a><span class="co"># Some IDs identify two records in a year. Do not silently pick one or treat</span></span>
+<span id="cb3-14"><a href=""></a><span class="co"># both as the same physical unit. Exclude those IDs from longitudinal work.</span></span>
+<span id="cb3-15"><a href=""></a>duplicate_ids <span class="ot">&lt;-</span> storefronts <span class="sc">|&gt;</span></span>
+<span id="cb3-16"><a href=""></a>  <span class="fu">count</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb3-17"><a href=""></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb3-18"><a href=""></a>  <span class="fu">distinct</span>(store_id) <span class="sc">|&gt;</span></span>
+<span id="cb3-19"><a href=""></a>  <span class="fu">pull</span>(store_id)</span>
+<span id="cb3-20"><a href=""></a>unique_stores <span class="ot">&lt;-</span> <span class="fu">filter</span>(storefronts, <span class="sc">!</span>store_id <span class="sc">%in%</span> duplicate_ids)</span>
+<span id="cb3-21"><a href=""></a>panel <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb3-22"><a href=""></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(year) <span class="sc">==</span> <span class="dv">7</span>, <span class="at">.by =</span> store_id)</span>
+<span id="cb3-23"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyDuplicated</span>(<span class="fu">select</span>(panel, store_id, year)),</span>
+<span id="cb3-24"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(panel, store_id))<span class="sc">$</span>n <span class="sc">==</span> <span class="dv">7</span>))</span>
+<span id="cb3-25"><a href=""></a>samples <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="st">`</span><span class="at">All surveyed records</span><span class="st">`</span> <span class="ot">=</span> storefronts,</span>
+<span id="cb3-26"><a href=""></a>                     <span class="st">`</span><span class="at">Same storefronts</span><span class="st">`</span> <span class="ot">=</span> panel, <span class="at">.id =</span> <span class="st">"sample"</span>)</span>
+<span id="cb3-27"><a href=""></a>annual <span class="ot">&lt;-</span> samples <span class="sc">|&gt;</span></span>
+<span id="cb3-28"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">records =</span> <span class="fu">n</span>(), <span class="at">occupied =</span> <span class="fu">sum</span>(status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb3-29"><a href=""></a>            <span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb3-30"><a href=""></a>            <span class="at">vacancy_including_uc =</span> <span class="fu">mean</span>(status <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>)),</span>
+<span id="cb3-31"><a href=""></a>            <span class="at">.by =</span> <span class="fu">c</span>(sample, year))</span>
+<span id="cb3-32"><a href=""></a>panel_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"Same storefronts"</span>)</span>
+<span id="cb3-33"><a href=""></a>all_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"All surveyed records"</span>)</span>
+<span id="cb3-34"><a href=""></a>panel_n <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(panel<span class="sc">$</span>store_id)</span>
+<span id="cb3-35"><a href=""></a>transitions <span class="ot">&lt;-</span> panel <span class="sc">|&gt;</span></span>
+<span id="cb3-36"><a href=""></a>  <span class="fu">arrange</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb3-37"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">prev_year =</span> <span class="fu">lag</span>(year), <span class="at">prev_status =</span> <span class="fu">lag</span>(status), <span class="at">.by =</span> store_id) <span class="sc">|&gt;</span></span>
+<span id="cb3-38"><a href=""></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(prev_year))</span>
+<span id="cb3-39"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(transitions<span class="sc">$</span>year <span class="sc">==</span> transitions<span class="sc">$</span>prev_year <span class="sc">+</span> <span class="dv">1</span>),</span>
+<span id="cb3-40"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(transitions, year))<span class="sc">$</span>n <span class="sc">==</span> panel_n))</span>
+<span id="cb3-41"><a href=""></a>flows <span class="ot">&lt;-</span> transitions <span class="sc">|&gt;</span></span>
+<span id="cb3-42"><a href=""></a>  <span class="fu">summarize</span>(</span>
+<span id="cb3-43"><a href=""></a>    <span class="at">became_vacant =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Occupied"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb3-44"><a href=""></a>    <span class="at">filled =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb3-45"><a href=""></a>    <span class="at">repeated_vacancy =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb3-46"><a href=""></a>    <span class="co"># Include movements to/from Vacant UC when checking the stock identity.</span></span>
+<span id="cb3-47"><a href=""></a>    <span class="at">uc_net =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant UC"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span></span>
+<span id="cb3-48"><a href=""></a>      <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant UC"</span>),</span>
+<span id="cb3-49"><a href=""></a>    <span class="at">vacancy_change =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb3-50"><a href=""></a>    <span class="at">.by =</span> year</span>
+<span id="cb3-51"><a href=""></a>  )</span>
+<span id="cb3-52"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(flows<span class="sc">$</span>vacancy_change,</span>
+<span id="cb3-53"><a href=""></a>                          flows<span class="sc">$</span>became_vacant <span class="sc">-</span> flows<span class="sc">$</span>filled <span class="sc">+</span> flows<span class="sc">$</span>uc_net)))</span>
+<span id="cb3-54"><a href=""></a><span class="co"># Check that the longitudinal result is not sensitive to ambiguous IDs.</span></span>
+<span id="cb3-55"><a href=""></a>unique_rates <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb3-56"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>), <span class="at">.by =</span> year) <span class="sc">|&gt;</span></span>
+<span id="cb3-57"><a href=""></a>  <span class="fu">left_join</span>(<span class="fu">select</span>(all_annual, year, <span class="at">all_vacancy =</span> vacancy),</span>
+<span id="cb3-58"><a href=""></a>            <span class="at">by =</span> <span class="st">"year"</span>, <span class="at">relationship =</span> <span class="st">"one-to-one"</span>)</span>
+<span id="cb3-59"><a href=""></a>max_id_effect_pp <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">max</span>(<span class="fu">abs</span>(unique_rates<span class="sc">$</span>vacancy <span class="sc">-</span> unique_rates<span class="sc">$</span>all_vacancy))</span>
+<span id="cb3-60"><a href=""></a>panel_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb3-61"><a href=""></a>panel_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb3-62"><a href=""></a>all_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb3-63"><a href=""></a>all_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb3-64"><a href=""></a><span class="fu">ggplot</span>(annual, <span class="fu">aes</span>(year, vacancy, <span class="at">colour =</span> sample)) <span class="sc">+</span></span>
+<span id="cb3-65"><a href=""></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.1</span>) <span class="sc">+</span></span>
+<span id="cb3-66"><a href=""></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb3-67"><a href=""></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> sample_colours) <span class="sc">+</span></span>
+<span id="cb3-68"><a href=""></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_percent</span>(), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.14</span>)) <span class="sc">+</span></span>
+<span id="cb3-69"><a href=""></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">2020</span><span class="sc">:</span><span class="dv">2026</span>) <span class="sc">+</span></span>
+<span id="cb3-70"><a href=""></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Share coded Vacant"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+
+<img data-src="example_storefronts_files/figure-revealjs/plot-vacancy-1.png" width="1056" class="r-stretch"><p>From 2021 to 2026: <strong>2.6 percentage points lower</strong> in all records, <strong>2.7 points lower</strong> in the same storefronts.</p>
+<aside class="notes">
+<p>About 1.5 minutes. This is the main test of the alternative explanation. The full sample changes, but the decline also appears within a fixed set of units. That weighs against the claim that the apparent recovery is only a coverage artifact. It does not establish a causal effect of any policy. The panel excludes units that enter or leave the inventory, so it is not representative of every storefront that existed at any time.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="the-result-survives-a-broader-vacancy-definition" class="slide level2">
+<h2>The result survives a broader vacancy definition</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href=""></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb4-2"><a href=""></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">19</span>) <span class="sc">+</span></span>
+<span id="cb4-3"><a href=""></a>            <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>, <span class="at">legend.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb4-4"><a href=""></a>                  <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>()))</span>
+<span id="cb4-5"><a href=""></a>sample_colours <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"All surveyed records"</span> <span class="ot">=</span> <span class="st">"#6f7b83"</span>, <span class="st">"Same storefronts"</span> <span class="ot">=</span> <span class="st">"#0b6b8a"</span>)</span>
+<span id="cb4-6"><a href=""></a>storefronts <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"docs/example_data/vancouver_storefronts_2020_2026.csv.gz"</span>,</span>
+<span id="cb4-7"><a href=""></a>                       <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-8"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.integer</span>(year_recorded),</span>
+<span id="cb4-9"><a href=""></a>         <span class="at">status =</span> <span class="fu">if_else</span>(general_business_category <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>),</span>
+<span id="cb4-10"><a href=""></a>                          general_business_category, <span class="st">"Occupied"</span>))</span>
+<span id="cb4-11"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>store_id), <span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>status),</span>
+<span id="cb4-12"><a href=""></a>          <span class="fu">setequal</span>(<span class="fu">unique</span>(storefronts<span class="sc">$</span>year), <span class="dv">2020</span><span class="sc">:</span><span class="dv">2026</span>))</span>
+<span id="cb4-13"><a href=""></a><span class="co"># Some IDs identify two records in a year. Do not silently pick one or treat</span></span>
+<span id="cb4-14"><a href=""></a><span class="co"># both as the same physical unit. Exclude those IDs from longitudinal work.</span></span>
+<span id="cb4-15"><a href=""></a>duplicate_ids <span class="ot">&lt;-</span> storefronts <span class="sc">|&gt;</span></span>
+<span id="cb4-16"><a href=""></a>  <span class="fu">count</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb4-17"><a href=""></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-18"><a href=""></a>  <span class="fu">distinct</span>(store_id) <span class="sc">|&gt;</span></span>
+<span id="cb4-19"><a href=""></a>  <span class="fu">pull</span>(store_id)</span>
+<span id="cb4-20"><a href=""></a>unique_stores <span class="ot">&lt;-</span> <span class="fu">filter</span>(storefronts, <span class="sc">!</span>store_id <span class="sc">%in%</span> duplicate_ids)</span>
+<span id="cb4-21"><a href=""></a>panel <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb4-22"><a href=""></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(year) <span class="sc">==</span> <span class="dv">7</span>, <span class="at">.by =</span> store_id)</span>
+<span id="cb4-23"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyDuplicated</span>(<span class="fu">select</span>(panel, store_id, year)),</span>
+<span id="cb4-24"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(panel, store_id))<span class="sc">$</span>n <span class="sc">==</span> <span class="dv">7</span>))</span>
+<span id="cb4-25"><a href=""></a>samples <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="st">`</span><span class="at">All surveyed records</span><span class="st">`</span> <span class="ot">=</span> storefronts,</span>
+<span id="cb4-26"><a href=""></a>                     <span class="st">`</span><span class="at">Same storefronts</span><span class="st">`</span> <span class="ot">=</span> panel, <span class="at">.id =</span> <span class="st">"sample"</span>)</span>
+<span id="cb4-27"><a href=""></a>annual <span class="ot">&lt;-</span> samples <span class="sc">|&gt;</span></span>
+<span id="cb4-28"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">records =</span> <span class="fu">n</span>(), <span class="at">occupied =</span> <span class="fu">sum</span>(status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb4-29"><a href=""></a>            <span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb4-30"><a href=""></a>            <span class="at">vacancy_including_uc =</span> <span class="fu">mean</span>(status <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>)),</span>
+<span id="cb4-31"><a href=""></a>            <span class="at">.by =</span> <span class="fu">c</span>(sample, year))</span>
+<span id="cb4-32"><a href=""></a>panel_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"Same storefronts"</span>)</span>
+<span id="cb4-33"><a href=""></a>all_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"All surveyed records"</span>)</span>
+<span id="cb4-34"><a href=""></a>panel_n <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(panel<span class="sc">$</span>store_id)</span>
+<span id="cb4-35"><a href=""></a>transitions <span class="ot">&lt;-</span> panel <span class="sc">|&gt;</span></span>
+<span id="cb4-36"><a href=""></a>  <span class="fu">arrange</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb4-37"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">prev_year =</span> <span class="fu">lag</span>(year), <span class="at">prev_status =</span> <span class="fu">lag</span>(status), <span class="at">.by =</span> store_id) <span class="sc">|&gt;</span></span>
+<span id="cb4-38"><a href=""></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(prev_year))</span>
+<span id="cb4-39"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(transitions<span class="sc">$</span>year <span class="sc">==</span> transitions<span class="sc">$</span>prev_year <span class="sc">+</span> <span class="dv">1</span>),</span>
+<span id="cb4-40"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(transitions, year))<span class="sc">$</span>n <span class="sc">==</span> panel_n))</span>
+<span id="cb4-41"><a href=""></a>flows <span class="ot">&lt;-</span> transitions <span class="sc">|&gt;</span></span>
+<span id="cb4-42"><a href=""></a>  <span class="fu">summarize</span>(</span>
+<span id="cb4-43"><a href=""></a>    <span class="at">became_vacant =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Occupied"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb4-44"><a href=""></a>    <span class="at">filled =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb4-45"><a href=""></a>    <span class="at">repeated_vacancy =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb4-46"><a href=""></a>    <span class="co"># Include movements to/from Vacant UC when checking the stock identity.</span></span>
+<span id="cb4-47"><a href=""></a>    <span class="at">uc_net =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant UC"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span></span>
+<span id="cb4-48"><a href=""></a>      <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant UC"</span>),</span>
+<span id="cb4-49"><a href=""></a>    <span class="at">vacancy_change =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb4-50"><a href=""></a>    <span class="at">.by =</span> year</span>
+<span id="cb4-51"><a href=""></a>  )</span>
+<span id="cb4-52"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(flows<span class="sc">$</span>vacancy_change,</span>
+<span id="cb4-53"><a href=""></a>                          flows<span class="sc">$</span>became_vacant <span class="sc">-</span> flows<span class="sc">$</span>filled <span class="sc">+</span> flows<span class="sc">$</span>uc_net)))</span>
+<span id="cb4-54"><a href=""></a><span class="co"># Check that the longitudinal result is not sensitive to ambiguous IDs.</span></span>
+<span id="cb4-55"><a href=""></a>unique_rates <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb4-56"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>), <span class="at">.by =</span> year) <span class="sc">|&gt;</span></span>
+<span id="cb4-57"><a href=""></a>  <span class="fu">left_join</span>(<span class="fu">select</span>(all_annual, year, <span class="at">all_vacancy =</span> vacancy),</span>
+<span id="cb4-58"><a href=""></a>            <span class="at">by =</span> <span class="st">"year"</span>, <span class="at">relationship =</span> <span class="st">"one-to-one"</span>)</span>
+<span id="cb4-59"><a href=""></a>max_id_effect_pp <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">max</span>(<span class="fu">abs</span>(unique_rates<span class="sc">$</span>vacancy <span class="sc">-</span> unique_rates<span class="sc">$</span>all_vacancy))</span>
+<span id="cb4-60"><a href=""></a>panel_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb4-61"><a href=""></a>panel_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb4-62"><a href=""></a>all_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb4-63"><a href=""></a>all_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb4-64"><a href=""></a>panel_annual <span class="sc">|&gt;</span></span>
+<span id="cb4-65"><a href=""></a>  <span class="fu">select</span>(year, <span class="st">`</span><span class="at">Vacant only</span><span class="st">`</span> <span class="ot">=</span> vacancy, <span class="st">`</span><span class="at">Vacant plus Vacant UC</span><span class="st">`</span> <span class="ot">=</span> vacancy_including_uc) <span class="sc">|&gt;</span></span>
+<span id="cb4-66"><a href=""></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>year, <span class="at">names_to =</span> <span class="st">"definition"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-67"><a href=""></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(year, value, <span class="at">colour =</span> definition)) <span class="sc">+</span></span>
+<span id="cb4-68"><a href=""></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.1</span>) <span class="sc">+</span></span>
+<span id="cb4-69"><a href=""></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb4-70"><a href=""></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Vacant only"</span> <span class="ot">=</span> <span class="st">"#0b6b8a"</span>, <span class="st">"Vacant plus Vacant UC"</span> <span class="ot">=</span> <span class="st">"#c9283e"</span>)) <span class="sc">+</span></span>
+<span id="cb4-71"><a href=""></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_percent</span>(), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.14</span>)) <span class="sc">+</span></span>
+<span id="cb4-72"><a href=""></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">2020</span><span class="sc">:</span><span class="dv">2026</span>) <span class="sc">+</span></span>
+<span id="cb4-73"><a href=""></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="cn">NULL</span>, <span class="at">y =</span> <span class="st">"Share of the same storefronts"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+
+<img data-src="example_storefronts_files/figure-revealjs/plot-definition-1.png" width="1056" class="r-stretch"><aside class="notes">
+<p>About 1 minute. The inventory has a separate Vacant UC category. To see whether moving units between the two vacancy codes could explain the result, combine them. The broader measure still declines after 2021. This is a sensitivity check using the same panel, not an additional independent source. A unit coded Vacant UC is not assumed to be an operating business.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="vacant-units-refill-as-new-vacancies-form" class="slide level2">
+<h2>Vacant units refill as new vacancies form</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb5-2"><a href=""></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">19</span>) <span class="sc">+</span></span>
+<span id="cb5-3"><a href=""></a>            <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>, <span class="at">legend.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb5-4"><a href=""></a>                  <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>()))</span>
+<span id="cb5-5"><a href=""></a>sample_colours <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"All surveyed records"</span> <span class="ot">=</span> <span class="st">"#6f7b83"</span>, <span class="st">"Same storefronts"</span> <span class="ot">=</span> <span class="st">"#0b6b8a"</span>)</span>
+<span id="cb5-6"><a href=""></a>storefronts <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"docs/example_data/vancouver_storefronts_2020_2026.csv.gz"</span>,</span>
+<span id="cb5-7"><a href=""></a>                       <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-8"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.integer</span>(year_recorded),</span>
+<span id="cb5-9"><a href=""></a>         <span class="at">status =</span> <span class="fu">if_else</span>(general_business_category <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>),</span>
+<span id="cb5-10"><a href=""></a>                          general_business_category, <span class="st">"Occupied"</span>))</span>
+<span id="cb5-11"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>store_id), <span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>status),</span>
+<span id="cb5-12"><a href=""></a>          <span class="fu">setequal</span>(<span class="fu">unique</span>(storefronts<span class="sc">$</span>year), <span class="dv">2020</span><span class="sc">:</span><span class="dv">2026</span>))</span>
+<span id="cb5-13"><a href=""></a><span class="co"># Some IDs identify two records in a year. Do not silently pick one or treat</span></span>
+<span id="cb5-14"><a href=""></a><span class="co"># both as the same physical unit. Exclude those IDs from longitudinal work.</span></span>
+<span id="cb5-15"><a href=""></a>duplicate_ids <span class="ot">&lt;-</span> storefronts <span class="sc">|&gt;</span></span>
+<span id="cb5-16"><a href=""></a>  <span class="fu">count</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb5-17"><a href=""></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-18"><a href=""></a>  <span class="fu">distinct</span>(store_id) <span class="sc">|&gt;</span></span>
+<span id="cb5-19"><a href=""></a>  <span class="fu">pull</span>(store_id)</span>
+<span id="cb5-20"><a href=""></a>unique_stores <span class="ot">&lt;-</span> <span class="fu">filter</span>(storefronts, <span class="sc">!</span>store_id <span class="sc">%in%</span> duplicate_ids)</span>
+<span id="cb5-21"><a href=""></a>panel <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb5-22"><a href=""></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(year) <span class="sc">==</span> <span class="dv">7</span>, <span class="at">.by =</span> store_id)</span>
+<span id="cb5-23"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyDuplicated</span>(<span class="fu">select</span>(panel, store_id, year)),</span>
+<span id="cb5-24"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(panel, store_id))<span class="sc">$</span>n <span class="sc">==</span> <span class="dv">7</span>))</span>
+<span id="cb5-25"><a href=""></a>samples <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="st">`</span><span class="at">All surveyed records</span><span class="st">`</span> <span class="ot">=</span> storefronts,</span>
+<span id="cb5-26"><a href=""></a>                     <span class="st">`</span><span class="at">Same storefronts</span><span class="st">`</span> <span class="ot">=</span> panel, <span class="at">.id =</span> <span class="st">"sample"</span>)</span>
+<span id="cb5-27"><a href=""></a>annual <span class="ot">&lt;-</span> samples <span class="sc">|&gt;</span></span>
+<span id="cb5-28"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">records =</span> <span class="fu">n</span>(), <span class="at">occupied =</span> <span class="fu">sum</span>(status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb5-29"><a href=""></a>            <span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb5-30"><a href=""></a>            <span class="at">vacancy_including_uc =</span> <span class="fu">mean</span>(status <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>)),</span>
+<span id="cb5-31"><a href=""></a>            <span class="at">.by =</span> <span class="fu">c</span>(sample, year))</span>
+<span id="cb5-32"><a href=""></a>panel_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"Same storefronts"</span>)</span>
+<span id="cb5-33"><a href=""></a>all_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"All surveyed records"</span>)</span>
+<span id="cb5-34"><a href=""></a>panel_n <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(panel<span class="sc">$</span>store_id)</span>
+<span id="cb5-35"><a href=""></a>transitions <span class="ot">&lt;-</span> panel <span class="sc">|&gt;</span></span>
+<span id="cb5-36"><a href=""></a>  <span class="fu">arrange</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb5-37"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">prev_year =</span> <span class="fu">lag</span>(year), <span class="at">prev_status =</span> <span class="fu">lag</span>(status), <span class="at">.by =</span> store_id) <span class="sc">|&gt;</span></span>
+<span id="cb5-38"><a href=""></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(prev_year))</span>
+<span id="cb5-39"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(transitions<span class="sc">$</span>year <span class="sc">==</span> transitions<span class="sc">$</span>prev_year <span class="sc">+</span> <span class="dv">1</span>),</span>
+<span id="cb5-40"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(transitions, year))<span class="sc">$</span>n <span class="sc">==</span> panel_n))</span>
+<span id="cb5-41"><a href=""></a>flows <span class="ot">&lt;-</span> transitions <span class="sc">|&gt;</span></span>
+<span id="cb5-42"><a href=""></a>  <span class="fu">summarize</span>(</span>
+<span id="cb5-43"><a href=""></a>    <span class="at">became_vacant =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Occupied"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb5-44"><a href=""></a>    <span class="at">filled =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb5-45"><a href=""></a>    <span class="at">repeated_vacancy =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb5-46"><a href=""></a>    <span class="co"># Include movements to/from Vacant UC when checking the stock identity.</span></span>
+<span id="cb5-47"><a href=""></a>    <span class="at">uc_net =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant UC"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span></span>
+<span id="cb5-48"><a href=""></a>      <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant UC"</span>),</span>
+<span id="cb5-49"><a href=""></a>    <span class="at">vacancy_change =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb5-50"><a href=""></a>    <span class="at">.by =</span> year</span>
+<span id="cb5-51"><a href=""></a>  )</span>
+<span id="cb5-52"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(flows<span class="sc">$</span>vacancy_change,</span>
+<span id="cb5-53"><a href=""></a>                          flows<span class="sc">$</span>became_vacant <span class="sc">-</span> flows<span class="sc">$</span>filled <span class="sc">+</span> flows<span class="sc">$</span>uc_net)))</span>
+<span id="cb5-54"><a href=""></a><span class="co"># Check that the longitudinal result is not sensitive to ambiguous IDs.</span></span>
+<span id="cb5-55"><a href=""></a>unique_rates <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb5-56"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>), <span class="at">.by =</span> year) <span class="sc">|&gt;</span></span>
+<span id="cb5-57"><a href=""></a>  <span class="fu">left_join</span>(<span class="fu">select</span>(all_annual, year, <span class="at">all_vacancy =</span> vacancy),</span>
+<span id="cb5-58"><a href=""></a>            <span class="at">by =</span> <span class="st">"year"</span>, <span class="at">relationship =</span> <span class="st">"one-to-one"</span>)</span>
+<span id="cb5-59"><a href=""></a>max_id_effect_pp <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">max</span>(<span class="fu">abs</span>(unique_rates<span class="sc">$</span>vacancy <span class="sc">-</span> unique_rates<span class="sc">$</span>all_vacancy))</span>
+<span id="cb5-60"><a href=""></a>panel_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb5-61"><a href=""></a>panel_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb5-62"><a href=""></a>all_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb5-63"><a href=""></a>all_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb5-64"><a href=""></a>flows <span class="sc">|&gt;</span></span>
+<span id="cb5-65"><a href=""></a>  <span class="fu">select</span>(year, <span class="st">`</span><span class="at">Occupied to vacant</span><span class="st">`</span> <span class="ot">=</span> became_vacant, <span class="st">`</span><span class="at">Vacant to occupied</span><span class="st">`</span> <span class="ot">=</span> filled) <span class="sc">|&gt;</span></span>
+<span id="cb5-66"><a href=""></a>  <span class="fu">pivot_longer</span>(<span class="sc">-</span>year, <span class="at">names_to =</span> <span class="st">"transition"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-67"><a href=""></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(year, value, <span class="at">colour =</span> transition)) <span class="sc">+</span></span>
+<span id="cb5-68"><a href=""></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">1.1</span>) <span class="sc">+</span></span>
+<span id="cb5-69"><a href=""></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb5-70"><a href=""></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Occupied to vacant"</span> <span class="ot">=</span> <span class="st">"#c9283e"</span>, <span class="st">"Vacant to occupied"</span> <span class="ot">=</span> <span class="st">"#0b6b8a"</span>)) <span class="sc">+</span></span>
+<span id="cb5-71"><a href=""></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_percent</span>(), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="cn">NA</span>)) <span class="sc">+</span></span>
+<span id="cb5-72"><a href=""></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">2021</span><span class="sc">:</span><span class="dv">2026</span>) <span class="sc">+</span></span>
+<span id="cb5-73"><a href=""></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Survey year, compared with the preceding spring"</span>, <span class="at">y =</span> <span class="st">"Share of the same storefronts"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+
+<img data-src="example_storefronts_files/figure-revealjs/plot-flows-1.png" width="1056" class="r-stretch"><aside class="notes">
+<p>About 1 minute. Both flows use all 7,776 panel units as the denominator, so they can be compared directly. These are not the probability that a vacant unit fills or that an occupied unit closes. Filling exceeds new vacancies in 4 of six transitions. Movements involving Vacant UC also affect the vacancy stock and are included in the code’s accounting check. Annual snapshots miss openings and closures between surveys.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="some-vacancy-appears-in-consecutive-surveys" class="slide level2">
+<h2>Some vacancy appears in consecutive surveys</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href=""></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb6-2"><a href=""></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">19</span>) <span class="sc">+</span></span>
+<span id="cb6-3"><a href=""></a>            <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>, <span class="at">legend.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb6-4"><a href=""></a>                  <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>()))</span>
+<span id="cb6-5"><a href=""></a>sample_colours <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"All surveyed records"</span> <span class="ot">=</span> <span class="st">"#6f7b83"</span>, <span class="st">"Same storefronts"</span> <span class="ot">=</span> <span class="st">"#0b6b8a"</span>)</span>
+<span id="cb6-6"><a href=""></a>storefronts <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"docs/example_data/vancouver_storefronts_2020_2026.csv.gz"</span>,</span>
+<span id="cb6-7"><a href=""></a>                       <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-8"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">as.integer</span>(year_recorded),</span>
+<span id="cb6-9"><a href=""></a>         <span class="at">status =</span> <span class="fu">if_else</span>(general_business_category <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>),</span>
+<span id="cb6-10"><a href=""></a>                          general_business_category, <span class="st">"Occupied"</span>))</span>
+<span id="cb6-11"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>store_id), <span class="sc">!</span><span class="fu">anyNA</span>(storefronts<span class="sc">$</span>status),</span>
+<span id="cb6-12"><a href=""></a>          <span class="fu">setequal</span>(<span class="fu">unique</span>(storefronts<span class="sc">$</span>year), <span class="dv">2020</span><span class="sc">:</span><span class="dv">2026</span>))</span>
+<span id="cb6-13"><a href=""></a><span class="co"># Some IDs identify two records in a year. Do not silently pick one or treat</span></span>
+<span id="cb6-14"><a href=""></a><span class="co"># both as the same physical unit. Exclude those IDs from longitudinal work.</span></span>
+<span id="cb6-15"><a href=""></a>duplicate_ids <span class="ot">&lt;-</span> storefronts <span class="sc">|&gt;</span></span>
+<span id="cb6-16"><a href=""></a>  <span class="fu">count</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb6-17"><a href=""></a>  <span class="fu">filter</span>(n <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-18"><a href=""></a>  <span class="fu">distinct</span>(store_id) <span class="sc">|&gt;</span></span>
+<span id="cb6-19"><a href=""></a>  <span class="fu">pull</span>(store_id)</span>
+<span id="cb6-20"><a href=""></a>unique_stores <span class="ot">&lt;-</span> <span class="fu">filter</span>(storefronts, <span class="sc">!</span>store_id <span class="sc">%in%</span> duplicate_ids)</span>
+<span id="cb6-21"><a href=""></a>panel <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb6-22"><a href=""></a>  <span class="fu">filter</span>(<span class="fu">n_distinct</span>(year) <span class="sc">==</span> <span class="dv">7</span>, <span class="at">.by =</span> store_id)</span>
+<span id="cb6-23"><a href=""></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">anyDuplicated</span>(<span class="fu">select</span>(panel, store_id, year)),</span>
+<span id="cb6-24"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(panel, store_id))<span class="sc">$</span>n <span class="sc">==</span> <span class="dv">7</span>))</span>
+<span id="cb6-25"><a href=""></a>samples <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="st">`</span><span class="at">All surveyed records</span><span class="st">`</span> <span class="ot">=</span> storefronts,</span>
+<span id="cb6-26"><a href=""></a>                     <span class="st">`</span><span class="at">Same storefronts</span><span class="st">`</span> <span class="ot">=</span> panel, <span class="at">.id =</span> <span class="st">"sample"</span>)</span>
+<span id="cb6-27"><a href=""></a>annual <span class="ot">&lt;-</span> samples <span class="sc">|&gt;</span></span>
+<span id="cb6-28"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">records =</span> <span class="fu">n</span>(), <span class="at">occupied =</span> <span class="fu">sum</span>(status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb6-29"><a href=""></a>            <span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb6-30"><a href=""></a>            <span class="at">vacancy_including_uc =</span> <span class="fu">mean</span>(status <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vacant"</span>, <span class="st">"Vacant UC"</span>)),</span>
+<span id="cb6-31"><a href=""></a>            <span class="at">.by =</span> <span class="fu">c</span>(sample, year))</span>
+<span id="cb6-32"><a href=""></a>panel_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"Same storefronts"</span>)</span>
+<span id="cb6-33"><a href=""></a>all_annual <span class="ot">&lt;-</span> <span class="fu">filter</span>(annual, sample <span class="sc">==</span> <span class="st">"All surveyed records"</span>)</span>
+<span id="cb6-34"><a href=""></a>panel_n <span class="ot">&lt;-</span> <span class="fu">n_distinct</span>(panel<span class="sc">$</span>store_id)</span>
+<span id="cb6-35"><a href=""></a>transitions <span class="ot">&lt;-</span> panel <span class="sc">|&gt;</span></span>
+<span id="cb6-36"><a href=""></a>  <span class="fu">arrange</span>(store_id, year) <span class="sc">|&gt;</span></span>
+<span id="cb6-37"><a href=""></a>  <span class="fu">mutate</span>(<span class="at">prev_year =</span> <span class="fu">lag</span>(year), <span class="at">prev_status =</span> <span class="fu">lag</span>(status), <span class="at">.by =</span> store_id) <span class="sc">|&gt;</span></span>
+<span id="cb6-38"><a href=""></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(prev_year))</span>
+<span id="cb6-39"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">all</span>(transitions<span class="sc">$</span>year <span class="sc">==</span> transitions<span class="sc">$</span>prev_year <span class="sc">+</span> <span class="dv">1</span>),</span>
+<span id="cb6-40"><a href=""></a>          <span class="fu">all</span>((<span class="fu">count</span>(transitions, year))<span class="sc">$</span>n <span class="sc">==</span> panel_n))</span>
+<span id="cb6-41"><a href=""></a>flows <span class="ot">&lt;-</span> transitions <span class="sc">|&gt;</span></span>
+<span id="cb6-42"><a href=""></a>  <span class="fu">summarize</span>(</span>
+<span id="cb6-43"><a href=""></a>    <span class="at">became_vacant =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Occupied"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb6-44"><a href=""></a>    <span class="at">filled =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Occupied"</span>),</span>
+<span id="cb6-45"><a href=""></a>    <span class="at">repeated_vacancy =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb6-46"><a href=""></a>    <span class="co"># Include movements to/from Vacant UC when checking the stock identity.</span></span>
+<span id="cb6-47"><a href=""></a>    <span class="at">uc_net =</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant UC"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span></span>
+<span id="cb6-48"><a href=""></a>      <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span> <span class="sc">&amp;</span> status <span class="sc">==</span> <span class="st">"Vacant UC"</span>),</span>
+<span id="cb6-49"><a href=""></a>    <span class="at">vacancy_change =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>) <span class="sc">-</span> <span class="fu">mean</span>(prev_status <span class="sc">==</span> <span class="st">"Vacant"</span>),</span>
+<span id="cb6-50"><a href=""></a>    <span class="at">.by =</span> year</span>
+<span id="cb6-51"><a href=""></a>  )</span>
+<span id="cb6-52"><a href=""></a><span class="fu">stopifnot</span>(<span class="fu">isTRUE</span>(<span class="fu">all.equal</span>(flows<span class="sc">$</span>vacancy_change,</span>
+<span id="cb6-53"><a href=""></a>                          flows<span class="sc">$</span>became_vacant <span class="sc">-</span> flows<span class="sc">$</span>filled <span class="sc">+</span> flows<span class="sc">$</span>uc_net)))</span>
+<span id="cb6-54"><a href=""></a><span class="co"># Check that the longitudinal result is not sensitive to ambiguous IDs.</span></span>
+<span id="cb6-55"><a href=""></a>unique_rates <span class="ot">&lt;-</span> unique_stores <span class="sc">|&gt;</span></span>
+<span id="cb6-56"><a href=""></a>  <span class="fu">summarize</span>(<span class="at">vacancy =</span> <span class="fu">mean</span>(status <span class="sc">==</span> <span class="st">"Vacant"</span>), <span class="at">.by =</span> year) <span class="sc">|&gt;</span></span>
+<span id="cb6-57"><a href=""></a>  <span class="fu">left_join</span>(<span class="fu">select</span>(all_annual, year, <span class="at">all_vacancy =</span> vacancy),</span>
+<span id="cb6-58"><a href=""></a>            <span class="at">by =</span> <span class="st">"year"</span>, <span class="at">relationship =</span> <span class="st">"one-to-one"</span>)</span>
+<span id="cb6-59"><a href=""></a>max_id_effect_pp <span class="ot">&lt;-</span> <span class="dv">100</span> <span class="sc">*</span> <span class="fu">max</span>(<span class="fu">abs</span>(unique_rates<span class="sc">$</span>vacancy <span class="sc">-</span> unique_rates<span class="sc">$</span>all_vacancy))</span>
+<span id="cb6-60"><a href=""></a>panel_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb6-61"><a href=""></a>panel_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(panel_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb6-62"><a href=""></a>all_start <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2021</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb6-63"><a href=""></a>all_end <span class="ot">&lt;-</span> <span class="fu">filter</span>(all_annual, year <span class="sc">==</span> <span class="dv">2026</span>)<span class="sc">$</span>vacancy</span>
+<span id="cb6-64"><a href=""></a><span class="fu">ggplot</span>(flows, <span class="fu">aes</span>(year, repeated_vacancy)) <span class="sc">+</span></span>
+<span id="cb6-65"><a href=""></a>  <span class="fu">geom_col</span>(<span class="at">fill =</span> <span class="st">"#0b6b8a"</span>, <span class="at">width =</span> <span class="fl">0.65</span>) <span class="sc">+</span></span>
+<span id="cb6-66"><a href=""></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> scales<span class="sc">::</span><span class="fu">percent</span>(repeated_vacancy, <span class="at">accuracy =</span> <span class="fl">0.1</span>)),</span>
+<span id="cb6-67"><a href=""></a>            <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.4</span>, <span class="at">size =</span> <span class="dv">5</span>) <span class="sc">+</span></span>
+<span id="cb6-68"><a href=""></a>  <span class="fu">scale_y_continuous</span>(<span class="at">labels =</span> scales<span class="sc">::</span><span class="fu">label_percent</span>(), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="fl">0.10</span>)) <span class="sc">+</span></span>
+<span id="cb6-69"><a href=""></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">2021</span><span class="sc">:</span><span class="dv">2026</span>) <span class="sc">+</span></span>
+<span id="cb6-70"><a href=""></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Survey year"</span>, <span class="at">y =</span> <span class="st">"Share vacant in both this</span><span class="sc">\n</span><span class="st">and the previous survey"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+
+<img data-src="example_storefronts_files/figure-revealjs/plot-persistence-1.png" width="1056" class="r-stretch"><p>In 2026, <strong>6.0%</strong> of panel units were vacant in two consecutive surveys.</p>
+<aside class="notes">
+<p>About 1 minute. Recovery is incomplete. But two vacant observations do not prove continuous vacancy between surveys. Call this repeated vacancy rather than a measured year-long vacancy spell. The denominator remains all panel units, not only currently vacant units.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="what-occupancy-cannot-establish" class="slide level2">
+<h2>What occupancy cannot establish</h2>
+<ul>
+<li>A balanced panel describes units that remain in the survey. Demolitions, new construction and coverage changes can affect the rest of the city differently.</li>
+<li>Annual spring observations miss short spells and seasonal changes.</li>
+<li>Occupancy does not reveal revenue, rents, profitability or why a unit became vacant.</li>
+</ul>
+<div class="key-point">
+<p>The evidence supports recovery in occupancy among continuing storefronts. It does not establish a recovery in business profitability.</p>
+</div>
+<aside class="notes">
+<p>About 45 seconds. The first caveat is the tradeoff in our main test: comparability improves, while coverage narrows. The conclusion should be scoped to what the panel and the full-sample comparison jointly establish.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="takeaways" class="slide level2">
+<h2>Takeaways</h2>
+<ul>
+<li>The vacancy decline remains when we follow the same units and broaden the vacancy definition.</li>
+<li>Comparing openings and new vacancies helps explain the change in the stock of vacant units.</li>
+<li>Substantial repeated vacancy remains. “Retail health” needs a more precise definition than a rising count of occupied records.</li>
+</ul>
+<aside class="notes">
+<p>About 30 seconds. Answer the original question directly: the improvement in occupancy is not explained away by the survey’s growing coverage. The analysis does not identify what caused the improvement.</p>
+<style type="text/css">
+        span.MJX_Assistive_MathML {
+          position:absolute!important;
+          clip: rect(1px, 1px, 1px, 1px);
+          padding: 1px 0 0 0!important;
+          border: 0!important;
+          height: 1px!important;
+          width: 1px!important;
+          overflow: hidden!important;
+          display:block!important;
+      }</style></aside>
+</section>
+<section id="backup-sources" class="slide level2 smaller">
+<h2>Backup: Sources</h2>
+<ul>
+<li>City of Vancouver, <a href="https://vancouver.ca/files/cov/memo-to-council-2023-storefronts-report-june-2023.pdf">2023 Storefronts Inventory memo</a>, June 13, 2023: reported vacancy trends and the inventory’s purpose.</li>
+<li>City of Vancouver, <a href="https://vancouver.ca/files/cov/2024-04-22-storefront-retail-vacancy-rates.pdf">Storefront retail vacancy rates</a>, April 22, 2024: the December 2023 update distinguishing recent and persistent vacancy.</li>
+<li><a href="https://opendata.vancouver.ca/explore/dataset/storefronts-inventory/">Storefronts Inventory open data</a>, snapshot October 4, 2026. <a href="example_data/README.md">Supplied data and extraction</a>.</li>
+</ul>
+</section>
+<section id="backup-analytical-decisions" class="slide level2">
+<h2>Backup: Analytical decisions</h2>
+<ul>
+<li><strong>Comparable units:</strong> exclude 7 ambiguous IDs, then retain units recorded in all seven years.</li>
+<li><strong>No arbitrary deduplication:</strong> all records remain in the full-sample series. Excluding ambiguous IDs changes its vacancy rate by at most 0.033 percentage points.</li>
+<li><strong>Definition check:</strong> show vacancy with and without Vacant UC, keeping the denominator fixed.</li>
+<li><strong>Flow check:</strong> reconcile the change in vacancy with all transitions, including movements to and from Vacant UC.</li>
+</ul>
+</section>
+<section id="backup-ai-use" class="slide level2">
+<h2>Backup: AI use</h2>
+<ul>
+<li><strong>Starting material:</strong> the instructor’s existing storefront analysis and slides.</li>
+<li><strong>Assistance:</strong> Codex helped focus the question, adapt the R code and draft the explanation.</li>
+<li><strong>Accountability:</strong> presenters must explain ambiguous IDs, panel selection, denominators and the difference between occupancy and profitability.</li>
+<li><strong>Individual understanding:</strong> either presenter should be able to explain why annual observations cannot establish continuous vacancy.</li>
+</ul>
+
+</section>
+    </div>
+  <div class="quarto-auto-generated-content" style="display: none;">
+<div class="footer footer-default">
+<p>City of Vancouver Storefronts Inventory · 2020–2026 snapshot</p>
+</div>
+</div></div>
+
+  <script>window.backupDefine = window.define; window.define = undefined;</script>
+  <script src="example_storefronts_files/libs/revealjs/dist/reveal.js"></script>
+  <!-- reveal.js plugins -->
+  <script src="example_storefronts_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.js"></script>
+  <script src="example_storefronts_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
+  <script src="example_storefronts_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
+  <script src="example_storefronts_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="example_storefronts_files/libs/revealjs/plugin/quarto-support/support.js"></script>
+  
+
+  <script src="example_storefronts_files/libs/revealjs/plugin/notes/notes.js"></script>
+  <script src="example_storefronts_files/libs/revealjs/plugin/search/search.js"></script>
+  <script src="example_storefronts_files/libs/revealjs/plugin/zoom/zoom.js"></script>
+  <script src="example_storefronts_files/libs/revealjs/plugin/math/math.js"></script>
+  <script>window.define = window.backupDefine; window.backupDefine = undefined;</script>
+
+  <script>
+
+      // Full list of configuration options available at:
+      // https://revealjs.com/config/
+      Reveal.initialize({
+'controlsAuto': false,
+'previewLinksAuto': false,
+'pdfSeparateFragments': false,
+'autoAnimateEasing': "ease",
+'autoAnimateDuration': 1,
+'autoAnimateUnmatched': true,
+'jumpToSlide': true,
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleScrollView(event)\"><kbd>r</kbd> Scroll View Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'smaller': false,
+ 
+        // Display controls in the bottom right corner
+        controls: true,
+
+        // Help the user learn the controls by providing hints, for example by
+        // bouncing the down arrow when they first encounter a vertical slide
+        controlsTutorial: false,
+
+        // Determines where controls appear, "edges" or "bottom-right"
+        controlsLayout: 'edges',
+
+        // Visibility rule for backwards navigation arrows; "faded", "hidden"
+        // or "visible"
+        controlsBackArrows: 'faded',
+
+        // Display a presentation progress bar
+        progress: true,
+
+        // Display the page number of the current slide
+        slideNumber: 'c/t',
+
+        // 'all', 'print', or 'speaker'
+        showSlideNumber: 'all',
+
+        // Add the current slide number to the URL hash so that reloading the
+        // page/copying the URL will return you to the same slide
+        hash: true,
+
+        // Start with 1 for the hash rather than 0
+        hashOneBasedIndex: false,
+
+        // Flags if we should monitor the hash and change slides accordingly
+        respondToHashChanges: true,
+
+        // Push each slide change to the browser history
+        history: false,
+
+        // Enable keyboard shortcuts for navigation
+        keyboard: true,
+
+        // Enable the slide overview mode
+        overview: true,
+
+        // Disables the default reveal.js slide layout (scaling and centering)
+        // so that you can use custom CSS layout
+        disableLayout: false,
+
+        // Vertical centering of slides
+        center: false,
+
+        // Enables touch navigation on devices with touch input
+        touch: true,
+
+        // Loop the presentation
+        loop: false,
+
+        // Change the presentation direction to be RTL
+        rtl: false,
+
+        // see https://revealjs.com/vertical-slides/#navigation-mode
+        navigationMode: 'linear',
+
+        // Randomizes the order of slides each time the presentation loads
+        shuffle: false,
+
+        // Turns fragments on and off globally
+        fragments: true,
+
+        // Flags whether to include the current fragment in the URL,
+        // so that reloading brings you to the same fragment position
+        fragmentInURL: false,
+
+        // Flags if the presentation is running in an embedded mode,
+        // i.e. contained within a limited portion of the screen
+        embedded: false,
+
+        // Flags if we should show a help overlay when the questionmark
+        // key is pressed
+        help: true,
+
+        // Flags if it should be possible to pause the presentation (blackout)
+        pause: true,
+
+        // Flags if speaker notes should be visible to all viewers
+        showNotes: false,
+
+        // Global override for autoplaying embedded media (null/true/false)
+        autoPlayMedia: null,
+
+        // Global override for preloading lazy-loaded iframes (null/true/false)
+        preloadIframes: null,
+
+        // Number of milliseconds between automatically proceeding to the
+        // next slide, disabled when set to 0, this value can be overwritten
+        // by using a data-autoslide attribute on your slides
+        autoSlide: 0,
+
+        // Stop auto-sliding after user input
+        autoSlideStoppable: true,
+
+        // Use this method for navigation when auto-sliding
+        autoSlideMethod: null,
+
+        // Specify the average time in seconds that you think you will spend
+        // presenting each slide. This is used to show a pacing timer in the
+        // speaker view
+        defaultTiming: null,
+
+        // Enable slide navigation via mouse wheel
+        mouseWheel: false,
+
+        // The display mode that will be used to show slides
+        display: 'block',
+
+        // Hide cursor if inactive
+        hideInactiveCursor: true,
+
+        // Time before the cursor is hidden (in ms)
+        hideCursorTime: 5000,
+
+        // Opens links in an iframe preview overlay
+        previewLinks: false,
+
+        // Transition style (none/fade/slide/convex/concave/zoom)
+        transition: 'fade',
+
+        // Transition speed (default/fast/slow)
+        transitionSpeed: 'default',
+
+        // Transition style for full page slide backgrounds
+        // (none/fade/slide/convex/concave/zoom)
+        backgroundTransition: 'none',
+
+        // Number of slides away from the current that are visible
+        viewDistance: 3,
+
+        // Number of slides away from the current that are visible on mobile
+        // devices. It is advisable to set this to a lower number than
+        // viewDistance in order to save resources.
+        mobileViewDistance: 2,
+
+        // The "normal" size of the presentation, aspect ratio will be preserved
+        // when the presentation is scaled to fit different resolutions. Can be
+        // specified using percentage units.
+        width: 1280,
+
+        height: 720,
+
+        // Factor of the display size that should remain empty around the content
+        margin: 8.0e-2,
+
+        math: {
+          mathjax: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js',
+          config: 'TeX-AMS_HTML-full',
+          tex2jax: {
+            inlineMath: [['\\(','\\)']],
+            displayMath: [['\\[','\\]']],
+            balanceBraces: true,
+            processEscapes: false,
+            processRefs: true,
+            processEnvironments: true,
+            preview: 'TeX',
+            skipTags: ['script','noscript','style','textarea','pre','code'],
+            ignoreClass: 'tex2jax_ignore',
+            processClass: 'tex2jax_process'
+          },
+        },
+
+        // reveal.js plugins
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+
+          RevealMath,
+          RevealNotes,
+          RevealSearch,
+          RevealZoom
+        ]
+      });
+    </script>
+    
+    <script>
+      // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+      // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+      // slide changes (different for each slide format).
+      (function () {
+        // dispatch for htmlwidgets
+        function fireSlideEnter() {
+          const event = window.document.createEvent("Event");
+          event.initEvent("slideenter", true, true);
+          window.document.dispatchEvent(event);
+        }
+
+        function fireSlideChanged(previousSlide, currentSlide) {
+          fireSlideEnter();
+
+          // dispatch for shiny
+          if (window.jQuery) {
+            if (previousSlide) {
+              window.jQuery(previousSlide).trigger("hidden");
+            }
+            if (currentSlide) {
+              window.jQuery(currentSlide).trigger("shown");
+            }
+          }
+        }
+
+        // hookup for slidy
+        if (window.w3c_slidy) {
+          window.w3c_slidy.add_observer(function (slide_num) {
+            // slide_num starts at position 1
+            fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+          });
+        }
+
+      })();
+    </script>
+
+    <script id="quarto-html-after-body" type="application/javascript">
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
+          }
+          return false;
+        }
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
+          }
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+            const codeEl = trigger.previousElementSibling.cloneNode(true);
+            for (const childEl of codeEl.children) {
+              if (isCodeAnnotation(childEl)) {
+                childEl.remove();
+              }
+            }
+            return codeEl.innerText;
+        }
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp('/' + window.location.host + '/');
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
+            }
+          }
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
+          }
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
+          }
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
+        }
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
+          });
+        }
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
+    
+
+</body></html>
