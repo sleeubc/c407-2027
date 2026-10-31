@@ -234,7 +234,7 @@ tm_shape(local_areas) + tm_polygons(fill = "grey95") +
 `tm_polygons()` draws areas, `tm_lines()` lines, and `tm_dots()` points. Each `tm_shape()` starts a layer, and later layers draw on top, as in ggplot. The first layer sets the map's extent, so the Expo Line stops at the city boundary.
 
 ::: {.notes}
-- Deck 13 adds legends, basemaps, and interactive maps.
+- Deck 14 adds legends, basemaps, and interactive maps.
 :::
 
 ## In tmap, the value decides: mapping or setting
@@ -387,7 +387,7 @@ tm_shape(local_areas) + tm_polygons(fill = "grey95") +
   tm_shape(sales) + tm_dots(fill = "act_use_cat", size = 0.1)
 ```
 
-Deck 13 matches these sales to local areas and measures how far each is from SkyTrain.
+Deck 14 matches these sales to local areas and measures how far each is from SkyTrain.
 
 ## Quick check: what does this do?
 
@@ -414,6 +414,37 @@ st_bbox(swapped) |> round(1)
 ```
 
 **B.** Latitude is now −123, which cannot exist: latitudes run from −90 to 90. R made the points anyway. Map new points before you use them.
+:::
+
+## Names make poor keys
+
+::: {.small}
+```{r}
+#| label: name-join
+van_2025 <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) == 2025)
+
+van_2025 |>
+  anti_join(local_areas, by = join_by(neigh_label == name)) |>
+  count(neigh_label, sort = TRUE) |>
+  head(3)
+```
+:::
+
+```{r}
+#| label: name-numbers
+#| include: false
+bca_names <- van_2025 |> distinct(neigh_label)
+name_match <- bca_names |> semi_join(local_areas, by = join_by(neigh_label == name))
+no_area <- van_2025 |> anti_join(local_areas, by = join_by(neigh_label == name))
+```
+
+Can we match sales to local areas by name, with a join from deck 07? Only `r nrow(name_match)` of BC Assessment's `r nrow(bca_names)` neighbourhood names match a City local area: `r scales::comma(nrow(no_area))` of `r scales::comma(nrow(van_2025))` sales get none. Even a match can mislead: BC Assessment's Kerrisdale is not the City's. Match by location instead: `st_join()` in deck 14.
+
+::: {.notes}
+- `anti_join()` accepts an sf object as `y`. It returns only the columns of `x`, so the result here is a plain tibble.
+- Join on codes when both tables have them, such as `neigh_id` within BC Assessment data or `GeoUID` in census data (deck 13).
+- `semi_join()`, the opposite of `anti_join()`, keeps the rows of `x` that do match. It counts the matching names in the hidden chunk.
 :::
 
 # Coordinate reference systems

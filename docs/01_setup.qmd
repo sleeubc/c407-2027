@@ -161,7 +161,7 @@ Run this once in the **Console**:
 #| eval: false
 install.packages(c(
   "tidyverse", "rmarkdown", "ggrepel", "sf", "tmap", "maptiles",
-  "cancensus", "cansim", "VancouvR", "tidygeocoder", "fixest",
+  "cancensus", "cansim", "cmhc", "VancouvR", "tidygeocoder", "fixest",
   "modelsummary"
 ))
 ```

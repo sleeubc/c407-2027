@@ -263,7 +263,7 @@ renter_map
 
 # Spatial joins
 
-## Areas, stations, and sales, as in deck 07
+## Areas, stations, and sales, as in deck 08
 
 ```{r}
 #| label: city-data
@@ -410,7 +410,7 @@ sales_m |> st_drop_geometry() |> select(price, station, dist_m) |> head(3)
 ```
 :::
 
-`st_nearest_feature()` finds the row of the closest station; `st_distance()` measures the distance to it. In EPSG 26910 (deck 07), the answer is in metres.
+`st_nearest_feature()` finds the row of the closest station; `st_distance()` measures the distance to it. In EPSG 26910 (deck 08), the answer is in metres.
 
 ::: {.notes}
 - With longitude and latitude, sf also measures in metres on a sphere (the s2 engine), but buffers are approximate: a 500 m buffer came out 1.5% too large in area.

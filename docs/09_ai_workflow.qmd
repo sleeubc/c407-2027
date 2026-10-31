@@ -287,7 +287,7 @@ neigh_info <- tibble(neigh = c("Kitsilano", "Kitsilano", "West End", "Marpole"),
 sales |> left_join(neigh_info, by = "neigh") |> nrow()
 ```
 
-Three sales became four rows, because Kitsilano appears twice in `neigh_info`. `AGENTS.md` tells the agent to add `relationship =`, which turns the silent duplicate into an error:
+Three sales became four rows, because Kitsilano appears twice in `neigh_info`: the trap from deck 07. `AGENTS.md` tells the agent to add `relationship =`, which turns the silent duplicate into an error:
 
 ```{r}
 #| label: join-relationship

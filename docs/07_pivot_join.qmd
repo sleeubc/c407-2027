@@ -1,0 +1,628 @@
+---
+title: "Reshaping and joining tables"
+subtitle: "COMM 407 · Pivots, joins, and checking the result"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.6)
+```
+
+# Reshape tables
+
+## A small tibble to practise on
+
+:::: {.columns .small}
+::: {.column width="56%"}
+```{r}
+#| label: yearly
+library(tidyverse)
+
+yearly <- tibble(
+  act_use_cat = c("S/F Res", "S/F Res",
+                  "S/F Res", "S/F Res",
+                  "Strata Res", "Strata Res",
+                  "Strata Res", "Strata Res"),
+  sale_year = c(2022, 2023, 2024, 2025,
+                2022, 2023, 2024, 2025),
+  avg_price = c(2000000, 1900000, 1850000, 1800000,
+                800000, 800000, 780000, 800000)
+)
+```
+:::
+
+::: {.column width="42%"}
+```{r}
+#| label: yearly-print
+yearly
+```
+:::
+::::
+
+Average prices by type and year. One row per type **and** year: a **long** table.
+
+## How would you compute the ratio?
+
+:::: {.columns .small}
+::: {.column width="44%"}
+```{r}
+#| label: ratio-data
+yearly
+```
+:::
+
+::: {.column width="54%"}
+Compute the ratio of the single-family price to the strata price in each year. The result should look like this:
+
+```{r}
+#| label: ratio-target
+#| echo: false
+yearly |>
+  pivot_wider(names_from = act_use_cat, values_from = avg_price) |>
+  mutate(ratio = `S/F Res` / `Strata Res`) |>
+  select(sale_year, ratio)
+```
+:::
+::::
+
+::: {.notes}
+- Students who remember deck 05 may write `group_by(sale_year) |> summarise(ratio = avg_price[act_use_cat == "S/F Res"] / avg_price[act_use_cat == "Strata Res"])`. It works. The next slide is shorter and keeps both prices beside the ratio.
+:::
+
+## Answer: make the table wide, then divide
+
+:::: {.columns .small}
+::: {.column width="46%"}
+```{r}
+#| label: wider
+wide <- yearly |>
+  pivot_wider(names_from = act_use_cat,
+              values_from = avg_price)
+wide
+```
+:::
+
+::: {.column width="52%"}
+```{r}
+#| label: ratio
+wide |>
+  mutate(ratio = `S/F Res` / `Strata Res`)
+```
+:::
+::::
+
+- `names_from`: the column whose values become the new column names. `values_from`: the column that fills them. Every other column, here `sale_year`, decides the rows.
+- Each type is now a column, so the ratio is one `mutate()`. `S/F Res` is not a valid R name, so it needs backticks; without them, R reads `S/F` as S divided by F.
+
+## Can you draw this chart?
+
+:::: {.columns .small}
+::: {.column width="44%"}
+```{r}
+#| label: chart-data
+wide
+```
+:::
+
+::: {.column width="54%"}
+```{r}
+#| label: chart-target
+#| echo: false
+#| fig-width: 5
+#| fig-height: 2.8
+ggplot(yearly, aes(sale_year, avg_price, colour = act_use_cat)) +
+  geom_line()
+```
+:::
+::::
+
+Suppose you have only `wide`, as when a download comes wide. Write code that draws this chart from it.
+
+::: {.notes}
+- If students are stuck: which column would `colour =` map? `wide` has none that holds the type.
+:::
+
+## Answer: make the table long, then plot
+
+:::: {.columns .small}
+::: {.column width="58%"}
+```{r include=params$answers}
+#| label: longer
+#| fig-show: hide
+long <- wide |>
+  pivot_longer(cols = c(`S/F Res`, `Strata Res`),
+               names_to = "act_use_cat",
+               values_to = "avg_price")
+
+ggplot(long, aes(sale_year, avg_price,
+                 colour = act_use_cat)) +
+  geom_line()
+```
+:::
+
+::: {.column width="40%"}
+```{r include=params$answers}
+#| label: longer-print
+long
+```
+:::
+::::
+
+- `cols` lists the columns to stack. `names_to` and `values_to` name the two new columns, in quotes because they do not exist yet.
+- `colour =` needs one column that holds the type. From `wide`, you would need one `geom_line()` per column, and get no legend.
+
+::: {.notes}
+- The wide version: `` ggplot(wide, aes(x = sale_year)) + geom_line(aes(y = `S/F Res`)) + geom_line(aes(y = `Strata Res`)) ``. Two layers, no legend, and the y-axis is named `S/F Res`, after the first layer.
+- `cols = -sale_year` does the same: every column except `sale_year`.
+- `long` holds the same rows as `yearly`, in a different order.
+:::
+
+## Extra columns split the rows
+
+:::: {.columns .small}
+::: {.column width="46%"}
+```{r}
+#| label: split-data
+yearly_n <- yearly |>
+  mutate(n_sales = c(2, 3, 1, 4, 5, 2, 6, 3))
+yearly_n
+```
+:::
+
+::: {.column width="52%"}
+```{r}
+#| label: split
+yearly_n |>
+  pivot_wider(names_from = act_use_cat,
+              values_from = avg_price)
+```
+:::
+::::
+
+::: {.warning}
+No warning, but eight rows with gaps: `n_sales` also decides the rows. Keep only the columns you need: `select(sale_year, act_use_cat, avg_price)`.
+:::
+
+::: {.notes}
+- `id_cols = sale_year` inside `pivot_wider()` does the same as the `select()`.
+- `values_fill = 0` fills gaps where a missing combination means zero, such as an area with no strata sales in a table of counts.
+- Two values for the same cell, such as two rows for strata in 2025, are a different problem. R warns, and the cells become lists (`<list>`). Find them with `count(sale_year, act_use_cat) |> filter(n > 1)`.
+:::
+
+## Quick check: what is wrong with this chart?
+
+::: {.small}
+```{r}
+#| label: renters-w
+renters_w <- tibble(city = c("Vancouver", "Surrey"),
+                    `2001` = c(56, 26), `2006` = c(52, 25), `2016` = c(53, 28), `2021` = c(55, 31))
+```
+:::
+
+:::: {.columns .small}
+::: {.column width="52%"}
+```{r}
+#| label: renters
+#| fig-show: hide
+renters <- renters_w |>
+  pivot_longer(cols = -city, names_to = "year",
+               values_to = "renter_pct")
+ggplot(renters, aes(year, renter_pct,
+                    colour = city)) +
+  geom_point()
+```
+:::
+
+::: {.column width="46%"}
+```{r}
+#| label: renters-plot
+#| echo: false
+#| fig-width: 4.4
+#| fig-height: 2.8
+ggplot(renters, aes(year, renter_pct, colour = city)) +
+  geom_point()
+```
+:::
+::::
+
+::: {.fragment}
+The years are evenly spaced, so 2006 sits as close to 2016 as to 2001. `names_to` makes `year` text, and ggplot spaces text as categories. Add `mutate(year = as.numeric(year))` after the pivot.
+:::
+
+::: {.notes}
+- The renter shares are made up. 2011 is missing on purpose: the 2011 long-form census was the voluntary National Household Survey, which analysts often leave out.
+- With `geom_line()` instead of `geom_point()`, the chart is empty, with the message "Each group consists of only one observation": text on the x-axis makes each year its own group.
+:::
+
+## Practice: the single-family premium
+
+```{r}
+#| label: bca
+bca <- read_rds("data/bca262.rds")
+```
+
+Using `bca`, for the City of Vancouver from 2016 to 2025:
+
+1. compute the median price of each `act_use_cat` in each year;
+2. make the table wide, with one column per type;
+3. add the ratio of the single-family median to the strata median.
+
+In which year was the ratio highest?
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: premium
+premium <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) %in% 2016:2025) |>
+  group_by(act_use_cat, sale_year = year(sale_date)) |>
+  summarise(median_price = median(price, na.rm = TRUE), .groups = "drop") |>
+  pivot_wider(names_from = act_use_cat, values_from = median_price) |>
+  mutate(ratio = `S/F Res` / `Strata Res`) |>
+  arrange(desc(ratio))
+premium |> head(4)
+```
+:::
+
+In `r premium$sale_year[1]`, a single-family home cost `r round(premium$ratio[1], 1)` times a strata home. In 2025, the ratio was `r round(premium$ratio[premium$sale_year == 2025], 1)`.
+
+::: {.notes}
+- A student who also computes `n()` in `summarise()` will get 20 rows with gaps: the extra-columns trap.
+:::
+
+# Join tables
+
+## Two tables that share a column
+
+:::: {.columns .small}
+::: {.column width="55%"}
+```{r}
+#| label: sales
+sales <- tibble(
+  sale_id = 1:4,
+  neigh = c("Kitsilano", "Oakridge",
+            "Kitsilano", "Dunbar-Southlands"),
+  price = c(1250000, 1400000,
+            980000, 2100000)
+)
+sales
+```
+:::
+
+::: {.column width="43%"}
+```{r}
+#| label: area-info
+area_info <- tibble(
+  neigh = c("Kitsilano", "Oakridge",
+            "West End"),
+  skytrain = c(FALSE, TRUE, FALSE)
+)
+area_info
+```
+:::
+::::
+
+A **join** adds the columns of one table to another, matching rows by a **key**: here `neigh`. `skytrain` says whether the local area has a SkyTrain station.
+
+## left_join() keeps every row of the left table
+
+:::: {.columns .small}
+::: {.column width="44%"}
+```{r}
+#| label: left-data
+sales
+area_info
+```
+:::
+
+::: {.column width="54%"}
+```{r}
+#| label: left
+sales |>
+  left_join(area_info, by = "neigh")
+```
+:::
+::::
+
+Four sales in, four rows out. Dunbar-Southlands has no row in `area_info`, so its `skytrain` is `NA`. West End has no sale, so it does not appear.
+
+## inner_join() keeps only the rows that match
+
+:::: {.columns .small}
+::: {.column width="44%"}
+```{r}
+#| label: inner-data
+sales
+area_info
+```
+:::
+
+::: {.column width="54%"}
+```{r}
+#| label: inner
+sales |>
+  inner_join(area_info, by = "neigh")
+```
+
+::: {.warning}
+Four sales in, three rows out: the Dunbar-Southlands sale is gone, with no message. Use `left_join()` unless you mean to drop the rows without a match.
+:::
+:::
+::::
+
+## Which rows does each join keep?
+
+| Code | Keeps |
+|---|---|
+| `left_join(x, y)` | Every row of `x`, with `NA` where `y` has no match |
+| `inner_join(x, y)` | Only the rows of `x` with a match in `y` |
+| `full_join(x, y)` | Every row of both tables |
+| `right_join(x, y)` | Every row of `y` |
+
+Each join adds the columns of `y` to `x`. They differ only in which rows they keep.
+
+::: {.notes}
+- `sales |> full_join(area_info, by = "neigh")` gives five rows: the four sales and West End, with `NA` for `sale_id` and `price`.
+- `right_join(x, y)` is `left_join(y, x)` with the columns in a different order. It is rare in practice.
+:::
+
+## Keys can have different names
+
+```{r}
+#| label: stations
+stations <- tibble(
+  station = c("Oakridge - 41st Avenue", "Langara - 49th Avenue", "Marine Drive"),
+  geo_local_area = c("Oakridge", "Oakridge", "Marpole")
+)
+```
+
+The City of Vancouver's station data call the local area `geo_local_area`. Name both columns with `join_by()`, the left table's first:
+
+::: {.small}
+```{r}
+#| label: join-by
+sales |>
+  left_join(stations, by = join_by(neigh == geo_local_area))
+```
+:::
+
+## A duplicate key adds rows
+
+:::: {.columns .small}
+::: {.column width="56%"}
+```{r}
+#| label: dup-rows
+nrow(sales)
+sales |>
+  left_join(stations,
+            by = join_by(neigh == geo_local_area)) |>
+  nrow()
+```
+:::
+
+::: {.column width="42%"}
+Check the key before you join:
+
+```{r}
+#| label: dup-check
+stations |>
+  count(geo_local_area) |>
+  filter(n > 1)
+```
+:::
+::::
+
+Oakridge has two stations, so its sale matched twice. Any average or count over the joined rows now counts it twice.
+
+## relationship = makes R check for you
+
+```{r}
+#| label: relationship
+sales |>
+  left_join(stations, by = join_by(neigh == geo_local_area),
+            relationship = "many-to-one")
+```
+
+`"many-to-one"`: many sales may share a key, but each key may appear only once in `stations`. The silent duplicate becomes an error.
+
+::: {.notes}
+- Without `relationship =`, dplyr warns only when keys repeat in **both** tables ("many-to-many"). A key that repeats in one table adds rows silently.
+- `"one-to-one"` also requires each key to appear only once in the left table.
+:::
+
+## Predict the output
+
+```{r}
+#| label: predict-code
+#| eval: false
+sales |>
+  inner_join(stations, by = join_by(neigh == geo_local_area))
+```
+
+How many rows, and which sales?
+
+::: {.fragment}
+```{r}
+#| label: predict-out
+#| echo: false
+sales |>
+  inner_join(stations, by = join_by(neigh == geo_local_area))
+```
+
+Two rows, both sale 2. Kitsilano and Dunbar-Southlands have no station, so the inner join drops three sales. Oakridge has two stations, so sale 2 appears twice.
+:::
+
+## anti_join() finds the rows that did not match
+
+```{r}
+#| label: anti
+sales |>
+  anti_join(area_info, by = "neigh")
+```
+
+`anti_join(x, y)` returns the rows of `x` with no match in `y`, and only the columns of `x`. Run it before an `inner_join()` to see what you will drop, and after a `left_join()` to see which rows got `NA`.
+
+::: {.key-point}
+After every join, check both directions: rows that matched twice (`relationship =`) and rows that did not match (`anti_join()`). A row count alone can miss them when they cancel out.
+:::
+
+::: {.notes}
+- Deck 08 uses `anti_join()` on real data: most of BC Assessment's neighbourhood names have no City local area of the same name.
+:::
+
+# Application: repeat sales
+
+## A repeat sale compares a home with itself
+
+```{r}
+#| label: repeat-data
+van <- bca |> filter(juris_label == "City of Vancouver")
+
+sales_2015 <- van |>
+  filter(year(sale_date) == 2015) |>
+  select(folioid, act_use_cat, price_2015 = price)
+
+sales_2025 <- van |>
+  filter(year(sale_date) == 2025) |>
+  select(folioid, price_2025 = price)
+```
+
+- In deck 05, an average fell while every type rose, because the mix of homes sold changed. Comparing each home with its own earlier price avoids the mix.
+- `folioid` identifies a property. In `bca`, it starts in 2015.
+- `select(price_2015 = price)` keeps `price` under a new name. If both tables kept `price`, the join would return `price.x` and `price.y`.
+
+## Practice: how much did the same homes gain?
+
+Join `sales_2015` and `sales_2025` so that only homes sold in both years remain.
+
+1. Before you join, check that `folioid` appears only once in each table.
+2. After you join, compute for each `act_use_cat` the number of homes and the median of `price_2025 / price_2015 - 1`.
+
+::: {.fragment}
+Hint, if a `folioid` appears more than once: `group_by(folioid) |> filter(n() == 1) |> ungroup()` keeps the homes sold once that year.
+:::
+
+## Answer: check the keys
+
+```{r include=params$answers}
+#| label: repeat-keys
+sales_2015 |> count(folioid) |> filter(n > 1) |> nrow()
+sales_2025 |> count(folioid) |> filter(n > 1) |> nrow()
+```
+
+```{r}
+#| label: flip-gap
+#| include: false
+flip_days <- bca |>
+  filter(juris_label == "City of Vancouver", year(sale_date) == 2015) |>
+  group_by(folioid) |>
+  filter(n() > 1) |>
+  summarise(days = as.numeric(max(sale_date) - min(sale_date)))
+```
+
+Some homes sold twice in one year. Joined as they are, a home sold twice in 2015 and twice in 2025 would become four rows. Keep the homes sold once in each year:
+
+```{r include=params$answers}
+#| label: repeat-once
+once_2015 <- sales_2015 |> group_by(folioid) |> filter(n() == 1) |> ungroup()
+once_2025 <- sales_2025 |> group_by(folioid) |> filter(n() == 1) |> ungroup()
+```
+
+::: {.notes}
+- Most of the 2015 resales came a few months after the first sale: the median gap is `r round(median(flip_days$days))` days.
+- Dropping them is a choice, and it should be stated. Keeping the last 2015 sale and the first 2025 sale is another.
+- `relationship = "one-to-one"` on the next slide would stop the join if any duplicate were left.
+:::
+
+## Answer: join and summarise
+
+::: {.small}
+```{r include=params$answers}
+#| label: repeat-join
+repeat_sales <- once_2015 |>
+  inner_join(once_2025, by = "folioid", relationship = "one-to-one")
+nrow(repeat_sales)
+
+repeat_sales |>
+  group_by(act_use_cat) |>
+  summarise(homes = n(), median_growth = median(price_2025 / price_2015 - 1))
+```
+:::
+
+Of `r scales::comma(nrow(sales_2015))` sales in 2015, `r nrow(repeat_sales)` homes sold again, once, in 2025.
+
+```{r}
+#| label: rebuilt
+#| include: false
+rebuilt <- bca |>
+  filter(folioid %in% repeat_sales$folioid, act_use_cat == "S/F Res",
+         year(sale_date) %in% c(2015, 2025)) |>
+  group_by(folioid) |>
+  summarise(rebuilt = n_distinct(year_built, na.rm = TRUE) > 1)
+```
+
+::: {.notes}
+- `r sum(rebuilt$rebuilt)` of the `r nrow(rebuilt)` houses have a different `year_built` in 2025: a new house on the old lot. Their price change includes the construction.
+- One house "fell" 98%: its 2025 price is $17,420, which is not a market sale. The median is not affected.
+:::
+
+## Same homes, a different story
+
+::: {.small}
+```{r}
+#| label: all-sales
+all_sales <- van |>
+  filter(year(sale_date) %in% c(2015, 2025)) |>
+  group_by(act_use_cat, sale_year = year(sale_date)) |>
+  summarise(median_price = median(price), .groups = "drop") |>
+  pivot_wider(names_from = sale_year, values_from = median_price) |>
+  mutate(growth = `2025` / `2015` - 1)
+all_sales
+```
+:::
+
+```{r}
+#| label: compare-numbers
+#| include: false
+pct <- \(x) round(100 * x)
+all_g <- set_names(all_sales$growth, all_sales$act_use_cat)
+rep_g <- repeat_sales |>
+  group_by(act_use_cat) |>
+  summarise(g = median(price_2025 / price_2015 - 1)) |>
+  deframe()
+```
+
+::: {.key-point}
+All sales: strata prices rose `r pct(all_g[["Strata Res"]])`%, single-family `r pct(all_g[["S/F Res"]])`%. The same homes: `r pct(rep_g[["Strata Res"]])`% and `r pct(rep_g[["S/F Res"]])`%. Different homes sold in each year. Neither is *the* price change: repeat sales are a small, selected group, and some houses were rebuilt in between.
+:::

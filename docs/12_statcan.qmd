@@ -1,6 +1,6 @@
 ---
 title: "Statistics Canada data tables"
-subtitle: "COMM 407 · Finding, downloading, and checking StatCan tables"
+subtitle: "COMM 407 · Finding, downloading, and checking StatCan and CMHC tables"
 author: "Sanghoon Lee"
 date: today
 date-format: "D MMMM YYYY"
@@ -236,4 +236,102 @@ ggplot(mortgage, aes(Date, VALUE)) +
   labs(x = NULL, y = "Rate (%)", title = "Conventional mortgage lending rate, 5-year term",
        caption = "Source: CMHC, Statistics Canada Table 34-10-0145-01")
 ```
+:::
+
+# CMHC data
+
+## CMHC's own downloads come wide
+
+Table 34-10-0127-01 is CMHC's vacancy rate, republished by Statistics Canada. CMHC's [Housing Market Information Portal](https://www03.cmhc-schl.gc.ca/hmip-pimh/en) has more detail, such as bedroom types and survey zones. Its download for the Vancouver CMA, 1990 to 2025:
+
+```{r}
+#| label: cmhc-raw
+read_lines("data/cmhc_vacancy_vancouver.csv", skip = 2, n_max = 3)
+```
+
+- One column per bedroom type: the table is wide.
+- After each value comes a column with no name. It holds a reliability code, from a (excellent) to d (poor: use with caution).
+- Two title lines sit above the table, and notes below it.
+
+## Practice: vacancy rates by bedroom type
+
+::: {.small}
+```{r}
+#| label: cmhc-read
+vacancy_w <- read_csv("data/cmhc_vacancy_vancouver.csv", skip = 2, n_max = 36) |>
+  select(year = 1, Studio, `1 Bedroom`, `2 Bedroom`, `3 Bedroom +`, Total) |>
+  mutate(year = parse_number(year))
+vacancy_w |> head(3)
+```
+:::
+
+This code reads the file. It skips the title lines, keeps the 36 years, drops the code columns, and turns "1990 October" into 1990.
+
+Make `vacancy_w` long, with one row per year and bedroom type, as in deck 07. Then plot one line per bedroom type.
+
+::: {.notes}
+- Without `n_max = 36`, `read_csv()` reads CMHC's notes as five more rows, and `Studio` becomes text, because the last line puts "CMHC Rental Market Survey" in its column.
+- `read_csv()` names the columns without a name `...1`, `...3`, and so on, and says so in a message. `select(year = 1)` keeps the first column and names it `year`.
+- The file is in Windows-1252, not UTF-8: the dash in its first line prints as `\x97`. Skipping the title lines avoids it.
+- Rent tables are harder: rents are text with commas, such as "1,684", and suppressed cells are `**`.
+:::
+
+## Answer
+
+::: {.small}
+```{r include=params$answers}
+#| label: cmhc-answer
+#| fig-height: 2.4
+vacancy_bed <- vacancy_w |>
+  pivot_longer(cols = -year, names_to = "bedrooms", values_to = "vacancy")
+
+ggplot(vacancy_bed, aes(year, vacancy, colour = bedrooms)) +
+  geom_line() +
+  labs(x = NULL, y = "Vacancy rate (%)", colour = NULL,
+       caption = "Source: CMHC Rental Market Survey")
+```
+:::
+
+```{r}
+#| label: cmhc-numbers
+#| include: false
+total <- vacancy_bed |> filter(bedrooms == "Total") |> arrange(desc(vacancy))
+```
+
+In `r total$year[1]`, the vacancy rate for all units was `r total$vacancy[1]`%, the highest since the table starts in 1990. The next highest was `r total$vacancy[2]`%, in `r total$year[2]`.
+
+::: {.notes}
+- The legend is alphabetical, so Studio comes after 3 Bedroom +. Making `bedrooms` a factor with your own level order (deck 11) puts Studio first.
+:::
+
+## The cmhc package returns it long
+
+::: {.small}
+```{r}
+#| label: cmhc-package
+library(cmhc)
+vacancy_cmhc <- get_cmhc(survey = "Rms", series = "Vacancy Rate",
+                         dimension = "Bedroom Type", geo_uid = "59933",
+                         breakdown = "Historical Time Periods")
+vacancy_cmhc |> select(Date, `Bedroom Type`, Value, Quality) |> head(3)
+```
+:::
+
+`get_cmhc()` downloads the same table and runs `pivot_longer()` for you. The codes become `Quality`, and suppressed cells `NA`: check `Quality` before you plot a series.
+
+::: {.key-point}
+The Rental Market Survey counts purpose-built rentals with three or more units, each October. Condos rented out by their owners are not in it.
+:::
+
+```{r}
+#| label: cmhc-quality
+#| include: false
+low <- sum(vacancy_cmhc$Quality %in% c("Good", "Fair (Use with Caution)"))
+```
+
+::: {.notes}
+- `geo_uid = "59933"` is the Vancouver CMA. `list_cmhc_surveys()`, `list_cmhc_series()`, `list_cmhc_dimensions()` and `list_cmhc_breakdowns()` list the other choices.
+- No API key is needed, but the download needs CMHC's site to be up.
+- The package labels code d "Fair (Use with Caution)"; the note in CMHC's file calls it "Poor (Use with Caution)".
+- In this table, `r low` of `r nrow(vacancy_cmhc)` values are rated "Good" or lower.
 :::

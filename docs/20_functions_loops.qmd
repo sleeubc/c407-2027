@@ -60,7 +60,7 @@ Today's goal is reading, not writing: explain every line of a function or loop t
 library(tidyverse)
 
 bca <- read_rds("data/bca262.rds")                 # deck 03
-pumf <- read_rds("data/2021_census_pumf_ind.rds")  # deck 10
+pumf <- read_rds("data/2021_census_pumf_ind.rds")  # deck 11
 ```
 
 ## A list holds items of any type and length
@@ -228,7 +228,7 @@ A function written in place has no name. You have seen this before:
 ```{r}
 #| label: lambda-seen
 #| eval: false
-pumf |> map_chr(\(col) class(col)[1])           # deck 10
+pumf |> map_chr(\(col) class(col)[1])           # deck 11
 scale_y_continuous(labels = \(x) paste0(x, "%"))  # a chart axis
 ```
 
@@ -320,7 +320,7 @@ median_in_year <- \(yr) median(bca$price[year(bca$sale_date) == yr],
 map_dbl(2023:2025, median_in_year)
 ```
 
-A tibble is a list of columns, so `map()` over a tibble visits each column. Now you can read this line from deck 10:
+A tibble is a list of columns, so `map()` over a tibble visits each column. Now you can read this line from deck 11:
 
 ```{r}
 #| label: map-chr
