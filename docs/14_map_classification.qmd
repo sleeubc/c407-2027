@@ -36,18 +36,17 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 5)
-suppressPackageStartupMessages({
-  library(tidyverse)
-  library(sf)
-  library(tmap)
-  library(cancensus)
-})
 ```
+
+## Transit shares by census tract, as in deck 13
 
 ```{r}
 #| label: data
 #| results: hide
-#| include: false
+library(tidyverse)
+library(tmap)
+library(cancensus)
+
 ct <- get_census(
   dataset = "CA21", regions = list(CMA = "59933"), level = "CT",
   vectors = c(total = "v_CA21_7632", transit = "v_CA21_7644"),
@@ -55,6 +54,8 @@ ct <- get_census(
 ) |>
   mutate(transit_pct = 100 * transit / total)
 ```
+
+`transit_pct` is the share of commuters in each census tract who travel mainly by public transit.
 
 ## A continuous scale makes areas hard to compare
 

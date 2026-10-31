@@ -36,14 +36,15 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.8)
-suppressPackageStartupMessages(library(tidyverse))
-bca <- read_rds("data/bca262.rds")
 ```
 
 ## Two tibbles to plot
 
 ```{r}
 #| label: data
+library(tidyverse)
+bca <- read_rds("data/bca262.rds")
+
 avg_price <- bca |>
   group_by(act_use_cat, sale_year = year(sale_date)) |>
   summarise(avg_price = mean(price, na.rm = TRUE), .groups = "drop")

@@ -36,7 +36,6 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA)
-suppressPackageStartupMessages(library(tidyverse))
 ```
 
 ## A finding is a comparison
@@ -74,6 +73,7 @@ The examples come from analyses of Vancouver data: crime, storefronts, and bridg
 
 ```{r}
 #| label: load
+library(tidyverse)
 traffic <- read_rds("data/tradas_daily.rds")
 traffic |>
   summarise(days = n(), first = min(date), last = max(date),
@@ -247,6 +247,8 @@ This happened at the Port Mann bridge counter: the December 2017 report is a bro
 ```{r}
 #| label: location-fe
 #| eval: false
+library(fixest)
+
 feols(food_bev ~ near_skytrain | local_area, data = storefronts)
 ```
 

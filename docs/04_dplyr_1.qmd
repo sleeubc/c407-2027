@@ -36,7 +36,6 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA)
-suppressPackageStartupMessages(library(tidyverse))
 ```
 
 ## Four verbs and a pipe
@@ -57,6 +56,8 @@ AI tools write these fluently. Your job is to read a pipeline and know what it r
 
 ```{r}
 #| label: tb
+library(tidyverse)
+
 tb <- tibble(a = c(2, 1, 3), b = c("a", "b", "c"), c = c("y", "y", "x"))
 tb
 ```

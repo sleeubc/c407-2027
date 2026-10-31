@@ -36,13 +36,14 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA)
-suppressPackageStartupMessages(library(tidyverse))
 ```
 
 ## A small tibble to practise on
 
 ```{r}
 #| label: toy
+library(tidyverse)
+
 sales <- tibble(
   act_use_cat = c("S/F Res", "S/F Res", "S/F Res",
                   "Strata Res", "Strata Res", "Strata Res"),

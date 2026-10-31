@@ -36,10 +36,6 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA)
-suppressPackageStartupMessages(library(tidyverse))
-library(fixest)
-bca <- read_rds("data/bca262.rds")
-pumf <- read_rds("data/2021_census_pumf_ind.rds")
 ```
 
 ## AI code uses three things we have not covered
@@ -56,6 +52,16 @@ AI writes these easily. You need to read them:
 ::: {.key-point}
 Today's goal is reading, not writing: explain every line of a function or loop that AI gives you.
 :::
+
+## Packages and data
+
+```{r}
+#| label: packages
+library(tidyverse)
+
+bca <- read_rds("data/bca262.rds")                 # deck 03
+pumf <- read_rds("data/2021_census_pumf_ind.rds")  # deck 10
+```
 
 ## A list holds items of any type and length
 
@@ -104,6 +110,8 @@ tb[["city"]]
 
 ```{r}
 #| label: model-list
+library(fixest)
+
 condo <- bca |>
   filter(juris_label == "City of Vancouver", act_use_cat == "Strata Res",
          between(year(sale_date), 2016, 2025))

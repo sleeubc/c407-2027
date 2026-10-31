@@ -36,11 +36,6 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA)
-suppressPackageStartupMessages({
-  library(tidyverse)
-  library(fixest)
-  library(modelsummary)
-})
 ```
 
 ## A home's price reflects its characteristics
@@ -60,7 +55,6 @@ install.packages(c("fixest", "modelsummary"))  # once, in the Console
 ```
 
 ```{r}
-#| eval: false
 library(fixest)        # estimate regressions
 library(modelsummary)  # build regression tables
 ```
@@ -69,6 +63,7 @@ library(modelsummary)  # build regression tables
 
 ```{r}
 #| label: sample
+library(tidyverse)
 bca <- read_rds("data/bca262.rds")
 
 condo <- bca |>
