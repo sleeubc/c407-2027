@@ -167,33 +167,30 @@ $code-block-font-size: 0.82em;
   white-space: nowrap;
 }
 
-.reveal .data-preview.horizontal-scroll {
+// A wide table scrolls sideways inside Quarto's output box. The scrollbar stays
+// visible so it can be dragged with a mouse; c407_table_scroll.html lets the
+// mouse wheel scroll it too.
+.reveal .data-preview .cell-output-display {
+  overflow-x: auto;
   margin-bottom: 0.6em;
   padding-bottom: 4px;
 }
 
-// Quarto makes each cell output its own scroll box; let the outer box scroll instead.
-.reveal .horizontal-scroll .cell-output-display {
-  overflow: visible;
-}
-
-// Keep the scrollbar visible so wide tables can be dragged with a mouse.
-.reveal .horizontal-scroll::-webkit-scrollbar {
+.reveal .data-preview .cell-output-display::-webkit-scrollbar {
   height: 12px;
-  width: 12px;
 }
 
-.reveal .horizontal-scroll::-webkit-scrollbar-track {
+.reveal .data-preview .cell-output-display::-webkit-scrollbar-track {
   background: #eef1f4;
   border-radius: 6px;
 }
 
-.reveal .horizontal-scroll::-webkit-scrollbar-thumb {
+.reveal .data-preview .cell-output-display::-webkit-scrollbar-thumb {
   background: #9aa7b4;
   border-radius: 6px;
 }
 
-.reveal .horizontal-scroll::-webkit-scrollbar-thumb:hover {
+.reveal .data-preview .cell-output-display::-webkit-scrollbar-thumb:hover {
   background: #6c7a89;
 }
 

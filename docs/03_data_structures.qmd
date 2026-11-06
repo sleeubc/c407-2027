@@ -24,6 +24,7 @@ format:
     link-external-newwindow: true
     code-line-numbers: false
     footer: "COMM 407"
+    include-after-body: c407_table_scroll.html
 execute:
   eval: true
   echo: true
@@ -36,6 +37,7 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA)
+source("docs/c407_preview.R")  # preview_print() for the data tables
 ```
 
 ## A tibble is a set of equal-length columns
@@ -51,6 +53,22 @@ bca |>
 ```
 
 Each column is a **vector**. Every column has the same number of values.
+
+## bca has one row per sale
+
+```{r}
+#| label: bca-rows
+#| classes: data-preview
+#| render: !expr preview_print
+bca |> head(5)
+```
+
+BC Assessment sales in Metro Vancouver, 2000 to March 2026. Scroll the table to see all `r ncol(bca)` columns.
+
+::: {.notes}
+- The previous slide picked 4 of these columns. The Console prints only the columns that fit and lists the rest by name; `View(bca)`, later in this deck, shows them all.
+- Point out a few: `aa_label` and `neigh_label` (where), `act_use_cat` (what kind of property), `floorarea`, `bedrooms`, `sale_date`, `price`.
+:::
 
 ## A vector holds values of one type
 

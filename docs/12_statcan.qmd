@@ -24,6 +24,7 @@ format:
     link-external-newwindow: true
     code-line-numbers: false
     footer: "COMM 407"
+    include-after-body: c407_table_scroll.html
 execute:
   eval: true
   echo: true
@@ -36,6 +37,7 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.6)
+source("docs/c407_preview.R")  # preview_print() for the data tables
 ```
 
 ## StatCan publishes thousands of data tables
@@ -67,13 +69,13 @@ dim(vacancy)
 
 ```{r}
 #| label: vacancy-cols
-vacancy |>
-  select(Date, GEO, VALUE, UOM, SCALAR_FACTOR) |>
-  head(4)
+#| classes: data-preview
+#| render: !expr preview_print
+vacancy |> head(4)
 ```
 
 - `VALUE` is the number. `UOM` and `SCALAR_FACTOR` give its unit, such as a rate, persons, or thousands of dollars.
-- Other columns describe what each row measures.
+- `Date` and `GEO` say what each row measures. Scroll the table: most other columns are StatCan codes, such as `DGUID` and `VECTOR`.
 
 ## Vacancy rates in two CMAs
 
@@ -113,6 +115,24 @@ population |>
 ```
 
 There are `r population |> filter(str_detect(GEO, "Vancouver"), Date == max(Date)) |> nrow()` rows for Vancouver in each year. Why?
+
+## Look at the rows for one year
+
+```{r}
+#| label: population-rows
+#| classes: data-preview
+#| render: !expr preview_print
+population |>
+  filter(str_detect(GEO, "Vancouver"), Date == max(Date)) |>
+  head(5)
+```
+
+The rows differ by `Gender` and `Age group`. Scroll the table to see all `r ncol(population)` columns.
+
+::: {.notes}
+- "0 to 4 years" and then "0 years" to "4 years": the five single years add up to the five-year group, so summing all rows counts those children twice.
+- Printing these rows in the Console shows "Total …" for `Gender` and 3.09e6 for `VALUE`.
+:::
 
 ## Every dimension needs a filter
 

@@ -37,6 +37,7 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.8)
+source("docs/c407_preview.R")  # preview_table() for the data tables
 ```
 
 ```{r}
@@ -56,11 +57,6 @@ preview_pumf <- readr::read_rds("data/2021_census_pumf_ind.rds") |>
   dplyr::filter(CMA == "Vancouver") |>
   dplyr::relocate(PPSORT, WEIGHT, CMA, AGEGRP, Gender, VISMIN, TotInc, Tenur) |>
   head(5)
-
-preview_table <- function(df) {
-  knitr::kable(df, format = "html", digits = 2,
-               format.args = list(big.mark = ","))
-}
 ```
 
 ## Census Profile or PUMF?
@@ -91,13 +87,12 @@ Students set up their CensusMapper key after deck 09. Check that everyone has it
 
 ## Census Profile: one row per area
 
-::: {.data-preview .horizontal-scroll}
 ```{r}
 #| label: preview-profile
 #| echo: false
+#| classes: data-preview
 preview_table(preview_profile)
 ```
-:::
 
 The five largest municipalities in Vancouver CMA. `Population`, `Households`, and the `vm_` columns are counts for the whole area.
 
@@ -108,13 +103,12 @@ The five largest municipalities in Vancouver CMA. `Population`, `Households`, an
 
 ## PUMF: one row per person
 
-::: {.data-preview .horizontal-scroll}
 ```{r}
 #| label: preview-pumf
 #| echo: false
+#| classes: data-preview
 preview_table(preview_pumf)
 ```
-:::
 
 Five people in Vancouver CMA. Scroll the table to see all `r ncol(preview_pumf)` columns.
 

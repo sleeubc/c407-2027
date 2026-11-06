@@ -24,6 +24,7 @@ format:
     link-external-newwindow: true
     code-line-numbers: false
     footer: "COMM 407"
+    include-after-body: c407_table_scroll.html
 execute:
   eval: true
   echo: true
@@ -37,6 +38,7 @@ execute:
 #| include: false
 knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 4.2)
 options(pillar.sigfig = 7)
+source("docs/c407_preview.R")  # preview_print() for the data tables
 ```
 
 ## Packages
@@ -482,10 +484,12 @@ span_km <- round(c(x = bb_m[["xmax"]] - bb_m[["xmin"]], y = bb_m[["ymax"]] - bb_
 
 ```{r}
 #| label: crimes
+#| classes: data-preview
+#| render: !expr preview_print
 vpd_file <- file.path("data", "crimedata_csv_AllNeighbourhoods_2026",
                       "crimedata_csv_AllNeighbourhoods_2026.csv")
 crimes <- read_csv(vpd_file)
-crimes |> select(TYPE, X, Y) |> head(3)
+crimes |> head(3)
 ```
 
 The Vancouver Police Department's guide says the coordinates are in "latitude and longitude" on one page and in "UTM Zone 10" on another. An `X` of 492,734 cannot be a longitude: these are metres.

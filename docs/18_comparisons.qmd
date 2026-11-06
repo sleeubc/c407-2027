@@ -24,6 +24,7 @@ format:
     link-external-newwindow: true
     code-line-numbers: false
     footer: "COMM 407"
+    include-after-body: c407_table_scroll.html
 execute:
   eval: true
   echo: true
@@ -36,6 +37,7 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA)
+source("docs/c407_preview.R")  # preview_print() for the data tables
 ```
 
 ## A finding is a comparison
@@ -73,11 +75,11 @@ The examples come from analyses of Vancouver data: crime, storefronts, and bridg
 
 ```{r}
 #| label: load
+#| classes: data-preview
+#| render: !expr preview_print
 library(tidyverse)
 traffic <- read_rds("data/tradas_daily.rds")
-traffic |>
-  summarise(days = n(), first = min(date), last = max(date),
-            .by = c(crossing, site))
+traffic |> head(3)
 ```
 
 - One row per counter and day: `crossing`, `site` (the counter), `date`, and `volume`, the vehicles counted in both directions.
@@ -86,6 +88,17 @@ traffic |>
 ::: {.notes}
 Source: TRADAS monthly hourly volume reports (MV03). Only days with all 24 hours, whose hourly counts add up to the report's daily total, are kept. Port Mann uses the Highway 1 counter east of 152 Street (P-16-22EW), because the bridge's own counter has no reports for December 2017 or after June 2018. It misses traffic that leaves at 152 Street. Alex Fraser is Highway 91; Massey is Highway 99, south of the tunnel. The Golden Ears Bridge toll also ended on 1 September 2017.
 :::
+
+## Each counter covers different dates
+
+```{r}
+#| label: counter-dates
+traffic |>
+  summarise(days = n(), first = min(date), last = max(date),
+            .by = c(crossing, site))
+```
+
+Check each counter's first and last dates before you compare them.
 
 ## Before and after, month by month
 
