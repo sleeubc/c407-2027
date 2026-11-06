@@ -60,7 +60,7 @@ Today's goal is reading, not writing: explain every line of a function or loop t
 library(tidyverse)
 
 bca <- read_rds("data/bca262.rds")                 # deck 03
-pumf <- read_rds("data/2021_census_pumf_ind.rds")  # deck 11
+pumf <- read_rds("data/2021_census_pumf_ind.rds")  # deck 10
 ```
 
 ## A list holds items of any type and length

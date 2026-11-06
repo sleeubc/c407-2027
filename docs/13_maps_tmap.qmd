@@ -69,7 +69,7 @@ ct <- get_census(
   mutate(transit_pct = 100 * transit / total)
 ```
 
-- `geo_format = "sf"` returns tract boundaries with the data.
+- `geo_format = "sf"` returns tract boundaries with the data, as in deck 10.
 - `total` is all commuters; `transit` is those who commute mainly by public transit.
 
 ::: {.notes}

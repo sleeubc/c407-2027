@@ -162,6 +162,41 @@ $code-block-font-size: 0.82em;
   color: var(--c407-blue);
 }
 
+.reveal .data-preview th,
+.reveal .data-preview td {
+  white-space: nowrap;
+}
+
+.reveal .data-preview.horizontal-scroll {
+  margin-bottom: 0.6em;
+  padding-bottom: 4px;
+}
+
+// Quarto makes each cell output its own scroll box; let the outer box scroll instead.
+.reveal .horizontal-scroll .cell-output-display {
+  overflow: visible;
+}
+
+// Keep the scrollbar visible so wide tables can be dragged with a mouse.
+.reveal .horizontal-scroll::-webkit-scrollbar {
+  height: 12px;
+  width: 12px;
+}
+
+.reveal .horizontal-scroll::-webkit-scrollbar-track {
+  background: #eef1f4;
+  border-radius: 6px;
+}
+
+.reveal .horizontal-scroll::-webkit-scrollbar-thumb {
+  background: #9aa7b4;
+  border-radius: 6px;
+}
+
+.reveal .horizontal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #6c7a89;
+}
+
 .reveal .plot-image {
   display: block;
   max-height: 470px;

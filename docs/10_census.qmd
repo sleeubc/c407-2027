@@ -1,0 +1,712 @@
+---
+title: "Census profiles and microdata"
+subtitle: "COMM 407 · Vectors, denominators, maps, weights, and codes"
+author: "Sanghoon Lee"
+date: today
+date-format: "D MMMM YYYY"
+params:
+  answers: true
+format:
+  revealjs:
+    theme: [simple, c407_revealjs.scss]
+    slide-number: c/t
+    transition: fade
+    background-transition: fade
+    center: false
+    width: 1280
+    height: 720
+    margin: 0.08
+    navigation-mode: linear
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    link-external-newwindow: true
+    code-line-numbers: false
+    footer: "COMM 407"
+    include-after-body: c407_table_scroll.html
+execute:
+  eval: true
+  echo: true
+  error: true
+  warning: false
+  message: false
+---
+
+```{r}
+#| label: setup
+#| include: false
+knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.8)
+```
+
+```{r}
+#| label: preview-data
+#| include: false
+# Display only: visible code loads these data later in the deck.
+preview_profile <- cancensus::get_census(
+  "CA21", regions = list(CMA = "59933"), level = "CSD",
+  vectors = c(vm_base = "v_CA21_4872", vm_chinese = "v_CA21_4881"),
+  labels = "short", use_cache = TRUE, quiet = TRUE
+) |>
+  dplyr::arrange(dplyr::desc(Population)) |>
+  dplyr::relocate(GeoUID, `Region Name`, Population, Households, vm_base, vm_chinese) |>
+  head(5)
+
+preview_pumf <- readr::read_rds("data/2021_census_pumf_ind.rds") |>
+  dplyr::filter(CMA == "Vancouver") |>
+  dplyr::relocate(PPSORT, WEIGHT, CMA, AGEGRP, Gender, VISMIN, TotInc, Tenur) |>
+  head(5)
+
+preview_table <- function(df) {
+  knitr::kable(df, format = "html", digits = 2,
+               format.args = list(big.mark = ","))
+}
+```
+
+## Census Profile or PUMF?
+
+:::: {.columns}
+::: {.column width="48%"}
+### Census Profile
+
+One row per **area**, from all of Canada down to small neighbourhoods.
+
+Use it when your unit of analysis is places.
+:::
+
+::: {.column width="48%"}
+### PUMF
+
+One row per **person**. The smallest area is a CMA.
+
+Use it when your unit of analysis is individuals.
+:::
+::::
+
+A profile has already counted the people in each area. With the PUMF, you count them yourself, with weights.
+
+::: {.notes}
+Students set up their CensusMapper key after deck 09. Check that everyone has it before the first `get_census()` call.
+:::
+
+## Census Profile: one row per area
+
+::: {.data-preview .horizontal-scroll}
+```{r}
+#| label: preview-profile
+#| echo: false
+preview_table(preview_profile)
+```
+:::
+
+The five largest municipalities in Vancouver CMA. `Population`, `Households`, and the `vm_` columns are counts for the whole area.
+
+::: {.notes}
+- This is the same download as the agent's code a few slides later. `vm_base` and `vm_chinese` are the two vectors it asks for; the other columns come with every download.
+- Point at Vancouver's `vm_chinese`: `r format(preview_profile$vm_chinese[1], big.mark = ",")` people. The next slide shows where such a count comes from.
+:::
+
+## PUMF: one row per person
+
+::: {.data-preview .horizontal-scroll}
+```{r}
+#| label: preview-pumf
+#| echo: false
+preview_table(preview_pumf)
+```
+:::
+
+Five people in Vancouver CMA. Scroll the table to see all `r ncol(preview_pumf)` columns.
+
+::: {.notes}
+- A profile row says how many people in Vancouver are Chinese (`vm_chinese`); a PUMF row says whether one person is (`VISMIN`). Adding up `WEIGHT` over such rows estimates the count.
+- Printing `pumf` in the Console cuts these labels to "45 to…" and hides most columns; here they are in full.
+:::
+
+# Census profiles
+
+## We asked an agent
+
+::: {.small}
+```text
+We want to calculate 2021 Chinese population share at CSD level
+for Vancouver CMA. Download relevant data using cancensus.
+```
+:::
+
+Before downloading, it asked which "Chinese" we meant:
+
+::: {.small}
+| Option | Vector | What it measures |
+|---|---|---|
+| **A. Visible minority** | `v_CA21_4881` | The population group people report; one answer each |
+| **B. Ethnic or cultural origin** | `v_CA21_4938` | Ancestry; one person can report several |
+| **C. Mother tongue** | `v_CA21_2047` | First language learned; misses people raised in English |
+:::
+
+We chose A.
+
+::: {.notes}
+- Tested on 2026-10-31 with Claude Code (Opus 5) in two fresh copies of the student `c407` folder, with only `CM_API_KEY` in `.Renviron`. The prompt is exactly as shown.
+- Both runs looked up the codes with `list_census_vectors()`, followed the parent chain to the right denominator, and asked this question before downloading. After the answer "A", both flagged the 5 reserves with suppressed counts and explained why the denominator is not `Population`.
+- The definition matters: Richmond's share is 54.3% as a visible minority and 47.9% by ethnic origin.
+- Ask the class which option fits their question, and why the agent could not decide for us.
+:::
+
+## The agent's code
+
+::: {.small}
+```{r}
+#| label: packages
+library(tidyverse)
+library(cancensus)
+library(sf)
+```
+
+```{r}
+#| label: agent-code
+csd_vm <- get_census(
+  dataset = "CA21",
+  regions = list(CMA = "59933"), # Vancouver CMA
+  level = "CSD",
+  vectors = c(
+    vm_base    = "v_CA21_4872", # Total - Visible minority for the population in private households
+    vm_chinese = "v_CA21_4881"  # Chinese
+  ),
+  geo_format = "sf",
+  labels = "short",
+  use_cache = TRUE,
+  quiet = TRUE
+)
+```
+:::
+
+::: {.notes}
+Run 2 wrote different code with the same four choices: it put the vectors in a separate object and listed `vectors` before `level`.
+:::
+
+## Your prompt set four arguments
+
+| Your prompt | Argument |
+|---|---|
+| "2021" | `dataset = "CA21"` |
+| "Vancouver CMA" | `regions = list(CMA = "59933")` |
+| "CSD level" | `level = "CSD"` |
+| "Chinese population share" | `vectors`: a count and its total |
+
+The agent added four you did not ask for. `geo_format = "sf"` downloads boundaries for a map; `labels`, `use_cache`, and `quiet` change only how the download runs.
+
+::: {.key-point}
+Read the lines you did not ask for. Here they are harmless; elsewhere they can change the answer.
+:::
+
+::: {.notes}
+The names in `vectors`, such as `vm_chinese =`, become the column names.
+:::
+
+## level picks the units
+
+| Code | Level | Example |
+|---|---|---|
+| `C` | Canada | Canada |
+| `PR` | Province or territory | British Columbia |
+| `CMA` | Census metropolitan area | Vancouver |
+| `CSD` | Census subdivision (municipality) | Burnaby |
+| `CT` | Census tract (usually fewer than 10,000 people) | A neighbourhood |
+| `DA` | Dissemination area (usually 400–700 people) | A few blocks |
+
+## Check the codes it looked up
+
+::: {.small}
+```{r}
+#| label: check-region
+list_census_regions("CA21") |>
+  filter(region == "59933") |>
+  select(region, name, level, pop)
+```
+
+```{r}
+#| label: check-vectors
+list_census_vectors("CA21") |>
+  filter(vector %in% c("v_CA21_4872", "v_CA21_4881")) |>
+  select(vector, label, parent_vector)
+```
+:::
+
+::: {.warning}
+A wrong code still returns numbers, just for a different variable.
+:::
+
+::: {.notes}
+- The prompt named a place and a topic, not codes: the agent looked up all three.
+- Chat tools that cannot run R often invent codes that look right.
+- To find codes yourself, run `explore_census_vectors("CA21")` in the Console: it opens a searchable list.
+:::
+
+## Find the total at the top of the table
+
+```{r}
+#| label: find-top
+parent_census_vectors("v_CA21_4881") |>
+  select(vector, label, parent_vector)
+```
+
+`parent_census_vectors()` lists every level of the table above a vector. The row with no parent is the top: `v_CA21_4872`, the agent's `vm_base`.
+
+::: {.notes}
+The `details` column of `list_census_vectors()` spells out the same path as text, and `explore_census_vectors()` shows the tree in a browser.
+:::
+
+## Different denominators, different answers
+
+::: {.small}
+```{r}
+#| label: denominator
+get_census("CA21", regions = list(CMA = "59933"), level = "CSD",
+           vectors = c(vm_base = "v_CA21_4872", vm_parent = "v_CA21_4875",
+                       vm_chinese = "v_CA21_4881")) |>
+  transmute(name = `Region Name`, top_total = 100 * vm_chinese / vm_base,
+            parent = 100 * vm_chinese / vm_parent,
+            population = 100 * vm_chinese / Population) |>
+  arrange(desc(top_total)) |> head(4)
+```
+:::
+
+::: {.key-point}
+Use the top total. The parent counts only visible minorities; `Population` adds people never asked, such as students in UBC residences.
+:::
+
+```{r}
+#| label: outside-numbers
+#| include: false
+outside <- get_census("CA21", regions = list(CMA = "59933"), level = "CSD",
+                      vectors = c(vm_base = "v_CA21_4872")) |>
+  filter(`Region Name` == "Metro Vancouver A (RDA)") |>
+  mutate(n = Population - vm_base, pct = 100 * n / Population)
+```
+
+::: {.notes}
+- `Population` (`v_CA21_1`) counts everyone. The visible-minority question was on the long form (a 25% sample), asked only in private households, so people in collective dwellings (student residences, care homes, prisons, shelters) can never be in the numerator.
+- In Metro Vancouver A, `r scales::comma(outside$n)` residents (`r round(outside$pct, 1)`%) live outside private households, mostly in UBC residences. In most CSDs the gap is under 1 percentage point.
+- Other tables cover far fewer people than `Population`: commuting mode covers employed people aged 15 and over with a usual place of work; shelter cost covers households with income above zero.
+:::
+
+## Quick check: which arguments change?
+
+You now want the **2016 renter share by census tract in the Toronto CMA**. In 2021, tenure is `v_CA21_4237` (households) and `v_CA21_4239` (renters).
+
+Which of the four arguments change?
+
+::: {.fragment}
+All four:
+
+::: {.small}
+```{r}
+#| label: toronto
+#| eval: false
+get_census(dataset = "CA16", regions = list(CMA = "35535"), level = "CT",
+           vectors = c(households = "v_CA16_4836", renters = "v_CA16_4838"))
+```
+:::
+
+Vector codes change between censuses: `v_CA16_4237` is not tenure. The last section shows what it is.
+:::
+
+## Map it with tm_shape(), as in deck 08 {.nostretch}
+
+```{r}
+#| label: chinese-map
+#| fig-height: 3.4
+library(tmap)
+csd_vm <- csd_vm |> mutate(chinese_share = vm_chinese / vm_base)
+tm_shape(csd_vm) +
+  tm_polygons(fill = "chinese_share")
+```
+
+The agent's `geo_format = "sf"` already downloaded the boundaries.
+
+::: {.notes}
+- Metro Vancouver A includes UBC and the North Shore mountains, so its 39% fills the top of the map. Deck 15 returns to large areas that dominate the eye.
+- The 5 reserves with suppressed counts are too small to see at this scale.
+- Deck 13 adds legend titles, basemaps, and interactive maps.
+:::
+
+## Practice: map shelter costs
+
+Ask your agent for this map:
+
+::: {.small}
+```text
+Using cancensus and tmap, map the share of households spending
+30% or more of their income on shelter costs, by census tract
+in the Vancouver CMA, from the 2021 Census.
+```
+:::
+
+Before you trust the map:
+
+1. Check every vector code it chose with `list_census_vectors()`.
+2. Find the total at the top of the count's table with `parent_census_vectors()`. Is it the denominator?
+3. How many tracts have no value?
+
+## Answer: check the codes
+
+```{r include=params$answers}
+#| label: shelter-check
+list_census_vectors("CA21") |>
+  filter(vector %in% c("v_CA21_4288", "v_CA21_4290")) |>
+  select(vector, label, parent_vector) |>
+  mutate(label = str_trunc(label, 60))
+```
+
+`v_CA21_4290` counts households. The total at the top of its table is `v_CA21_4288`: owner and tenant households with income above zero, outside farms and reserves. That is not `v_CA21_4237`, all private households.
+
+::: {.notes}
+- An agent may choose `v_CA21_4315`, the percentage of tenant households spending 30% or more: renters only, and already a percentage.
+- The prompt is untested with an agent.
+:::
+
+## Answer: the map
+
+:::: {.columns}
+::: {.column width="54%"}
+::: {.small}
+```{r include=params$answers}
+#| label: shelter-map
+#| eval: false
+shelter_ct <- get_census(
+  "CA21", regions = list(CMA = "59933"),
+  level = "CT", geo_format = "sf",
+  vectors = c(households = "v_CA21_4288",
+              burdened = "v_CA21_4290")
+) |>
+  mutate(burdened_share = burdened / households)
+
+tm_shape(shelter_ct) +
+  tm_polygons(fill = "burdened_share")
+```
+:::
+:::
+
+::: {.column width="44%"}
+```{r include=params$answers}
+#| label: shelter-map-plot
+#| echo: false
+#| results: hide
+#| fig-width: 5
+#| fig-height: 4
+shelter_ct <- get_census(
+  "CA21", regions = list(CMA = "59933"),
+  level = "CT", geo_format = "sf",
+  vectors = c(households = "v_CA21_4288",
+              burdened = "v_CA21_4290")
+) |>
+  mutate(burdened_share = burdened / households)
+
+tm_shape(shelter_ct) +
+  tm_polygons(fill = "burdened_share")
+```
+:::
+::::
+
+```{r}
+#| label: shelter-numbers
+#| include: false
+shelter_gap <- get_census(
+  "CA21", regions = list(CMA = "59933"), level = "CT",
+  vectors = c(all_households = "v_CA21_4237")
+) |>
+  select(GeoUID, all_households) |>
+  left_join(st_drop_geometry(shelter_ct), by = "GeoUID", relationship = "one-to-one") |>
+  mutate(gap = 100 * abs(burdened / all_households - burdened_share))
+```
+
+`r sum(is.na(shelter_ct$burdened_share))` of the `r nrow(shelter_ct)` tracts have no value.
+
+::: {.notes}
+Dividing by all private households (`v_CA21_4237`) instead changes a tract's share by at most `r round(max(shelter_gap$gap, na.rm = TRUE))` percentage points, because few households have no income or live on farms or reserves. Here the choice matters little; for other variables it can matter a lot.
+:::
+
+# Census microdata (PUMF)
+
+## The PUMF describes individuals
+
+```{r}
+#| label: pumf
+pumf <- read_rds("data/2021_census_pumf_ind.rds")
+dim(pumf)
+```
+
+- Each row is one person from the 2021 Census, a **2.7% sample** of Canadians.
+- `WEIGHT` is how many people each row represents, about `r round(mean(pumf$WEIGHT))`.
+- Geography stops at the census metropolitan area (CMA), to protect privacy.
+
+**Try it:** run `View(pumf)` in the Console. Find `AGEGRP` and `CFInc`. Are their values numbers or words?
+
+::: {.notes}
+- Answer: words. `AGEGRP` holds age ranges such as "`r as.character(pumf$AGEGRP[1])`", and `CFInc` holds income ranges such as "`r as.character(pumf$CFInc[1])`". Most PUMF columns store categories like these; deck 11 covers them as factors.
+- Column names are short codes. Each column also has a description: `attr(pumf$AGEGRP, "label")` returns "`r attr(pumf$AGEGRP, "label")`". The PUMF user guide explains every column.
+- TODO: check whether Positron's Data Explorer shows these column descriptions.
+- Statistics Canada, Individuals File, 2021 Census PUMF: https://www150.statcan.gc.ca/n1/en/catalogue/98M0001X2021001
+:::
+
+## Each row stands for about 37 people
+
+```{r}
+#| label: weight
+nrow(pumf)
+sum(pumf$WEIGHT)
+```
+
+The rows are a sample. `sum(WEIGHT)` estimates the population: about `r round(sum(pumf$WEIGHT) / 1e6, 1)` million people in private households.
+
+::: {.key-point}
+Count people with `sum(WEIGHT)` or `count(x, wt = WEIGHT)`. Average with `weighted.mean(x, WEIGHT)`, which counts each row `WEIGHT` times.
+:::
+
+::: {.notes}
+`WEIGHT` ranges only from `r round(min(pumf$WEIGHT), 2)` to `r round(max(pumf$WEIGHT), 2)`, so weighted and unweighted shares are close. Weights matter most for counts.
+:::
+
+## Count households using PRIHM
+
+Each household has one **primary maintainer**. Keep that person to estimate household counts.
+
+```{r}
+#| label: bar
+#| fig-height: 2.8
+households <- pumf |>
+  filter(PRIHM == "Person is primary maintainer", Tenur != "Not available")
+
+ggplot(households, aes(y = Tenur)) + geom_bar() +
+  labs(x = "Household records in the sample", y = NULL)
+```
+
+::: {.notes}
+PRIHM identifies one designated maintainer per household in the population. Keeping sampled primary maintainers lets us estimate household statistics; the file does not contain every member of every household. "Not available" is dropped here; a later slide explains it. Source: 2021 Census Individuals PUMF User Guide, Chapter 2, PRIHM, printed page 124.
+:::
+
+## Add weights to count households
+
+```{r}
+#| label: bar-weight
+#| fig-height: 3.2
+ggplot(households, aes(y = Tenur, weight = WEIGHT)) + geom_bar() +
+  labs(x = "Estimated households", y = NULL)
+```
+
+::: {.warning}
+The weighted chart estimates households. Without weights, it counts sampled records, about 37 times fewer.
+:::
+
+## The user guide explains every column
+
+The PUMF user guide is the PDF in your `data` folder: `2021 Census Individuals PUMF User Guide_v2.pdf`.
+
+- **Chapter 1** (record layout) lists every column.
+- **Chapter 2** (variable descriptions) gives each column's meaning, who it covers, and its categories.
+
+**Try it:** find `CFInc` in Chapter 2. Whose income is it?
+
+::: {.key-point}
+Read a column's description before you use it. The name alone can mislead you.
+:::
+
+::: {.notes}
+- Answer: the whole census family's. For a person in a census family, `CFInc` is the sum of all members' total incomes; a person's own income is `TotInc`. The guide describes `CFInc` on page 92 (PDF page 93).
+- Chapter 2 also lists each category's unweighted and weighted counts, which you can use to check your own counts.
+:::
+
+## Some numbers are codes, not amounts
+
+Chapter 2 on `TotInc`:
+
+> The value 88,888,888 stands for not available. The value 99,999,999 stands for not applicable and is applied to all persons aged less than 15 years.
+
+```{r}
+#| label: totinc-codes
+mean(pumf$TotInc)
+mean(pumf$TotInc[pumf$TotInc < 88888888])
+```
+
+::: {.warning}
+Check Chapter 2 for codes like these before you average a column.
+:::
+
+::: {.notes}
+- `TotInc` has `r format(sum(pumf$TotInc == 99999999), big.mark = ",")` rows coded "not applicable" (under 15) and `r format(sum(pumf$TotInc == 88888888), big.mark = ",")` coded "not available".
+- 20 numeric columns use these codes: the 18 columns whose description starts with "Income:" (including `Wages`, `IncTax`, and `ChldC`, child care expenses), `COVID_ERB`, and `Value`, the dwelling value. In some, most rows are codes: `ChldC` has `r format(sum(pumf$ChldC %in% c(88888888, 99999999)), big.mark = ",")`.
+- The same entry says high incomes are top coded: the largest `TotInc` that is not a code is `r scales::label_dollar()(max(pumf$TotInc[pumf$TotInc < 88888888]))`. Keep this in mind if your project studies high earners.
+- The practice at the end of this section turns them into `NA` with `if_else()`.
+:::
+
+## "Not available" is a category, not NA
+
+```{r}
+#| label: tenur-count
+pumf |> count(Tenur)
+sum(is.na(pumf$Tenur))
+```
+
+R does not treat "Not available" as missing, so counts and charts include it as a group. Remove it yourself before computing shares. Deck 11 explains why: most PUMF columns are factors.
+
+## Point the AI to the user guide
+
+A coding agent can read the guide in your `data` folder. Name the PDF and the column:
+
+::: {.small}
+```text
+Before you use CFInc, read its entry in Chapter 2 of
+data/2021 Census Individuals PUMF User Guide_v2.pdf.
+Tell me whose income it measures and which values are codes.
+Give the page number and quote the description.
+```
+:::
+
+::: {.key-point}
+The guide improves the AI's code. Check the quoted page yourself.
+:::
+
+::: {.notes}
+- `AGENTS.md` already lists the PUMF traps from this deck: factors, the 88888888/99999999 codes, and `WEIGHT`. The guide covers everything else, such as whose income `CFInc` measures.
+- In a chat tool, paste the variable's entry from the guide instead.
+:::
+
+## Quick check: people or dwellings?
+
+Imagine two homes where the owners live:
+
+| Home | People | Dwelling value |
+|---|---|---|
+| A | 1 | $500,000 |
+| B | 3 | $1,500,000 |
+
+What is the average dwelling value? What if you average one record per person?
+
+::: {.fragment}
+- **Per dwelling:** ($500,000 + $1,500,000) / 2 = **$1,000,000**.
+- **Per person:** ($500,000 + 3 × $1,500,000) / 4 = **$1,250,000**.
+
+Including every person gives larger households more weight.
+:::
+
+::: {.notes}
+These are illustrative homes, not estimates from the PUMF. Value is the owner's estimate for the entire dwelling and is repeated on each person's record. It is reported for homes that are owned, occupied by their owners, and not on a farm; high values may be top coded. Source: 2021 Census Individuals PUMF User Guide, Chapter 2, Value, printed pages 130–131. Filtering to primary maintainers changes the unit from people to households.
+:::
+
+## Practice: find three mistakes
+
+We asked an AI: *"Compare the average total income of owners and renters in the Vancouver CMA, and show the population of each group."*
+
+```{r}
+#| label: practice-wrong
+pumf |>
+  filter(CMA == "Vancouver") |>
+  group_by(Tenur) |>
+  summarise(avg_income = mean(TotInc), population = n())
+```
+
+## Answer
+
+```{r include=params$answers}
+#| label: practice-answer
+pumf |>
+  # 1. Drop the "Not available" group
+  filter(CMA == "Vancouver", Tenur != "Not available") |>
+  # 2. Turn missing-value codes into NA
+  mutate(TotInc = if_else(TotInc %in% c(88888888, 99999999), NA, TotInc)) |>
+  group_by(Tenur) |>
+  # 3. Count people with WEIGHT, not records
+  summarise(avg_income = weighted.mean(TotInc, WEIGHT, na.rm = TRUE),
+            population = sum(WEIGHT))
+```
+
+# Comparing two censuses
+
+## Vector codes change between censuses
+
+The same code means a different variable in 2016:
+
+```{r}
+#| label: ca16-same-code
+list_census_vectors("CA16") |>
+  filter(vector %in% c("v_CA16_4237", "v_CA16_4239")) |>
+  select(vector, label)
+```
+
+::: {.warning}
+Swap `CA21` for `CA16` in the tenure codes from the quick check, and the code still runs. It divides people reporting Spanish origins by those reporting Slovenian origins. In 2016, tenure is `v_CA16_4836` and `v_CA16_4838`.
+:::
+
+## Tract boundaries change too
+
+```{r}
+#| label: ct-change
+ct16 <- get_census("CA16", regions = list(CMA = "59933"), level = "CT")
+ct21 <- get_census("CA21", regions = list(CMA = "59933"), level = "CT")
+c(tracts_2016 = nrow(ct16), tracts_2021 = nrow(ct21),
+  same_code = sum(ct16$GeoUID %in% ct21$GeoUID))
+```
+
+- Statistics Canada splits tracts that grow: `9330012.00` became `.01` and `.02`.
+- A join by `GeoUID` silently drops split tracts, often the fastest-growing areas.
+
+::: {.key-point}
+Compare levels whose boundaries rarely change, such as municipalities, or combine tracts into common areas with the `tongfen` package.
+:::
+
+## PUMF columns change too
+
+```{r}
+#| label: pumf-years
+pumf16 <- read_rds("data/2016_census_pumf_ind.rds")
+c(TOTINC = "TOTINC" %in% names(pumf16), TotInc = "TotInc" %in% names(pumf16))
+setdiff(levels(pumf$CMA), levels(pumf16$CMA))
+```
+
+- Many columns were renamed: `TOTINC` became `TotInc`, and `TENUR` became `Tenur`.
+- Some CMA names differ only in a dash or a space: "Ottawa – Gatineau" in 2016, "Ottawa - Gatineau" in 2021. If you stack the two years with `bind_rows()` (deck 20), they become separate groups. Check every category's spelling in both years.
+
+## What to know from this deck
+
+:::: {.columns}
+::: {.column width="34%"}
+**Know**<br>*Write it without help*
+
+::: {.small}
+- `get_census()`: dataset, regions, level, vectors
+- `list_census_vectors()` to check codes
+- `sum(WEIGHT)`, `count(x, wt = WEIGHT)`
+- `weighted.mean(x, WEIGHT)`
+- `aes(weight = WEIGHT)`
+:::
+:::
+
+::: {.column width="32%"}
+**Recognize**<br>*Say what the line does*
+
+::: {.small}
+- `geo_format = "sf"`: adds boundaries
+- `parent_census_vectors()`: the table above
+- `88888888`, `99999999`: missing
+- "Not available": a category
+- `if_else()`: recode values
+:::
+:::
+
+::: {.column width="30%"}
+**Look up**<br>*When you meet it*
+
+::: {.small}
+- `list_census_regions()`
+- `explore_census_vectors()`
+- `attr(x, "label")`
+- `setdiff()`
+- `tongfen`
+:::
+:::
+::::
+
+::: {.key-point}
+Check every vector code and its table's total. In the PUMF, check the unit, weights, and codes.
+:::

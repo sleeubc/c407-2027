@@ -204,7 +204,7 @@ Left: a few large, expensive homes stretch the axes, and most sales crowd into a
 `scales::label_dollar()` uses `label_dollar()` from the scales package without loading it. `label_comma()` and `label_percent()` work the same way.
 
 ::: {.notes}
-- `label_number(scale = 1e-6, suffix = "M")` writes 2,000,000 as 2M. Decks 11 and 12 use it.
+- `label_number(scale = 1e-6, suffix = "M")` writes 2,000,000 as 2M. Deck 12 uses it.
 - A log scale transforms the data before geoms compute. `geom_smooth(method = "lm")` on these axes fits log price on log floor area, a different line from the one on the original axes.
 :::
 
@@ -304,7 +304,7 @@ A **factor** stores categories with a fixed order, its **levels**. ggplot draws 
 :::
 
 ::: {.notes}
-"ordered" means the levels can be compared: Sun < Mon. Deck 11 comes back to it.
+"ordered" means the levels can be compared: Sun < Mon. The factor slides later in this deck come back to it.
 :::
 
 ## Text goes in alphabetical order
@@ -332,6 +332,112 @@ wday(d, label = TRUE, week_start = 1)
 :::
 
 `ymd()` reads text as a date. `week_start = 1` puts Monday first: the function sets the levels.
+
+## Most PUMF columns are factors
+
+```{r}
+#| label: pumf-classes
+pumf <- read_rds("data/2021_census_pumf_ind.rds")
+pumf |> map_chr(\(col) class(col)[1]) |> table()
+```
+
+Like `day`, the PUMF from deck 10 stores categories as factors.
+
+```{r}
+#| label: tenur-levels
+levels(pumf$Tenur)
+```
+
+## A factor is not a number
+
+```{r}
+#| label: as-numeric
+head(pumf$AGEGRP, 3)
+as.numeric(head(pumf$AGEGRP, 3))
+```
+
+::: {.warning}
+`as.numeric()` returns each level's position, not an age. Averaging these numbers runs without an error and gives a meaningless result.
+:::
+
+## Create a factor with your own level order
+
+```{r}
+#| label: factor-create
+tenure <- c("Renter", "Owner", "Owner")
+factor(tenure, levels = c("Owner", "Renter"))
+```
+
+A typo in `levels` turns values into `NA` without a warning:
+
+```{r}
+#| label: factor-typo
+factor(tenure, levels = c("Owner", "renter"))
+```
+
+## Ordered factors support comparisons
+
+```{r}
+#| label: ordered
+unit_size <- factor(c("small", "large", "medium"),
+                    levels = c("small", "medium", "large"), ordered = TRUE)
+unit_size
+unit_size >= "medium"
+```
+
+`>=` compares positions in the level order. `as.ordered(pumf$HDGREE)` makes education levels comparable the same way.
+
+::: {.notes}
+`wday(label = TRUE)` and `month(label = TRUE)` earlier in this deck also return ordered factors: `class()` printed "ordered" "factor".
+:::
+
+## Practice: simplify education levels
+
+Create `HDGREE2` with five levels, in this order:
+
+"Less than high school", "High school", "Post-secondary below bachelor", "Bachelor's degree", "Graduate degree"
+
+1. Use `case_when()` on `HDGREE`; leave "Not available" and "Not applicable" as `NA`.
+2. Make `HDGREE2` a factor with the levels in the order above.
+3. Count people (not rows) in each level with `count(HDGREE2, wt = WEIGHT)`.
+4. Draw a bar chart of people in each level, without the `NA` group.
+
+## Answer
+
+::: {.tiny}
+```{r include=params$answers}
+#| label: hdgree-answer
+edu <- pumf |>
+  mutate(
+    hdgree = as.ordered(HDGREE),
+    HDGREE2 = case_when(
+      hdgree == "No certificate, diploma or degree" ~ "Less than high school",
+      hdgree == "High (secondary) school diploma or equivalency certificate" ~ "High school",
+      hdgree <= "University certificate or diploma below bachelor level" ~ "Post-secondary below bachelor",
+      hdgree == "Bachelor's degree" ~ "Bachelor's degree",
+      hdgree <= "Earned doctorate" ~ "Graduate degree"
+    ),
+    HDGREE2 = factor(HDGREE2, levels = c(
+      "Less than high school", "High school", "Post-secondary below bachelor",
+      "Bachelor's degree", "Graduate degree"))
+  )
+
+edu |> count(HDGREE2, wt = WEIGHT)
+```
+:::
+
+## Answer: the chart
+
+```{r include=params$answers}
+#| label: hdgree-plot
+#| fig-height: 3
+edu |>
+  filter(!is.na(HDGREE2)) |>
+  ggplot(aes(y = HDGREE2, weight = WEIGHT)) +
+  geom_bar()
+```
+
+The bars follow the level order you chose. `NA` covers "Not available" and "Not applicable" (people under 15).
 
 ## The functions around the geoms
 
@@ -647,6 +753,7 @@ s_share <- \(y) surrey$share[surrey$year == y]
 - `label_dollar()`, `label_percent()` in a `scale_*()`
 - `labs()`
 - `ggsave()`
+- `factor(x, levels = ...)`, `levels()`
 :::
 :::
 
@@ -655,9 +762,10 @@ s_share <- \(y) surrey$share[surrey$year == y]
 
 ::: {.small}
 - `scale_*()`, `coord_*()`, `theme()`, `guides()`: the name says what changes
-- Factor levels: the order of bars, stacks, and legends
-- `ymd()`, `month()`, `wday()`: dates and their parts
+- Factor levels: bar and legend order
+- `ymd()`, `month()`, `wday()`: dates
 - `as.character()` on a factor: text, sorted alphabetically
+- `as.numeric()` on a factor: level positions, not values
 :::
 :::
 
@@ -669,6 +777,9 @@ s_share <- \(y) surrey$share[surrey$year == y]
 - `legend.position`
 - `week_start = 1`
 - `fct_reorder()`
+- `as.ordered()`
+- `case_when()`
+- `map_chr()`
 :::
 :::
 ::::

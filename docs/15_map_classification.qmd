@@ -38,7 +38,7 @@ execute:
 knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 5)
 ```
 
-## Transit shares by census tract, as in deck 14
+## Transit shares by census tract, as in deck 13
 
 ```{r}
 #| label: data

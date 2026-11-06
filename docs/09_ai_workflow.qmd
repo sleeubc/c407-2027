@@ -372,3 +372,32 @@ You write the exam without AI. Most questions ask you to read code: say what a l
 Each subsequent deck that teaches code ends with these three lists. Spend your study time on the first two.
 :::
 
+
+# Before next class
+
+## Get a census API key
+
+Deck 10 downloads census data with `cancensus`, which needs a free key from CensusMapper.
+
+1. Sign up at [censusmapper.ca](https://censusmapper.ca/users/sign_up) and copy your API key.
+2. In the Console, run `file.edit(".Renviron")`. This creates the file in `c407` and opens it.
+3. Add this line with your own key, then save the file:
+
+```text
+CM_API_KEY=your_key_here
+```
+
+4. Restart R: **Session → Restart R**.
+
+::: {.notes}
+TODO: Confirm in Positron that `file.edit(".Renviron")` opens the file in the editor.
+:::
+
+## Check the key without showing it
+
+```{r}
+#| label: key-check
+Sys.getenv("CM_API_KEY") != ""
+```
+
+`TRUE` means R found your key. As with any key, keep it out of your code and your AI conversations.

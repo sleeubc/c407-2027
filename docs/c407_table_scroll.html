@@ -1,0 +1,14 @@
+<script>
+// Let an ordinary mouse wheel scroll wide tables sideways.
+// Applies to .horizontal-scroll boxes that overflow only horizontally.
+document.addEventListener("wheel", function (event) {
+  var box = event.target.closest && event.target.closest(".horizontal-scroll");
+  if (!box || event.shiftKey) return;
+  if (Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+  if (box.scrollWidth <= box.clientWidth) return;
+  if (box.scrollHeight > box.clientHeight) return;
+  var step = event.deltaMode === 1 ? 40 : 1;
+  box.scrollLeft += event.deltaY * step;
+  event.preventDefault();
+}, { passive: false });
+</script>
