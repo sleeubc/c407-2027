@@ -1,6 +1,6 @@
 ---
-title: "Statistics Canada data tables"
-subtitle: "COMM 407 · Finding, downloading, and checking StatCan and CMHC tables"
+title: "StatCan and CMHC data"
+subtitle: "COMM 407 · Finding tables, units, dimensions, real prices, and reliability codes"
 author: "Sanghoon Lee"
 date: today
 date-format: "D MMMM YYYY"
@@ -172,6 +172,7 @@ van_pop |> count(Date) |> distinct(n)
 #| label: pop-plot
 ggplot(van_pop, aes(Date, VALUE)) +
   geom_line() + geom_point() +
+  # Write 3,000,000 as 3M (more on scales in deck 12)
   scale_y_continuous(labels = scales::label_number(scale = 1e-6, suffix = "M")) +
   labs(x = NULL, y = NULL, title = "Vancouver CMA population, July 1 estimates",
        caption = "Source: Statistics Canada Table 17-10-0148-01")
@@ -321,7 +322,7 @@ total <- vacancy_bed |> filter(bedrooms == "Total") |> arrange(desc(vacancy))
 In `r total$year[1]`, the vacancy rate for all units was `r total$vacancy[1]`%, the highest since the table starts in 1990. The next highest was `r total$vacancy[2]`%, in `r total$year[2]`.
 
 ::: {.notes}
-- The legend is alphabetical, so Studio comes after 3 Bedroom +. Making `bedrooms` a factor with your own level order (deck 11) puts Studio first.
+- The legend is alphabetical, so Studio comes after 3 Bedroom +. Making `bedrooms` a factor with your own level order (deck 12) puts Studio first.
 :::
 
 ## The cmhc package returns it long

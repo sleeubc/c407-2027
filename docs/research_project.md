@@ -127,7 +127,7 @@ At question registration, identify a data source you have checked for access and
 | Source | What it has | In R |
 |---|---|---|
 | Course data (`data/` folder) | BC Assessment sales in Metro Vancouver, 2000 to March 2026; 2016 and 2021 Census PUMF | `read_rds()` |
-| [Statistics Canada data tables](https://www150.statcan.gc.ca/n1/en/type/data) | Prices, rents, population, income, and construction, often by CMA | `cansim` (deck 12) |
+| [Statistics Canada data tables](https://www150.statcan.gc.ca/n1/en/type/data) | Prices, rents, population, income, and construction, often by CMA | `cansim` (deck 11) |
 | [Census Profile via CensusMapper](https://censusmapper.ca) | Census variables from 1996 to 2021, down to dissemination areas | `cancensus` (deck 10) |
 | [CMHC Housing Market Information Portal](https://www03.cmhc-schl.gc.ca/hmip-pimh/en) | Rents, vacancy rates, and housing starts and completions, for CMAs and smaller zones | `cmhc` package |
 | [City of Vancouver Open Data](https://opendata.vancouver.ca) | Building permits, zoning, property tax, business licences, and more | `VancouvR` |

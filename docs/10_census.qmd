@@ -438,7 +438,7 @@ dim(pumf)
 **Try it:** run `View(pumf)` in the Console. Find `AGEGRP` and `CFInc`. Are their values numbers or words?
 
 ::: {.notes}
-- Answer: words. `AGEGRP` holds age ranges such as "`r as.character(pumf$AGEGRP[1])`", and `CFInc` holds income ranges such as "`r as.character(pumf$CFInc[1])`". Most PUMF columns store categories like these; deck 11 covers them as factors.
+- Answer: words. `AGEGRP` holds age ranges such as "`r as.character(pumf$AGEGRP[1])`", and `CFInc` holds income ranges such as "`r as.character(pumf$CFInc[1])`". Most PUMF columns store categories like these; deck 12 covers them as factors.
 - Column names are short codes. Each column also has a description: `attr(pumf$AGEGRP, "label")` returns "`r attr(pumf$AGEGRP, "label")`". The PUMF user guide explains every column.
 - TODO: check whether Positron's Data Explorer shows these column descriptions.
 - Statistics Canada, Individuals File, 2021 Census PUMF: https://www150.statcan.gc.ca/n1/en/catalogue/98M0001X2021001
@@ -542,7 +542,7 @@ pumf |> count(Tenur)
 sum(is.na(pumf$Tenur))
 ```
 
-R does not treat "Not available" as missing, so counts and charts include it as a group. Remove it yourself before computing shares. Deck 11 explains why: most PUMF columns are factors.
+R does not treat "Not available" as missing, so counts and charts include it as a group. Remove it yourself before computing shares. Deck 12 explains why: most PUMF columns are factors.
 
 ## Point the AI to the user guide
 
