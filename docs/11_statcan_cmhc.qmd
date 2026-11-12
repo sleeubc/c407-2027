@@ -37,247 +37,683 @@ execute:
 #| label: setup
 #| include: false
 knitr::opts_chunk$set(comment = NA, fig.width = 9, fig.height = 3.6)
-source("docs/c407_preview.R")  # preview_print() for the data tables
+source("docs/c407_preview.R")  # preview_table() and preview_print() for the data tables
+options(cansim.suppress_repair_warnings = TRUE)
 ```
-
-## StatCan publishes thousands of data tables
-
-Go to [Statistics Canada → Data](https://www150.statcan.gc.ca/n1/en/type/data) and browse:
-
-- **Subject**: which subjects relate to real estate?
-- **Geography**: which level matches municipalities, such as the City of Vancouver?
-- **Frequency**: monthly, quarterly, or annual?
-
-Each table has a number such as **34-10-0127-01**.
-
-## Find a table, then download it with cansim
-
-Search for "vacancy rates", then choose Housing and Census metropolitan area.
 
 ```{r}
-#| label: vacancy
-library(tidyverse)
-library(cansim)
+#| label: preview-data
+#| include: false
+# Display only: visible code downloads these data later in the deck.
+cubes <- cansim::list_cansim_cubes(lite = TRUE)
+n_active <- sum(!cubes$archived)
 
-vacancy <- get_cansim("34-10-0127-01")
-dim(vacancy)
+pop_all <- cansim::get_cansim("17-10-0148-01")
+n_van_2025 <- sum(pop_all$GEO == "Vancouver (CMA), British Columbia" & pop_all$REF_DATE == "2025")
+preview_pop <- pop_all |>
+  dplyr::filter(GEO == "Vancouver (CMA), British Columbia", REF_DATE == "2025",
+                Gender %in% c("Total - gender", "Men+"),
+                `Age group` %in% c("All ages", "0 to 4 years", "Average age")) |>
+  dplyr::relocate(REF_DATE, GEO, Gender, `Age group`, VALUE, UOM)
+rm(pop_all)
+
+census_2021 <- cancensus::get_census("CA21", regions = list(CMA = "59933"),
+                                     level = "CMA", quiet = TRUE)$Population
+
+cmhc_all <- cmhc::get_cmhc("Rms", "Vacancy Rate", "Bedroom Type",
+                           "Historical Time Periods", geo_uid = "59933")
+preview_cmhc <- cmhc_all |> dplyr::filter(Date == max(Date))
+
+# StatCan's republished vacancy rate against CMHC's own headline rate
+vac_compare <- cansim::get_cansim("34-10-0127-01") |>
+  dplyr::filter(GEO == "Vancouver, British Columbia") |>
+  dplyr::transmute(year = lubridate::year(Date), statcan = VALUE) |>
+  dplyr::inner_join(
+    cmhc_all |>
+      dplyr::filter(`Bedroom Type` == "Total") |>
+      dplyr::transmute(year = lubridate::year(Date), cmhc = Value),
+    by = "year"
+  )
+n_vac_differ <- sum(vac_compare$statcan != vac_compare$cmhc)
 ```
 
-`get_cansim()` downloads the whole table: every place and every date.
+## StatCan or CMHC?
 
-## Read the columns before you use VALUE
+:::: {.columns}
+::: {.column width="48%"}
+### Statistics Canada
 
-```{r}
-#| label: vacancy-cols
-#| classes: data-preview
-#| render: !expr preview_print
-vacancy |> head(4)
-```
+About `r format(round(n_active, -2), big.mark = ",")` active data tables on every subject: prices, population, income, and construction.
 
-- `VALUE` is the number. `UOM` and `SCALAR_FACTOR` give its unit, such as a rate, persons, or thousands of dollars.
-- `Date` and `GEO` say what each row measures. Scroll the table: most other columns are StatCan codes, such as `DGUID` and `VECTOR`.
+Mostly for Canada, provinces, and CMAs; monthly or annual.
 
-## Vacancy rates in two CMAs
-
-```{r}
-#| label: vacancy-plot
-vacancy |>
-  filter(str_detect(GEO, "Vancouver|Toronto")) |>
-  ggplot(aes(Date, VALUE, colour = GEO)) +
-  geom_line() +
-  labs(x = NULL, y = "Vacancy rate (%)", colour = NULL,
-       caption = "Source: CMHC, Statistics Canada Table 34-10-0127-01")
-```
-
-## Check what a partial match caught
-
-```{r}
-#| label: str-detect
-vacancy |>
-  filter(str_detect(GEO, "Vancouver|Toronto")) |>
-  distinct(GEO)
-```
-
-::: {.warning}
-`str_detect()` matches any name that contains the text. Always check which places you kept.
+Use it for long series and broad topics.
 :::
 
-## A table can hold many series per place
+::: {.column width="48%"}
+### CMHC
 
-```{r}
-#| label: population
-population <- get_cansim("17-10-0148-01")
+Housing only, in more detail: the rental market, housing starts and completions, condo rentals, and seniors' housing.
 
-population |>
-  filter(str_detect(GEO, "Vancouver")) |>
-  count(Date) |>
-  head(3)
-```
+Down to neighbourhoods and census tracts.
 
-There are `r population |> filter(str_detect(GEO, "Vancouver"), Date == max(Date)) |> nrow()` rows for Vancouver in each year. Why?
+Use it for rental and construction detail in small areas.
+:::
+::::
 
-## Look at the rows for one year
-
-```{r}
-#| label: population-rows
-#| classes: data-preview
-#| render: !expr preview_print
-population |>
-  filter(str_detect(GEO, "Vancouver"), Date == max(Date)) |>
-  head(5)
-```
-
-The rows differ by `Gender` and `Age group`. Scroll the table to see all `r ncol(population)` columns.
+StatCan republishes a few CMHC series, with less detail.
 
 ::: {.notes}
-- "0 to 4 years" and then "0 years" to "4 years": the five single years add up to the five-year group, so summing all rows counts those children twice.
-- Printing these rows in the Console shows "Total …" for `Gender` and 3.09e6 for `VALUE`.
+- StatCan: [statcan.gc.ca](https://www.statcan.gc.ca/en/start). `cansim::search_cansim_cubes("vacancy")` searches the table titles from R.
+- CMHC: the [Housing Market Information Portal](https://www03.cmhc-schl.gc.ca/hmip-pimh/en) shows every CMHC table and downloads it as a CSV. The `cmhc` package reads the same tables.
+- Neither needs an API key.
 :::
 
-## Every dimension needs a filter
+## Tables for real estate
+
+::: {.small}
+| Table | What it measures | Places | Since |
+|---|---|---|---|
+| [17-10-0148-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1710014801) | Population estimates, July 1, by age and gender | CMAs | 2001, annual |
+| [18-10-0005-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1810000501) | Consumer Price Index, annual average | Canada, provinces, 19 cities | 1914, annual |
+| [18-10-0004-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1810000401) | Consumer Price Index | Canada, provinces, 19 cities | 1914, monthly |
+| [18-10-0205-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=1810020501) | New housing price index: total, house, and land | Canada, provinces, CMAs | 1981, monthly |
+| [34-10-0292-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3410029201) | Building permits: number, units, and value | Canada, provinces, CMAs | 2018, monthly |
+| [34-10-0156-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3410015601) | CMHC housing starts, by type of unit | Canada, provinces, CMAs | 1990, monthly |
+| [34-10-0127-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3410012701) | CMHC vacancy rates | CMAs | 1971, annual |
+| [34-10-0133-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3410013301) | CMHC average rents, by unit type | Centres of 10,000+ | 1987, annual |
+| [34-10-0145-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=3410014501) | CMHC 5-year mortgage rate | Canada | 1951, monthly |
+:::
+
+The table number is what you give `get_cansim()`, or your agent.
+
+::: {.notes}
+- "Since" is the first year in the table. Many places start later: the Vancouver CPI, for example, does not go back to 1914.
+- The CPI's 19 cities include Vancouver, Victoria, Calgary, Edmonton, Toronto, and Montréal.
+- The research project page lists these and other sources.
+:::
+
+## A StatCan table: one row per date, place, and category
 
 ```{r}
-#| label: dims
-population |>
-  summarise(genders = n_distinct(Gender),
-            age_groups = n_distinct(`Age group`),
-            units = paste(unique(UOM), collapse = ", "))
+#| label: preview-statcan
+#| echo: false
+#| classes: data-preview
+preview_table(preview_pop)
 ```
 
-Each row is one gender × age group, and some rows are ages in **years**, not persons.
+Six of the `r n_van_2025` rows for Vancouver CMA in 2025. Each row is one gender and one age group. `UOM` says whether `VALUE` counts persons or years.
 
-::: {.warning}
-Summing `VALUE` without filtering every dimension adds people to ages. R will not stop you.
+::: {.notes}
+- Gender and Age group are the table's dimensions. Every StatCan table has `Date`, `GEO`, `VALUE`, `UOM`, and `SCALAR_FACTOR`, plus its own dimensions.
+- "Total - gender" is the sum of Men+ and Women+, and "All ages" is the sum of the age groups. The table holds totals and their parts in the same column.
 :::
 
-## Filter until there is one row per date
+## A CMHC table: one row per date and category
+
+```{r}
+#| label: preview-cmhc
+#| echo: false
+#| classes: data-preview
+preview_table(preview_cmhc)
+```
+
+Vacancy rates in the Vancouver CMA, October `r lubridate::year(max(cmhc_all$Date))`. `Quality` rates each value, from Excellent to "Fair (Use with Caution)". CMHC withholds values too unreliable to publish: they come back as `NA`.
+
+## What each source counts
+
+::: {.small}
+| Data | Counts | Watch for |
+|---|---|---|
+| Population estimates | People on July 1, on 2021 boundaries for every year | Estimates, not census counts: the 2021 Census counted `r format(census_2021, big.mark = ",")` |
+| CPI | Prices of a fixed basket of goods, 2002 = 100 | Not seasonally adjusted |
+| StatCan housing starts | Units started, seasonally adjusted at **annual rates** | Each month is a yearly pace: do not add months |
+| CMHC Rental Market Survey | Purpose-built rentals in buildings of 3+ units, each October | Leaves out rented condos and basement suites |
+| StatCan vacancy rates | Apartments in buildings of 6+ units | Differs from CMHC's headline rate in `r n_vac_differ` of `r nrow(vac_compare)` years |
+:::
+
+::: {.key-point}
+An agent can find a table. Whether the table counts what your question needs is your call.
+:::
+
+::: {.notes}
+- Population estimates add births, deaths, and migration to the last census and adjust for people the census missed, so the 2021 estimate is higher than the census count.
+- The rental survey and StatCan's vacancy table differ by 0.1 to 0.2 points in those years, because they count different buildings.
+- CMHC's own Starts and Completions Survey (`survey = "Scss"` in the `cmhc` package) gives monthly counts that can be added up.
+:::
+
+## Quick check: which source and table?
+
+Where would you look for:
+
+1. Two-bedroom rents in Kitsilano and in Marpole since 2015?
+2. Whether Vancouver's population growth is slowing?
+3. Whether new-home prices have kept up with inflation?
+4. How many homes were started in the Vancouver CMA each year?
+
+::: {.fragment .small}
+1. CMHC's Rental Market Survey, by survey zone: "Kitsilano/Point Grey" and "Marpole". StatCan stops at the CMA.
+2. StatCan 17-10-0148-01.
+3. StatCan's new housing price index, 18-10-0205-01, against the CPI, 18-10-0005-01.
+4. CMHC's Starts and Completions Survey. StatCan's 34-10-0156-01 gives annual rates, which do not add up to a year.
+:::
+
+# A StatCan table with an agent
+
+## We asked an agent
+
+::: {.small}
+```text
+Plot the population of the Vancouver CMA from 2001 to 2025 using
+Statistics Canada data. Download it with cansim.
+```
+:::
+
+It had to choose a table, and said why:
+
+> StatCan has two CMA population tables. `17-10-0135-01` (2016 boundaries) ends at 2022, so it can't cover your period; I used `17-10-0148-01` (2021 boundaries, 2001–2025).
+
+It also noted that these are estimates, not census counts.
+
+::: {.notes}
+- Tested on 2026-11-06 with Claude Code (Opus 5) in two fresh copies of the student `c407` folder. The prompt is exactly as shown.
+- Neither run asked a question: the period settled the choice of table. Both chose 17-10-0148-01 and the same filters. Run 1 filtered on the code `GeoUID == "933"` instead of the place name.
+- StatCan's site was down during the test; run 2 waited about 10 minutes and tried again. Downloads can fail for a while: try again later.
+:::
+
+## The agent's code
+
+::: {.small}
+```{r}
+#| label: packages
+library(tidyverse)
+library(cansim)
+```
+
+```{r}
+#| label: agent-population
+#| output: false
+# Table 17-10-0148-01: population estimates as of 1 July, by CMA and CA, on
+# 2021 census boundaries. The older 17-10-0135-01 (2016 boundaries) stops at
+# 2022, so it cannot cover the requested period.
+cma_pop_raw <- get_cansim("17-10-0148-01")
+
+van_pop <- cma_pop_raw |>
+  # "All ages" drops the single-year and average/median-age rows; "Total -
+  # gender" avoids double counting Men+ and Women+. Together these leave one
+  # headcount per year.
+  filter(
+    GEO == "Vancouver (CMA), British Columbia",
+    `Age group` == "All ages",
+    Gender == "Total - gender",
+    REF_DATE >= "2001", REF_DATE <= "2025"
+  ) |>
+  transmute(year = as.integer(REF_DATE), population = val_norm) |>
+  arrange(year)
+
+glimpse(van_pop)
+```
+:::
+
+::: {.notes}
+- `get_cansim()` downloads the whole table: every place, gender, age group, and year, about `r round(nrow(cma_pop_raw) / 1e6, 1)` million rows.
+- `transmute()` keeps only the columns it creates.
+:::
+
+## Your prompt became three filters
+
+::: {.small}
+| Your prompt | The agent's code |
+|---|---|
+| "the Vancouver CMA" | `GEO == "Vancouver (CMA), British Columbia"` |
+| "from 2001 to 2025" | `REF_DATE >= "2001", REF_DATE <= "2025"` |
+| "population" | Table 17-10-0148-01, `` `Age group` == "All ages" ``, and `Gender == "Total - gender"` |
+:::
+
+"Population" became a table and two filters you did not write.
+
+The agent also used `val_norm`, not `VALUE`. It turns percentages into proportions, so 5% becomes 0.05. Here the two are the same.
+
+::: {.key-point}
+Every dimension of a StatCan table needs a filter. Each filter the agent chose is a decision: read them all.
+:::
+
+## Check: one row per year
 
 ```{r}
 #| label: one-row
-van_pop <- population |>
-  filter(str_detect(GEO, "Vancouver"),
-         Gender == "Total - gender",
-         `Age group` == "All ages")
-
-van_pop |> count(Date) |> distinct(n)
+van_pop |> count(year) |> distinct(n)
 ```
 
-::: {.key-point}
-`count(Date)` should show exactly one row per date before you plot or sum.
+`count(year)` should show exactly one row per year before you plot or sum.
+
+## What the filters removed
+
+```{r}
+#| label: dims
+cma_pop_raw |>
+  filter(GEO == "Vancouver (CMA), British Columbia", REF_DATE == "2025") |>
+  count(Gender, UOM)
+```
+
+::: {.warning}
+Without the filters, summing `VALUE` counts each person several times and adds ages in years to people. R will not stop you.
 :::
 
 ## Vancouver's population over time
 
 ```{r}
 #| label: pop-plot
-ggplot(van_pop, aes(Date, VALUE)) +
-  geom_line() + geom_point() +
-  # Write 3,000,000 as 3M (more on scales in deck 12)
+#| code-fold: true
+#| code-summary: "The agent's chart code"
+van_pop |>
+  ggplot(aes(x = year, y = population)) +
+  geom_line(linewidth = 0.8, colour = "#2c7fb8") +
+  geom_point(size = 1.5, colour = "#2c7fb8") +
+  scale_x_continuous(breaks = seq(2001, 2025, 4)) +
   scale_y_continuous(labels = scales::label_number(scale = 1e-6, suffix = "M")) +
-  labs(x = NULL, y = NULL, title = "Vancouver CMA population, July 1 estimates",
-       caption = "Source: Statistics Canada Table 17-10-0148-01")
+  labs(
+    x = NULL,
+    y = "Population",
+    caption = "Statistics Canada, table 17-10-0148-01 (2021 CMA boundaries)"
+  ) +
+  theme_minimal()
 ```
 
-## Prices from different years need the same dollars
+::: {.notes}
+- `label_number(scale = 1e-6, suffix = "M")` writes 3,000,000 as 3M. Deck 12 covers scales.
+- Both runs noted the slowdown in 2025 and linked it to the caps on temporary residents, and both said the table cannot show the cause.
+:::
 
-Table **18-10-0004-01** has a monthly consumer price index (CPI) for Vancouver.
+## Quick check: which filters change?
 
-```{r}
-#| label: cpi
-cpi <- get_cansim("18-10-0004-01") |>
-  filter(GEO == "Vancouver, British Columbia",
-         `Products and product groups` == "All-items")
-cpi |> count(Date) |> distinct(n)
+You now want **Calgary's population aged 65 and older, by gender**, from 2001 to 2025.
 
-cpi_year <- cpi |>
-  group_by(sale_year = year(Date)) |>
-  summarise(cpi = mean(VALUE), months = n())
-```
+Which lines of the agent's `filter()` change? How many rows per year should the check find?
 
-The annual CPI is the average of 12 monthly values. `months` flags a partial year: so far, `r tail(cpi_year$sale_year, 1)` has only `r tail(cpi_year$months, 1)` months.
-
-## Convert sale prices to 2025 dollars
-
+::: {.fragment}
 ::: {.small}
 ```{r}
-#| label: real-prices
-bca <- read_rds("data/bca262.rds")
-
-prices <- bca |>
-  filter(year(sale_date) <= 2025) |>  # 2026 is a partial year
-  group_by(sale_year = year(sale_date)) |>
-  summarise(nominal = median(price, na.rm = TRUE)) |>
-  left_join(cpi_year, by = "sale_year") |>
-  mutate(real = nominal * cpi[sale_year == 2025] / cpi)
-
-prices |> filter(sale_year %in% c(2000, 2025))
+#| label: calgary
+#| eval: false
+filter(
+  GEO == "Calgary (CMA), Alberta",
+  `Age group` == "65 years and older",
+  Gender != "Total - gender",
+  REF_DATE >= "2001", REF_DATE <= "2025"
+)
 ```
 :::
 
-A price in 2025 dollars is the price × (CPI in 2025 ÷ CPI in the year of sale).
+Three of the four. "By gender" keeps Men+ and Women+ and drops their total, so the check should find two rows per year.
+:::
 
-## Real prices rose less than nominal prices
+# Real prices with an agent
+
+## We asked an agent to adjust for inflation
+
+::: {.small}
+```text
+Using data/bca262.rds, plot the median sale price by year from 2000
+to 2025, adjusted for inflation. Get the CPI from Statistics Canada
+with cansim.
+```
+:::
+
+Before plotting, it asked whether to pool the two property types:
+
+::: {.small}
+| Option | Change in real prices, 2000 to 2025 |
+|---|---|
+| **1. One line per property type** | Single-family +259%, strata +158% |
+| **2. One pooled line** | +113% |
+| **3. Both** | The pooled line beside the two types |
+:::
+
+Strata units were 45% of sales in 2000 and 76% in 2025, so the pooled median partly tracks which homes sold. This is the mix shift from deck 05. We chose 1.
+
+::: {.notes}
+- Tested on 2026-11-06 with Claude Code (Opus 5) in two fresh copies of the student `c407` folder. The prompt is exactly as shown.
+- Both runs asked this question, with the same numbers, and recommended option 1. We answered "1".
+- Ask the class why the agent could not decide this for us: both lines are correct; they answer different questions.
+:::
+
+## The agent's code: sales and CPI
+
+::: {.small}
+```{r}
+#| label: agent-cpi
+bca <- read_rds("data/bca262.rds")
+
+# Sales stop on 11 March 2026, so 2026 is a partial year and is left out.
+sales <- bca |>
+  mutate(year = year(sale_date)) |>
+  filter(year %in% 2000:2025)
+
+# Table 18-10-0005 is the annual-average CPI. Annual averages line up with
+# annual medians, so no monthly aggregation is needed. Vancouver CMA is used
+# rather than Canada so that local inflation does the deflating.
+cpi_raw <- get_cansim("18-10-0005")
+
+cpi_van <- cpi_raw |>
+  filter(`Products and product groups` == "All-items",
+         GEO == "Vancouver, British Columbia") |>
+  transmute(year = as.integer(REF_DATE), cpi = VALUE) |>
+  filter(year %in% 2000:2025)
+```
+:::
+
+::: {.notes}
+Run 2's code, shortened: the `cat()` lines that print row counts are left out.
+:::
+
+## The agent's code: real medians
+
+::: {.small}
+```{r}
+#| label: agent-real
+# 2025 is the base year, so every price is expressed in 2025 dollars.
+cpi_base <- cpi_van |> filter(year == 2025) |> pull(cpi)
+
+median_nominal_by_year <- sales |>
+  summarise(.by = c(year, act_use_cat),
+            n_sales = n(),
+            median_nominal = median(price))
+
+# relationship = "many-to-one": many year-by-type rows match one CPI row per
+# year, and a duplicated CPI year would stop with an error instead of silently
+# duplicating sales rows.
+median_by_year <- median_nominal_by_year |>
+  left_join(cpi_van, by = "year", relationship = "many-to-one") |>
+  # Every sale in a year shares one deflator, so deflating the median gives the
+  # same answer as deflating each sale and then taking the median.
+  mutate(median_real = median_nominal * cpi_base / cpi,
+         property_type = if_else(act_use_cat == "S/F Res",
+                                 "Single-family",
+                                 "Strata (condo or townhouse)"))
+```
+:::
+
+`median_real` is the price × (CPI in 2025 ÷ CPI in the year of sale).
+
+## Three choices it did not ask about
+
+::: {.small}
+| Choice | The agent's pick | Other options |
+|---|---|---|
+| Table | 18-10-0005-01, annual averages | 18-10-0004-01, monthly |
+| Place | Vancouver | British Columbia, Canada |
+| Dollars | 2025 dollars | Any other year |
+:::
+
+It said none of these changes the shape of the line. Check the place:
+
+::: {.small}
+```{r}
+#| label: cpi-places
+cpi_raw |>
+  filter(`Products and product groups` == "All-items", REF_DATE %in% c("2000", "2025"),
+         GEO %in% c("Canada", "British Columbia", "Vancouver, British Columbia")) |>
+  select(GEO, REF_DATE, VALUE) |>
+  pivot_wider(names_from = REF_DATE, values_from = VALUE)
+```
+:::
+
+```{r}
+#| label: cpi-numbers
+#| include: false
+cpi_growth <- cpi_raw |>
+  filter(`Products and product groups` == "All-items", REF_DATE %in% c("2000", "2025"),
+         GEO %in% c("Canada", "British Columbia", "Vancouver, British Columbia")) |>
+  summarise(growth = VALUE[REF_DATE == "2025"] / VALUE[REF_DATE == "2000"], .by = GEO) |>
+  deframe()
+```
+
+## The choice it asked about mattered more
+
+From 2000 to 2025, prices rose `r round(cpi_growth[["Vancouver, British Columbia"]], 2)`-fold in Vancouver and `r round(cpi_growth[["Canada"]], 2)`-fold in Canada. Switching the CPI moves every real price by about `r round(100 * (cpi_growth[["Canada"]] / cpi_growth[["Vancouver, British Columbia"]] - 1))`%.
+
+Pooling the property types moved the answer from +259% to +113%.
+
+::: {.key-point}
+The agent asked about the choice that changed the answer. Check the ones it did not ask about anyway: each takes a few lines.
+:::
+
+## Check the arithmetic
+
+```{r}
+#| label: check-2000
+median_by_year |>
+  filter(year == 2000) |>
+  select(property_type, median_nominal, cpi, median_real)
+```
+
+```{r}
+#| label: check-numbers
+#| include: false
+sf_2000 <- median_by_year |> filter(year == 2000, act_use_cat == "S/F Res")
+```
+
+By hand, for single-family homes: `r scales::comma(sf_2000$median_nominal)` × `r cpi_base` ÷ `r sf_2000$cpi` = `r scales::comma(sf_2000$median_real)`. A median from 2000 in 2025 dollars.
+
+## Real prices by property type
 
 ```{r}
 #| label: real-plot
 #| fig-height: 3
 #| code-fold: true
 #| code-summary: "Chart code"
-ggplot(prices, aes(sale_year)) +
-  geom_line(aes(y = nominal, colour = "Nominal dollars")) +
-  geom_line(aes(y = real, colour = "2025 dollars")) +
+ggplot(median_by_year, aes(year, median_real, colour = property_type)) +
+  geom_line() +
   scale_y_continuous(labels = scales::label_dollar()) +
-  labs(x = NULL, y = "Median sale price", colour = NULL,
-       caption = "Sources: BC Assessment; Statistics Canada Table 18-10-0004-01")
+  labs(x = NULL, y = "Median sale price, 2025 dollars", colour = NULL,
+       caption = "Sources: BC Assessment; Statistics Canada Table 18-10-0005-01")
+```
+
+```{r}
+#| label: real-numbers
+#| include: false
+sf <- median_by_year |> filter(act_use_cat == "S/F Res")
+fold <- function(x) round(x[sf$year == 2025] / x[sf$year == 2000], 1)
 ```
 
 ::: {.warning}
-From 2000 to 2025 the median price rose `r round(prices$nominal[prices$sale_year == 2025] / prices$nominal[prices$sale_year == 2000], 1)`-fold in nominal dollars, but `r round(prices$real[prices$sale_year == 2025] / prices$real[prices$sale_year == 2000], 1)`-fold in 2025 dollars. AI reports nominal prices unless you ask, so say which dollars every axis uses.
+From 2000 to 2025 the single-family median rose `r fold(sf$median_nominal)`-fold in nominal dollars, but `r fold(sf$median_real)`-fold in 2025 dollars. Say which dollars every axis uses.
 :::
 
 ## Practice: mortgage rates
 
-Using Table **34-10-0145-01**:
+Ask your agent:
 
-1. Check that there is one row per date.
-2. Plot the conventional 5-year mortgage lending rate over time.
-3. Cite the table in the caption.
+::: {.small}
+```text
+Using cansim, plot the conventional 5-year mortgage lending rate
+in Canada since 1990.
+```
+:::
+
+Before you trust the chart:
+
+1. Which table did it use? Is it on our list of tables?
+2. Check that there is one row per date.
+3. Does the caption cite the table?
+
+::: {.notes}
+The prompt is untested with an agent.
+:::
 
 ## Answer
 
 ::: {.small}
 ```{r include=params$answers}
 #| label: mortgage
-#| fig-height: 2.4
+#| fig-height: 2.2
 mortgage <- get_cansim("34-10-0145-01")
 mortgage |> count(Date) |> distinct(n)
 
-ggplot(mortgage, aes(Date, VALUE)) +
+mortgage |>
+  filter(year(Date) >= 1990) |>
+  ggplot(aes(Date, VALUE)) +
   geom_line() +
-  labs(x = NULL, y = "Rate (%)", title = "Conventional mortgage lending rate, 5-year term",
+  labs(x = NULL, y = "5-year mortgage rate (%)",
        caption = "Source: CMHC, Statistics Canada Table 34-10-0145-01")
 ```
 :::
 
-# CMHC data
+# CMHC data with an agent
 
-## CMHC's own downloads come wide
+## We asked an agent
 
-Table 34-10-0127-01 is CMHC's vacancy rate, republished by Statistics Canada. CMHC's [Housing Market Information Portal](https://www03.cmhc-schl.gc.ca/hmip-pimh/en) has more detail, such as bedroom types and survey zones. Its download for the Vancouver CMA, 1990 to 2025:
-
-```{r}
-#| label: cmhc-raw
-read_lines("data/cmhc_vacancy_vancouver.csv", skip = 2, n_max = 3)
+::: {.small}
+```text
+Using the cmhc package, plot rental vacancy rates by bedroom type
+in the Vancouver CMA since 1990.
 ```
+:::
 
-- One column per bedroom type: the table is wide.
-- After each value comes a column with no name. It holds a reliability code, from a (excellent) to d (poor: use with caution).
-- Two title lines sit above the table, and notes below it.
+It asked nothing. Both runs downloaded the same `r nrow(cmhc_all)` values: 36 Octobers × 5 bedroom categories, the four types and their total.
 
-## Practice: vacancy rates by bedroom type
+Both noticed that the course file `data/cmhc_vacancy_vancouver.csv` holds the same series, and one run checked that the 1990 values match.
+
+::: {.notes}
+- Tested on 2026-11-06 with Claude Code (Opus 5) in two fresh copies of the student `c407` folder. The prompt is exactly as shown.
+- Run 2 called `get_cmhc()` without `filters` and got the same values.
+- No API key is needed, but the download needs CMHC's site to be up.
+:::
+
+## The agent's code
 
 ::: {.small}
 ```{r}
+#| label: agent-cmhc
+library(cmhc)
+
+# geo_uid 59933 is the Vancouver CMA (see cmhc_cma_translation_data).
+# "Row / Apartment" is CMHC's full purpose-built rental universe and the basis
+# of its headline published vacancy rate; the October survey is the only one
+# that reaches back to 1990 (April runs only 2007-2015).
+vacancy <- get_cmhc(
+  survey = "Rms",
+  series = "Vacancy Rate",
+  dimension = "Bedroom Type",
+  breakdown = "Historical Time Periods",
+  geo_uid = "59933",
+  filters = list(dwelling_type_desc_en = "Row / Apartment", season = "October")
+)
+```
+:::
+
+::: {.notes}
+Run 1's code. `glimpse(vacancy)` after it is left out.
+:::
+
+## Your prompt set five arguments
+
+::: {.small}
+| Your prompt | Argument |
+|---|---|
+| "rental vacancy rates" | `survey = "Rms"`, `series = "Vacancy Rate"` |
+| "by bedroom type" | `dimension = "Bedroom Type"` |
+| "since 1990" | `breakdown = "Historical Time Periods"`: years for one place |
+| "the Vancouver CMA" | `geo_uid = "59933"` |
+:::
+
+The agent added `filters`, which you did not ask for. These two match the defaults, so the numbers do not change. `season = "April"` would: April surveys ran only from 2007 to 2015.
+
+::: {.notes}
+- `breakdown = "Survey Zones"` returns places for one year instead, as on the next slide.
+- `list_cmhc_surveys()`, `list_cmhc_series()`, `list_cmhc_dimensions()`, and `list_cmhc_breakdowns()` list the other choices.
+- `59933` is the census code for the Vancouver CMA, the same as in `get_census()`.
+:::
+
+## Check the quality codes
+
+```{r}
+#| label: quality-cma
+count(vacancy, Quality)
+```
+
+For the whole CMA, every value is Good or better.
+
+::: {.notes}
+The package labels code d "Fair (Use with Caution)"; the note in CMHC's CSV calls it "Poor (Use with Caution)".
+:::
+
+## Small areas have weaker values
+
+::: {.small}
+```{r}
+#| label: quality-zones
+rents_zone <- get_cmhc(survey = "Rms", series = "Average Rent",
+                       dimension = "Bedroom Type", breakdown = "Survey Zones",
+                       geo_uid = "59933", year = 2025)
+count(rents_zone, Quality)
+```
+:::
+
+```{r}
+#| label: quality-numbers
+#| include: false
+n_weak <- sum(is.na(rents_zone$Quality) | rents_zone$Quality == "Fair (Use with Caution)")
+```
+
+Average rents by survey zone in 2025: `r n_weak` of `r nrow(rents_zone)` are "Fair (Use with Caution)" or withheld.
+
+::: {.warning}
+The smaller the area, the fewer units CMHC surveys. Check `Quality` before you compare areas.
+:::
+
+## What "rental" left out
+
+The Rental Market Survey counts purpose-built rentals in buildings of 3+ units, each October. Condos rented out by their owners are in a different survey:
+
+::: {.small}
+```{r}
+#| label: srms
+list_cmhc_series("Srms")
+```
+:::
+
+One run told us its series leaves out condo rentals; the other did not. If your question is about everyone who rents, the survey you need may not be the one the agent picked.
+
+## Practice: read CMHC's own download
+
+The portal also downloads tables as CSV files, such as `data/cmhc_vacancy_vancouver.csv`. Ask your agent:
+
+::: {.small}
+```text
+Read data/cmhc_vacancy_vancouver.csv and plot vacancy rates by
+bedroom type.
+```
+:::
+
+Before you trust the chart:
+
+1. How many rows did it keep? The file covers 1990 to 2025.
+2. Are the rates numbers, not text?
+3. What did it do with the letters after each rate?
+
+::: {.notes}
+The prompt is untested with an agent.
+:::
+
+## Answer: the file
+
+::: {.small}
+```{r include=params$answers}
+#| label: cmhc-raw
+read_lines("data/cmhc_vacancy_vancouver.csv", skip = 2, n_max = 3)
+```
+:::
+
+- One column per bedroom type: the table is wide.
+- After each rate comes a column with no name. It holds a reliability code, from a (excellent) to d (poor: use with caution).
+- Two title lines sit above the table, and notes below it.
+
+## Answer: the code
+
+::: {.small}
+```{r include=params$answers}
 #| label: cmhc-read
 vacancy_w <- read_csv("data/cmhc_vacancy_vancouver.csv", skip = 2, n_max = 36) |>
   select(year = 1, Studio, `1 Bedroom`, `2 Bedroom`, `3 Bedroom +`, Total) |>
@@ -286,73 +722,55 @@ vacancy_w |> head(3)
 ```
 :::
 
-This code reads the file. It skips the title lines, keeps the 36 years, drops the code columns, and turns "1990 October" into 1990.
-
-Make `vacancy_w` long, with one row per year and bedroom type, as in deck 07. Then plot one line per bedroom type.
+- 36 rows. Without `n_max = 36`, CMHC's notes become five more rows, and `Studio` turns into text.
+- `select()` keeps the rates and drops the code columns.
 
 ::: {.notes}
-- Without `n_max = 36`, `read_csv()` reads CMHC's notes as five more rows, and `Studio` becomes text, because the last line puts "CMHC Rental Market Survey" in its column.
 - `read_csv()` names the columns without a name `...1`, `...3`, and so on, and says so in a message. `select(year = 1)` keeps the first column and names it `year`.
 - The file is in Windows-1252, not UTF-8: the dash in its first line prints as `\x97`. Skipping the title lines avoids it.
 - Rent tables are harder: rents are text with commas, such as "1,684", and suppressed cells are `**`.
+- To plot one line per bedroom type, make the table long with `pivot_longer()`, as in deck 07.
 :::
 
-## Answer
+## What to know from this deck
+
+:::: {.columns}
+::: {.column width="34%"}
+**Know**<br>*Write it without help*
 
 ::: {.small}
-```{r include=params$answers}
-#| label: cmhc-answer
-#| fig-height: 2.4
-vacancy_bed <- vacancy_w |>
-  pivot_longer(cols = -year, names_to = "bedrooms", values_to = "vacancy")
-
-ggplot(vacancy_bed, aes(year, vacancy, colour = bedrooms)) +
-  geom_line() +
-  labs(x = NULL, y = "Vacancy rate (%)", colour = NULL,
-       caption = "Source: CMHC Rental Market Survey")
-```
+- StatCan for long series; CMHC for rental detail
+- `get_cansim("table number")`
+- `count(Date) |> distinct(n)`
+- price × CPI₂₀₂₅ ÷ CPI
+- `count(x, Quality)`
+:::
 :::
 
-```{r}
-#| label: cmhc-numbers
-#| include: false
-total <- vacancy_bed |> filter(bedrooms == "Total") |> arrange(desc(vacancy))
-```
-
-In `r total$year[1]`, the vacancy rate for all units was `r total$vacancy[1]`%, the highest since the table starts in 1990. The next highest was `r total$vacancy[2]`%, in `r total$year[2]`.
-
-::: {.notes}
-- The legend is alphabetical, so Studio comes after 3 Bedroom +. Making `bedrooms` a factor with your own level order (deck 12) puts Studio first.
-:::
-
-## The cmhc package returns it long
+::: {.column width="32%"}
+**Recognize**<br>*Say what the line does*
 
 ::: {.small}
-```{r}
-#| label: cmhc-package
-library(cmhc)
-vacancy_cmhc <- get_cmhc(survey = "Rms", series = "Vacancy Rate",
-                         dimension = "Bedroom Type", geo_uid = "59933",
-                         breakdown = "Historical Time Periods")
-vacancy_cmhc |> select(Date, `Bedroom Type`, Value, Quality) |> head(3)
-```
+- `VALUE`, `UOM`, `val_norm`
+- `get_cmhc()`: survey, series, dimension, breakdown, geo_uid
+- `filters =` in `get_cmhc()`
+- "at annual rates"
+- `Rms` and `Srms`
+:::
 :::
 
-`get_cmhc()` downloads the same table and runs `pivot_longer()` for you. The codes become `Quality`, and suppressed cells `NA`: check `Quality` before you plot a series.
+::: {.column width="30%"}
+**Look up**<br>*When you meet it*
+
+::: {.small}
+- `search_cansim_cubes()`
+- `list_cmhc_series()`
+- `list_cmhc_breakdowns()`
+- CMHC's Housing Market Information Portal
+:::
+:::
+::::
 
 ::: {.key-point}
-The Rental Market Survey counts purpose-built rentals with three or more units, each October. Condos rented out by their owners are not in it.
-:::
-
-```{r}
-#| label: cmhc-quality
-#| include: false
-low <- sum(vacancy_cmhc$Quality %in% c("Good", "Fair (Use with Caution)"))
-```
-
-::: {.notes}
-- `geo_uid = "59933"` is the Vancouver CMA. `list_cmhc_surveys()`, `list_cmhc_series()`, `list_cmhc_dimensions()` and `list_cmhc_breakdowns()` list the other choices.
-- No API key is needed, but the download needs CMHC's site to be up.
-- The package labels code d "Fair (Use with Caution)"; the note in CMHC's file calls it "Poor (Use with Caution)".
-- In this table, `r low` of `r nrow(vacancy_cmhc)` values are rated "Good" or lower.
+Know what each source counts. Then check the agent's table, filters, and units.
 :::

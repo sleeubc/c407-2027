@@ -9,12 +9,13 @@
 # c407_table_scroll.html).
 
 # Amounts of 10,000 or more get commas; years and small numbers do not.
+# Whole numbers show no decimals, others one: 3,088,036 and 41.5.
 preview_number <- function(x) {
   if (!any(abs(x) >= 1e4, na.rm = TRUE)) return(x)
-  whole <- all(x == round(x), na.rm = TRUE)
-  out <- formatC(x, format = "f", digits = if (whole) 0 else 1, big.mark = ",")
-  out[is.na(x)] <- NA
-  out
+  vapply(x, function(v) {
+    if (is.na(v)) return(NA_character_)
+    formatC(v, format = "f", digits = if (v == round(v)) 0 else 1, big.mark = ",")
+  }, character(1))
 }
 
 # Codes such as neigh_id or PPSORT are identifiers, not amounts: no commas.
